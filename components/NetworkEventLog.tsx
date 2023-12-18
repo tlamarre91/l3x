@@ -1,6 +1,6 @@
 import React from "react";
 
-import { AgentEchoEvent } from "@/model/agent";
+import { AgentEchoEvent } from "@/model/agent/events";
 
 type AgentMessageLogProps = { messages?: AgentEchoEvent[] };
 
@@ -15,3 +15,4 @@ export default function AgentMessageLog({ messages }: AgentMessageLogProps) {
     </div>
   );
 }
+
