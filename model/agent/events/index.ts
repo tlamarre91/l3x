@@ -7,6 +7,7 @@ export type AgentEventType =
   | "error"
   | "process";
 
+// TODO: refactor to be like network events
 export interface AgentEvent {
   type: AgentEventType;
   agent: Agent;

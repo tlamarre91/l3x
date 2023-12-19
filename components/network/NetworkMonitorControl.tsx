@@ -1,15 +1,13 @@
 import React, { ReactNode } from "react";
-import { Network } from "@/model/network";
 
 export type NetworkMonitorControlProps = {
   children: ReactNode;
-  network: Network;
-  action: (network: Network) => void;
+  action: () => void;
 };
 
-export default function NetworkMonitorControl({ children, network, action }: NetworkMonitorControlProps) {
+export default function NetworkMonitorControl({ children, action }: NetworkMonitorControlProps) {
   return (
-    <button className="rounded border-1" onClick={() => action(network)}>
+    <button className="rounded-md border m-1" onClick={() => { console.log("doing it!"); action(); }}>
       {children}
     </button>
   );

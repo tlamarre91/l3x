@@ -43,7 +43,7 @@ export class Network {
 
     this.nodes.add(node);
 
-    const event = { type: "addnode", network: this, node } satisfies events.NetworkAddNodeEvent;
+    const event = new events.NetworkAddNodeEvent(this, node);
     this.eventsSubject.next(event);
 
     if (edgesOut == null) {
@@ -89,6 +89,14 @@ export class Network {
   hasEdge(from: NetworkNode, to: NetworkNode): boolean {
     const edge = this.edges.get(from)?.get(to);
     return edge != null;
+  }
+
+  get agents() {
+    console.log("getting agents");
+    console.log(this.#agentPositions);
+    const agents = [...this.#agentPositions.keys()];
+    console.log({agents});
+    return agents;
   }
 
   addAgent(agent: Agent, toNode: NetworkNode) {

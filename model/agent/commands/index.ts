@@ -4,8 +4,10 @@ export type AgentInstruction =
   | "move"    // Cross a link
   | "pwrite"  // Peek stack and write value to cell
   | "write"   // Pop stack and write to cell
+  | "push"
   | "state";
 
+// TODO: refactor to be like network events
 export class AgentCommand<LeftOperandType = unknown, RightOperandType = unknown> {
   instruction: AgentInstruction;
   left?: LeftOperandType;

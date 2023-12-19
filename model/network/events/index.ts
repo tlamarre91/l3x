@@ -10,14 +10,22 @@ export class NetworkEvent {
   constructor(network: Network) {
     this.network = network;
   }
+}
 
-  isAddAgent(): this is NetworkAddAgentEvent {
-    return this.type === "addagent";
-  }
+export function isAddAgent(event: NetworkEvent): event is NetworkAddAgentEvent {
+  return event.type === "addagent";
+}
 
-  isRemoveAgent(): this is NetworkRemoveAgentEvent {
-    return this.type === "removeagent";
-  }
+export function isRemoveAgent(event: NetworkEvent): event is NetworkRemoveAgentEvent {
+  return event.type === "removeagent";
+}
+
+export function isAddNode(event: NetworkEvent): event is NetworkAddNodeEvent {
+  return event.type === "addnode";
+}
+
+export function isRemoveNode(event: NetworkEvent): event is NetworkRemoveNodeEvent {
+  return event.type === "removenode";
 }
 
 export class NetworkAddAgentEvent extends NetworkEvent {

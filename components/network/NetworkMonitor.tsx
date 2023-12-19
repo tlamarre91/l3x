@@ -1,34 +1,47 @@
-"use client";
-
 import React, { useCallback, useEffect, useReducer } from "react";
-import { Network } from "@/model/network";
-import { NetworkEvent } from "@/model/network/events";
+import { Network, NetworkNode } from "@/model/network";
+import { NetworkEvent, isAddNode, isRemoveNode, isAddAgent, isRemoveAgent } from "@/model/network/events";
 import { Agent } from "@/model/agent";
 
 export type NetworkMonitorProps = {
   network: Network;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function networkAgentStateReducer(knownAgents: Agent[], event: NetworkEvent) {
-  console.log(`REDUCE! ${knownAgents} ${event}`);
-  if (event.isAddAgent()) {
+  console.log("REDUCE!");
+  console.log({ knownAgents });
+  console.log({ event });
+  if (isAddAgent(event)) {
     return [...knownAgents, event.agent];
   }
 
-  if (event.isRemoveAgent()) {
+  if (isRemoveAgent(event)) {
     return knownAgents.filter((agent) => agent !== event.agent);
   }
 
   return knownAgents;
 }
 
+function networkNodeStateReducer(knownNodes: NetworkNode[], event: NetworkEvent) {
+  if (isAddNode(event)) {
+    return [...knownNodes, event.node];
+  }
+
+  if (isRemoveNode(event)) {
+    return knownNodes.filter((node) => node !== event.node);
+  }
+
+  return knownNodes;
+}
+
 export default function NetworkMonitor({ network }: NetworkMonitorProps) {
-  const [knownAgents, knownAgentsDispatch] = useReducer(networkAgentStateReducer, []);
+  // const [knownAgents, knownAgentsDispatch] = useReducer(networkAgentStateReducer, []);
+  const [knownNodes, knownNodesDispatch] = useReducer(networkNodeStateReducer, []);
 
   const handleNetworkEvent = useCallback((event: NetworkEvent) => {
     console.log(`NetworkMonitor got an event for network ${network.name}!`);
-    console.log({ knownAgents });
-    knownAgentsDispatch(event);
+    knownNodesDispatch(event);
   }, []);
 
   useEffect(() => {
@@ -37,7 +50,10 @@ export default function NetworkMonitor({ network }: NetworkMonitorProps) {
   }, [network]);
 
   return (
-    <div>Network Monitor</div>
+    <>
+      <div>Network Monitor</div>
+      {knownNodes.map((node) => <div key={node.name}>{node.name}</div>)}
+    </>
   );
 }
 
