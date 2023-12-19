@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback, useState, useRef } from "react";
 import { Network, NetworkNode } from "@/model/network";
 import NetworkMonitor from "./NetworkMonitor";
 import NetworkMonitorControl from "./NetworkMonitorControl";
@@ -14,17 +14,17 @@ function setupTestNetwork(): Network {
 }
 
 export default function NetworkSandbox() {
-  const [network, setNetwork] = useState(setupTestNetwork);
+  const networkRef = useRef(setupTestNetwork());
+  const network = networkRef.current;
   const [mostRecentNode, setMostRecentNode] = useState<NetworkNode>();
   const [mostRecentAgent, setMostRecentAgent] = useState<Agent>();
-
 
   const testAddNode = useCallback(() => {
     const node = { name: "node-" + Date.now(), agents: [] } satisfies NetworkNode;
     const edgesOut = mostRecentNode != null ? [{ from: mostRecentNode, to: node }] : undefined;
     network.addNode(node, edgesOut);
     setMostRecentNode(() => node);
-  }, [mostRecentNode, network]);
+  }, [mostRecentNode]);
 
   const testAddAgent = useCallback(() => {
     console.log("trying add agent", network);
@@ -38,25 +38,21 @@ export default function NetworkSandbox() {
     agent.eventSubject.subscribe((event) => console.log(`agent event in node ${mostRecentNode.name}`, event));
     network.addAgent(agent, mostRecentNode);
     setMostRecentAgent(() => agent);
-  }, [mostRecentNode, network]);
+  }, [mostRecentNode]);
 
   const testAddCommand = useCallback(() => {
     mostRecentAgent?.queueCommand(new AgentCommand("echo", `hey queued ${Date.now()}`));
     console.log({mostRecentAgent});
-    // const command = mostRecentAgent?.dequeueCommand();
-    // console.log({command});
   }, [mostRecentAgent]);
 
   const testTest = useCallback(() => {
-    // console.log({ network });
     network.agents.forEach((agent) => {console.log({agent}); agent.process();});
-    // network.nodes.forEach((node) => {console.log({node}); });
-  }, [network]);
+  }, []);
 
   useEffect(() => {
     const sub = network.eventsSubject.subscribe((event) => console.log({ tester: event }));
     return () => sub.unsubscribe();
-  }, [network]);
+  }, []);
 
   const addNodeControl = (
     <NetworkMonitorControl action={testAddNode}>
