@@ -57,8 +57,41 @@ export class Network {
 
       const edge = { name: edgeSpec.name, data: edgeSpec.data };
       this.addEdge(node, edgeSpec.to, edge);
+    }
+  }
 
-      const event = { type: "addedge", network: this, edgeSpec } satisfies events.NetworkAddEdgeEvent;
+  removeNode(node: NetworkNode) {
+    if (!this.nodes.has(node)) {
+      throw new Error(`Network ${this.name} doesn't contain node ${node.name}`);
+    }
+
+    node.agents.forEach((agent) => {
+      this.removeAgent(agent);
+    });
+
+    this.nodes.delete(node);
+    const removeNodeEvent = new events.NetworkRemoveNodeEvent(this, node);
+    this.eventsSubject.next(removeNodeEvent);
+
+    const outEdgeMap = this.edges.get(node);
+    const outNeighbors = outEdgeMap != null ? [...outEdgeMap.keys()] : [];
+    this.edges.delete(node);
+
+    const inNeighbors = [...this.edges.entries()]
+      .map(([fromNode, toNodeMap]) => {
+        const removed = toNodeMap.delete(node);
+        return [fromNode, removed] satisfies [NetworkNode, boolean];
+      })
+      .filter(([_, removed]) => removed)
+      .map(([fromNode, _]) => fromNode);
+
+    for (const to of outNeighbors) {
+      const event = new events.NetworkRemoveEdgeEvent(this, { from: node, to })
+      this.eventsSubject.next(event);
+    }
+
+    for (const from of inNeighbors) {
+      const event = new events.NetworkRemoveEdgeEvent(this, { from, to: node })
       this.eventsSubject.next(event);
     }
   }
@@ -83,7 +116,27 @@ export class Network {
       this.edges.set(from, edgesOut);
     }
 
+    // TODO: do we need to handle if this is overwriting an existing edge?
     edgesOut.set(to, edge);
+
+    const event = new events.NetworkAddEdgeEvent(this, { from, to, ...edge });
+    this.eventsSubject.next(event);
+  }
+
+  removeEdge(from: NetworkNode, to: NetworkNode) {
+    const edgesOut = this.edges.get(from);
+    if (edgesOut == null) {
+      return; // TODO: throw? log?
+    }
+
+    const edge = edgesOut.get(to);
+    if (edge == null) {
+      return; // TODO: throw? log?
+    }
+
+    edgesOut.delete(to);
+    const event = new events.NetworkRemoveEdgeEvent(this, { from, to, ...edge});
+    this.eventsSubject.next(event);
   }
 
   hasEdge(from: NetworkNode, to: NetworkNode): boolean {
@@ -95,19 +148,26 @@ export class Network {
     console.log("getting agents");
     console.log(this.#agentPositions);
     const agents = [...this.#agentPositions.keys()];
-    console.log({agents});
+    console.log({ agents });
     return agents;
   }
 
-  addAgent(agent: Agent, toNode: NetworkNode) {
+  addAgent(agent: Agent, node: NetworkNode) {
     if (this.#agentPositions.get(agent) != null) {
       throw new Error(`Agent ${agent.name} is already in the network`);
     }
 
-    this.#reassignAgentNode(agent, null, toNode);
+    if (!this.nodes.has(node)) {
+      throw new Error(`Node ${node.name} ain't in the network`);
+    }
 
-    const event = { type: "addagent", network: this, agent } satisfies events.NetworkAddAgentEvent;
-    this.eventsSubject.next(event);
+    this.#reassignAgentNode(agent, null, node);
+
+    const addEvent = new events.NetworkAddAgentEvent(this, agent);
+    this.eventsSubject.next(addEvent);
+
+    const enterEvent = new events.AgentEnterNodeEvent(this, node, agent);
+    this.eventsSubject.next(enterEvent);
   }
 
   moveAgent(agent: Agent, toNode: NetworkNode) {
@@ -124,6 +184,12 @@ export class Network {
     }
 
     this.#reassignAgentNode(agent, fromNode, toNode);
+
+    const exitEvent = new events.AgentExitNodeEvent(this, toNode, agent);
+    this.eventsSubject.next(exitEvent);
+
+    const enterEvent = new events.AgentEnterNodeEvent(this, toNode, agent);
+    this.eventsSubject.next(enterEvent);
   }
 
   removeAgent(agent: Agent) {
@@ -133,6 +199,12 @@ export class Network {
     }
 
     this.#reassignAgentNode(agent, fromNode, null);
+
+    const exitEvent = new events.AgentExitNodeEvent(this, fromNode, agent);
+    this.eventsSubject.next(exitEvent);
+
+    const removeEvent = new events.NetworkRemoveAgentEvent(this, agent);
+    this.eventsSubject.next(removeEvent);
   }
 
   /**

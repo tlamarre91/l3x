@@ -1,7 +1,9 @@
-import React, { useCallback, useEffect, useReducer } from "react";
+import React, { useCallback, useEffect, useReducer, useState } from "react";
 import { Network, NetworkNode } from "@/model/network";
 import { NetworkEvent, isAddNode, isRemoveNode, isAddAgent, isRemoveAgent } from "@/model/network/events";
 import { Agent } from "@/model/agent";
+import { useSubscription } from "@/hooks";
+import NetworkNodeCard from "./NetworkNodeCard";
 
 export type NetworkMonitorProps = {
   network: Network;
@@ -35,24 +37,31 @@ function networkNodeStateReducer(knownNodes: NetworkNode[], event: NetworkEvent)
   return knownNodes;
 }
 
+function eventLogReducer(eventLog: any[], event: any) {
+  return [...eventLog, event];
+}
+
 export default function NetworkMonitor({ network }: NetworkMonitorProps) {
   // const [knownAgents, knownAgentsDispatch] = useReducer(networkAgentStateReducer, []);
   const [knownNodes, knownNodesDispatch] = useReducer(networkNodeStateReducer, []);
+  const [eventLog, eventLogDispatch] = useReducer(eventLogReducer, []);
 
   const handleNetworkEvent = useCallback((event: NetworkEvent) => {
     console.log(`NetworkMonitor got an event for network ${network.name}!`);
     knownNodesDispatch(event);
-  }, []);
-
-  useEffect(() => {
-    const subscription = network.eventsSubject.subscribe(handleNetworkEvent);
-    return () => subscription.unsubscribe();
+    // eventLogDispatch({ networkname: event.network.name, type: event.type, nodename: event?.node?.name, edgespec: event.edgeSpec });
+    eventLogDispatch(event);
   }, [network]);
+
+  useSubscription(network.eventsSubject, handleNetworkEvent);
 
   return (
     <>
       <div>Network Monitor</div>
-      {knownNodes.map((node) => <div key={node.name}>{node.name}</div>)}
+      {knownNodes.map((node, i) => <NetworkNodeCard key={i} network={network} node={node}/>)}
+      <div id="eventLog">
+        {eventLog.map((ev, i) => <div key={i}>{ev.toString()}</div>)}
+      </div>
     </>
   );
 }

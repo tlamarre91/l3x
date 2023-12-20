@@ -42,16 +42,11 @@ export default function NetworkSandbox() {
 
   const testAddCommand = useCallback(() => {
     mostRecentAgent?.queueCommand(new AgentCommand("echo", `hey queued ${Date.now()}`));
-    console.log({mostRecentAgent});
+    console.log({ mostRecentAgent });
   }, [mostRecentAgent]);
 
   const testTest = useCallback(() => {
-    network.agents.forEach((agent) => {console.log({agent}); agent.process();});
-  }, []);
-
-  useEffect(() => {
-    const sub = network.eventsSubject.subscribe((event) => console.log({ tester: event }));
-    return () => sub.unsubscribe();
+    network.agents.forEach((agent) => {console.log({ agent }); agent.process();});
   }, []);
 
   const addNodeControl = (
