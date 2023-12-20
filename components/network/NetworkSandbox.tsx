@@ -55,7 +55,7 @@ export default function NetworkSandbox() {
   }, []);
 
   const addNodeControl = (
-    <NetworkMonitorControl action={testAddNode}>
+    <NetworkMonitorControl onClick={testAddNode}>
         add node
     </NetworkMonitorControl>
   );
@@ -64,13 +64,13 @@ export default function NetworkSandbox() {
     <div className="flex flex-col">
       <NetworkMonitor network={network} />
       {addNodeControl}
-      <NetworkMonitorControl action={testAddAgent}>
+      <NetworkMonitorControl onClick={testAddAgent}>
         add agent
       </NetworkMonitorControl>
-      <NetworkMonitorControl action={testAddCommand}>
+      <NetworkMonitorControl onClick={testAddCommand}>
         add echo to {mostRecentAgent?.name}
       </NetworkMonitorControl>
-      <NetworkMonitorControl action={testTest}>
+      <NetworkMonitorControl onClick={testTest}>
         test process
       </NetworkMonitorControl>
     </div>

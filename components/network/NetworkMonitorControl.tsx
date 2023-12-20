@@ -2,12 +2,12 @@ import React, { ReactNode } from "react";
 
 export type NetworkMonitorControlProps = {
   children: ReactNode;
-  action: () => void;
+  onClick: () => void;
 };
 
-export default function NetworkMonitorControl({ children, action }: NetworkMonitorControlProps) {
+export default function NetworkMonitorControl({ children, onClick }: NetworkMonitorControlProps) {
   return (
-    <button className="rounded-md border m-1" onClick={() => { console.log("doing it!"); action(); }}>
+    <button className="rounded-md border m-1" onClick={onClick}>
       {children}
     </button>
   );
