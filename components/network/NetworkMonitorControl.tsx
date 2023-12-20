@@ -12,5 +12,3 @@ export default function NetworkMonitorControl({ children, onClick }: NetworkMoni
     </button>
   );
 }
-
-
