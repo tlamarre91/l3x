@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useCallback, useState, useRef } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import { Network, NetworkNode } from "@/model/network";
 import NetworkMonitor from "./NetworkMonitor";
 import NetworkMonitorControl from "./NetworkMonitorControl";
@@ -14,15 +14,25 @@ function setupTestNetwork(): Network {
 }
 
 export default function NetworkSandbox() {
-  const networkRef = useRef(setupTestNetwork());
-  const network = networkRef.current;
+  const network = useMemo(() => setupTestNetwork(), []);
   const [mostRecentNode, setMostRecentNode] = useState<NetworkNode>();
   const [mostRecentAgent, setMostRecentAgent] = useState<Agent>();
 
   const testAddNode = useCallback(() => {
     const node = { name: "node-" + Date.now(), agents: [] } satisfies NetworkNode;
-    const edgesOut = mostRecentNode != null ? [{ from: mostRecentNode, to: node }] : undefined;
-    network.addNode(node, edgesOut);
+    network.addNode(node);
+    if (mostRecentNode != null) {
+      try {
+        network.addEdge(node, mostRecentNode, { name: "forward" });
+      } catch (error) {
+        console.error(error);
+      }
+      try {
+        network.addEdge(mostRecentNode, node, { name: "backward" });
+      } catch (error) {
+        console.error(error);
+      }
+    }
     setMostRecentNode(() => node);
   }, [mostRecentNode]);
 
@@ -56,7 +66,7 @@ export default function NetworkSandbox() {
   );
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col m-5 p-5">
       <NetworkMonitor network={network} />
       {addNodeControl}
       <NetworkMonitorControl onClick={testAddAgent}>

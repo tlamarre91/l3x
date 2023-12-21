@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 
 import { Network, NetworkNode } from "@/model/network";
 import { NetworkNodeEvent, isAboutNode } from "@/model/network/events";
 import { filter } from "rxjs";
 
 import { useSubscription } from "@/hooks";
+import { Agent } from "@/model/agent";
 
 export type NetworkNodeCardProps = {
   network: Network;
@@ -18,14 +19,20 @@ export default function NetworkNodeCard({ network, node }: NetworkNodeCardProps)
   }, [network, node]);
 
   const handleClickRemove = useCallback(() => {
-    network.removeNode(node)
+    network.removeNode(node);
   }, [network, node]);
 
-  /**
-   * Subject reporting events about this node
-   */
+  const handleClickAddAgent = useCallback(() => {
+    console.log(network, node);
+    console.log(network.nodes);
+    console.log(network.nodes.has(node));
+    const agent = new Agent("added-agent-" + Date.now());
+    network.addAgent(agent, node);
+  }, [network, node]);
+
+  /** Observable for events about this node */
   const nodeEvents = useMemo(() => {
-    return network.eventsSubject.pipe(
+    return network.events$.pipe(
       filter(isAboutNode),
       filter((event) => event.node === node)
     );
@@ -39,7 +46,8 @@ export default function NetworkNodeCard({ network, node }: NetworkNodeCardProps)
       <div className="bold">
         {node.name}
       </div>
-      <button onClick={handleClickRemove}>do you dare?</button>
+      <button onClick={handleClickAddAgent}>add agent</button>
+      <button onClick={handleClickRemove}>delete node</button>
     </div>
   );
 }

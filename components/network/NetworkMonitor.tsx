@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useReducer, useState } from "react";
+import React, { useCallback, useReducer } from "react";
 import { Network, NetworkNode } from "@/model/network";
-import { NetworkEvent, isAddNode, isRemoveNode, isAddAgent, isRemoveAgent } from "@/model/network/events";
+import { NetworkEvent, SequentialNetworkEvent, isAddNode, isRemoveNode, isAddAgent, isRemoveAgent } from "@/model/network/events";
 import { Agent } from "@/model/agent";
 import { useSubscription } from "@/hooks";
 import NetworkNodeCard from "./NetworkNodeCard";
+import NetworkEventLog from "./NetworkEventLog";
 
 export type NetworkMonitorProps = {
   network: Network;
@@ -37,7 +38,7 @@ function networkNodeStateReducer(knownNodes: NetworkNode[], event: NetworkEvent)
   return knownNodes;
 }
 
-function eventLogReducer(eventLog: any[], event: any) {
+function eventLogReducer(eventLog: SequentialNetworkEvent[], event: SequentialNetworkEvent) {
   return [...eventLog, event];
 }
 
@@ -46,23 +47,31 @@ export default function NetworkMonitor({ network }: NetworkMonitorProps) {
   const [knownNodes, knownNodesDispatch] = useReducer(networkNodeStateReducer, []);
   const [eventLog, eventLogDispatch] = useReducer(eventLogReducer, []);
 
-  const handleNetworkEvent = useCallback((event: NetworkEvent) => {
+  const handleNetworkEvent = useCallback((event: SequentialNetworkEvent) => {
     console.log(`NetworkMonitor got an event for network ${network.name}!`);
     knownNodesDispatch(event);
-    // eventLogDispatch({ networkname: event.network.name, type: event.type, nodename: event?.node?.name, edgespec: event.edgeSpec });
     eventLogDispatch(event);
   }, [network]);
 
-  useSubscription(network.eventsSubject, handleNetworkEvent);
+  useSubscription(network.events$, handleNetworkEvent);
 
   return (
-    <>
-      <div>Network Monitor</div>
-      {knownNodes.map((node, i) => <NetworkNodeCard key={i} network={network} node={node}/>)}
-      <div id="eventLog">
-        {eventLog.map((ev, i) => <div key={i}>{ev.toString()}</div>)}
+    <div className="w-full">
+      <div className="font-bold">Network Monitor</div>
+      <div className="grid grid-cols-12">
+        <div className="col-span-4">
+          {knownNodes.map((node) => (
+            <NetworkNodeCard
+              key={node.name}
+              network={network}
+              node={node}/>
+          ))}
+        </div>
+        <div className="col-span-8">
+          <NetworkEventLog events={eventLog} />
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 

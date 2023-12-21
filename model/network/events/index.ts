@@ -1,5 +1,6 @@
 import { Agent } from "@/model/agent";
 import { Network, NetworkEdgeSpec, NetworkNode } from "../Network";
+import { Sequential } from "@/model/types";
 
 type NetworkEventType = "addagent" | "removeagent" | "addnode" | "removenode" | "addedge" | "removeedge" | "agententer" | "agentexit";
 
@@ -15,6 +16,8 @@ export class NetworkEvent {
     return this.type + " " + JSON.stringify({ network: this.network.name });
   }
 }
+
+export type SequentialNetworkEvent = Sequential & NetworkEvent;
 
 export function isAddAgent(event: NetworkEvent): event is NetworkAddAgentEvent {
   return event.type === "addagent";

@@ -1,7 +1,6 @@
-import { Subject } from "rxjs";
+import { Observable, Subject } from "rxjs";
 import { Agent } from "@/model/agent";
 import * as events from "./events";
-
 export interface NetworkNode {
   name?: string | undefined;
   data?: string | undefined;
@@ -25,15 +24,37 @@ export class Network {
   nodes: Set<NetworkNode>;
   /** Nested map where first key maps to collection of edges out of a node, second maps to specific edges */
   edges: Map<NetworkNode, Map<NetworkNode, NetworkEdge>>;
-  readonly eventsSubject: Subject<events.NetworkEvent>;
+  readonly #eventSubject: Subject<events.SequentialNetworkEvent>;
+  readonly events$: Observable<events.SequentialNetworkEvent>;
   #agentPositions: Map<Agent, NetworkNode>;
+  #nextEventId: number = 0;
 
   constructor(name: string) {
+    console.log("constructin'", name);
     this.name = name;
     this.nodes = new Set();
     this.edges = new Map();
-    this.eventsSubject = new Subject();
+    this.#eventSubject = new Subject();
+    this.events$ = this.#eventSubject.asObservable();
+
+    // note: doing it this way results in incrementing the id for every *read* of an event from the observable!
+    // this.events$ = this.#rawEvents.asObservable().pipe(
+    //   tap((event) => console.log({tap1: event})),
+    //   map((event) => {
+    //     const sequentialEvent = { id: this.#nextEventId, ...event } satisfies events.SequentialNetworkEvent;
+    //     this.#nextEventId += 1;
+    //     return sequentialEvent;
+    //   }),
+    //   tap((event) => console.log({tap2: event})),
+    // );
+
+
     this.#agentPositions = new Map();
+  }
+
+  #emit(event: events.NetworkEvent) {
+    const seqEvent = { id: this.#nextEventId++, ...event } satisfies events.SequentialNetworkEvent;
+    this.#eventSubject.next(seqEvent);
   }
 
   addNode(node: NetworkNode, edgesOut?: NetworkEdgeSpec[]) {
@@ -41,10 +62,12 @@ export class Network {
       throw new Error(`Network ${this.name} already has node ${node.name}`);
     }
 
+    // TODO: store nodes by name and check for uniqueness
+
     this.nodes.add(node);
 
     const event = new events.NetworkAddNodeEvent(this, node);
-    this.eventsSubject.next(event);
+    this.#emit(event);
 
     if (edgesOut == null) {
       return;
@@ -67,32 +90,34 @@ export class Network {
 
     node.agents.forEach((agent) => {
       this.removeAgent(agent);
+      // don't worry about clearing node.agents
     });
 
     this.nodes.delete(node);
     const removeNodeEvent = new events.NetworkRemoveNodeEvent(this, node);
-    this.eventsSubject.next(removeNodeEvent);
+    this.#emit(removeNodeEvent);
 
     const outEdgeMap = this.edges.get(node);
     const outNeighbors = outEdgeMap != null ? [...outEdgeMap.keys()] : [];
     this.edges.delete(node);
 
+    // TODO: can we kinda merge this and the definition of Network.removeEdge?
     const inNeighbors = [...this.edges.entries()]
       .map(([fromNode, toNodeMap]) => {
         const removed = toNodeMap.delete(node);
         return [fromNode, removed] satisfies [NetworkNode, boolean];
       })
-      .filter(([_, removed]) => removed)
+      .filter(([_, removed]) => { console.log(_); return removed; })
       .map(([fromNode, _]) => fromNode);
 
     for (const to of outNeighbors) {
-      const event = new events.NetworkRemoveEdgeEvent(this, { from: node, to })
-      this.eventsSubject.next(event);
+      const event = new events.NetworkRemoveEdgeEvent(this, { from: node, to });
+      this.#emit(event);
     }
 
     for (const from of inNeighbors) {
-      const event = new events.NetworkRemoveEdgeEvent(this, { from, to: node })
-      this.eventsSubject.next(event);
+      const event = new events.NetworkRemoveEdgeEvent(this, { from, to: node });
+      this.#emit(event);
     }
   }
 
@@ -120,7 +145,7 @@ export class Network {
     edgesOut.set(to, edge);
 
     const event = new events.NetworkAddEdgeEvent(this, { from, to, ...edge });
-    this.eventsSubject.next(event);
+    this.#emit(event);
   }
 
   removeEdge(from: NetworkNode, to: NetworkNode) {
@@ -135,8 +160,8 @@ export class Network {
     }
 
     edgesOut.delete(to);
-    const event = new events.NetworkRemoveEdgeEvent(this, { from, to, ...edge});
-    this.eventsSubject.next(event);
+    const event = new events.NetworkRemoveEdgeEvent(this, { from, to, ...edge });
+    this.#emit(event);
   }
 
   hasEdge(from: NetworkNode, to: NetworkNode): boolean {
@@ -153,6 +178,7 @@ export class Network {
   }
 
   addAgent(agent: Agent, node: NetworkNode) {
+    console.log(this, agent, node);
     if (this.#agentPositions.get(agent) != null) {
       throw new Error(`Agent ${agent.name} is already in the network`);
     }
@@ -164,10 +190,10 @@ export class Network {
     this.#reassignAgentNode(agent, null, node);
 
     const addEvent = new events.NetworkAddAgentEvent(this, agent);
-    this.eventsSubject.next(addEvent);
+    this.#emit(addEvent);
 
     const enterEvent = new events.AgentEnterNodeEvent(this, node, agent);
-    this.eventsSubject.next(enterEvent);
+    this.#emit(enterEvent);
   }
 
   moveAgent(agent: Agent, toNode: NetworkNode) {
@@ -186,10 +212,10 @@ export class Network {
     this.#reassignAgentNode(agent, fromNode, toNode);
 
     const exitEvent = new events.AgentExitNodeEvent(this, toNode, agent);
-    this.eventsSubject.next(exitEvent);
+    this.#emit(exitEvent);
 
     const enterEvent = new events.AgentEnterNodeEvent(this, toNode, agent);
-    this.eventsSubject.next(enterEvent);
+    this.#emit(enterEvent);
   }
 
   removeAgent(agent: Agent) {
@@ -201,10 +227,10 @@ export class Network {
     this.#reassignAgentNode(agent, fromNode, null);
 
     const exitEvent = new events.AgentExitNodeEvent(this, fromNode, agent);
-    this.eventsSubject.next(exitEvent);
+    this.#emit(exitEvent);
 
     const removeEvent = new events.NetworkRemoveAgentEvent(this, agent);
-    this.eventsSubject.next(removeEvent);
+    this.#emit(removeEvent);
   }
 
   /**
