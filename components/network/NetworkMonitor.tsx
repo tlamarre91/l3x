@@ -11,22 +11,6 @@ export type NetworkMonitorProps = {
   network: Network;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function networkAgentStateReducer(knownAgents: Agent[], event: NetworkEvent) {
-  console.log("REDUCE!");
-  console.log({ knownAgents });
-  console.log({ event });
-  if (isAddAgent(event)) {
-    return [...knownAgents, event.agent];
-  }
-
-  if (isRemoveAgent(event)) {
-    return knownAgents.filter((agent) => agent !== event.agent);
-  }
-
-  return knownAgents;
-}
-
 function networkNodeStateReducer(knownNodes: NetworkNode[], event: NetworkEvent): NetworkNode[] {
   if (isAddNode(event)) {
     return [...knownNodes, event.node];
@@ -39,27 +23,22 @@ function networkNodeStateReducer(knownNodes: NetworkNode[], event: NetworkEvent)
   return knownNodes;
 }
 
-function eventLogReducer(eventLog: NetworkEvent[], event: NetworkEvent) {
-  return [...eventLog, event];
-}
-
 export default function NetworkMonitor({ network }: NetworkMonitorProps) {
   // const [knownAgents, knownAgentsDispatch] = useReducer(networkAgentStateReducer, []);
   const [knownNodes, knownNodesDispatch] = useReducer(networkNodeStateReducer, []);
-  const [eventLog, eventLogDispatch] = useReducer(eventLogReducer, []);
+  
 
   const handleNetworkEvent = useCallback((event: NetworkEvent) => {
     console.log(`NetworkMonitor got an event for network ${network.name}!`);
     knownNodesDispatch(event);
-    eventLogDispatch(event);
   }, [network]);
 
   useSubscription(network.events$, handleNetworkEvent);
 
   return (
-    <Flex direction="column" gap="3">
+    <Flex direction="column" gap="2">
       <Heading size="4">network monitor</Heading>
-      <Flex direction="row" gap="3" wrap="wrap">
+      <Flex direction="row" gap="2" wrap="wrap">
         {knownNodes.map((node) => (
           <NetworkNodeCard
             key={node.name}
@@ -67,7 +46,8 @@ export default function NetworkMonitor({ network }: NetworkMonitorProps) {
             node={node}/>
         ))}
       </Flex>
-      <NetworkEventLog events={eventLog} />
+      {/* TODO: yooo it'd be cool if you could click on the name of a node and have it "selected" in the window and see details*/}
+      <NetworkEventLog show={{ network: false }} events$={network.events$} />
     </Flex>
   );
 }

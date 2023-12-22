@@ -67,9 +67,9 @@ export default function NetworkSandbox() {
   );
 
   return (
-    <Flex direction="column" p="3" m="3" gap="3">
+    <Flex direction="column" p="2" m="2" gap="3">
       <Card>
-        <Flex gap="3">
+        <Flex gap="2">
           {addNodeControl}
           <Button onClick={testAddAgent}>
             add agent

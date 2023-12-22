@@ -30,26 +30,12 @@ export class Network {
   #nextEventId: number = 0;
 
   constructor(name: string) {
-    console.log("constructin'", name);
+    this.#eventSubject = new Subject();
+    this.#agentPositions = new Map();
     this.name = name;
     this.nodes = new Set();
     this.edges = new Map();
-    this.#eventSubject = new Subject();
     this.events$ = this.#eventSubject.asObservable();
-
-    // note: doing it this way results in incrementing the id for every *read* of an event from the observable!
-    // this.events$ = this.#rawEvents.asObservable().pipe(
-    //   tap((event) => console.log({tap1: event})),
-    //   map((event) => {
-    //     const sequentialEvent = { id: this.#nextEventId, ...event } satisfies events.SequentialNetworkEvent;
-    //     this.#nextEventId += 1;
-    //     return sequentialEvent;
-    //   }),
-    //   tap((event) => console.log({tap2: event})),
-    // );
-
-
-    this.#agentPositions = new Map();
   }
 
   #emit(event: events.NetworkEvent) {
@@ -92,9 +78,6 @@ export class Network {
       // don't worry about clearing node.agents
     });
 
-    this.nodes.delete(node);
-    this.#emit({ type: "removenode", network: this, node });
-
     const outEdgeMap = this.edges.get(node);
     const outNeighbors = outEdgeMap != null ? [...outEdgeMap.keys()] : [];
     this.edges.delete(node);
@@ -115,6 +98,9 @@ export class Network {
     for (const from of inNeighbors) {
       this.#emit({ type: "removeedge", network: this, edgeSpec: { from, to: node } });
     }
+
+    this.nodes.delete(node);
+    this.#emit({ type: "removenode", network: this, node });
   }
 
   nodeHasAgent(node: NetworkNode, agent: Agent): boolean {
@@ -184,8 +170,7 @@ export class Network {
     this.#reassignAgentNode(agent, null, node);
 
     this.#emit({ type: "addagent", network: this, agent });
-
-    this.#emit({ type: "agententer", network: this, agent });
+    this.#emit({ type: "agententer", network: this, agent, node });
   }
 
   moveAgent(agent: Agent, toNode: NetworkNode) {
