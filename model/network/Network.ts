@@ -66,8 +66,7 @@ export class Network {
 
     this.nodes.add(node);
 
-    const event = new events.NetworkAddNodeEvent(this, node);
-    this.#emit(event);
+    this.#emit({ type: "addnode", network: this, node });
 
     if (edgesOut == null) {
       return;
@@ -94,8 +93,7 @@ export class Network {
     });
 
     this.nodes.delete(node);
-    const removeNodeEvent = new events.NetworkRemoveNodeEvent(this, node);
-    this.#emit(removeNodeEvent);
+    this.#emit({ type: "removenode", network: this, node });
 
     const outEdgeMap = this.edges.get(node);
     const outNeighbors = outEdgeMap != null ? [...outEdgeMap.keys()] : [];
@@ -111,13 +109,11 @@ export class Network {
       .map(([fromNode, _]) => fromNode);
 
     for (const to of outNeighbors) {
-      const event = new events.NetworkRemoveEdgeEvent(this, { from: node, to });
-      this.#emit(event);
+      this.#emit({ type: "removeedge", network: this, edgeSpec: { from: node, to } });
     }
 
     for (const from of inNeighbors) {
-      const event = new events.NetworkRemoveEdgeEvent(this, { from, to: node });
-      this.#emit(event);
+      this.#emit({ type: "removeedge", network: this, edgeSpec: { from, to: node } });
     }
   }
 
@@ -144,8 +140,7 @@ export class Network {
     // TODO: do we need to handle if this is overwriting an existing edge?
     edgesOut.set(to, edge);
 
-    const event = new events.NetworkAddEdgeEvent(this, { from, to, ...edge });
-    this.#emit(event);
+    this.#emit({ type: "addedge", network: this, edgeSpec: { from, to, ...edge } });
   }
 
   removeEdge(from: NetworkNode, to: NetworkNode) {
@@ -160,8 +155,7 @@ export class Network {
     }
 
     edgesOut.delete(to);
-    const event = new events.NetworkRemoveEdgeEvent(this, { from, to, ...edge });
-    this.#emit(event);
+    this.#emit({ type: "removeedge", network: this, edgeSpec: { from, to, ...edge } });
   }
 
   hasEdge(from: NetworkNode, to: NetworkNode): boolean {
@@ -189,11 +183,9 @@ export class Network {
 
     this.#reassignAgentNode(agent, null, node);
 
-    const addEvent = new events.NetworkAddAgentEvent(this, agent);
-    this.#emit(addEvent);
+    this.#emit({ type: "addagent", network: this, agent });
 
-    const enterEvent = new events.AgentEnterNodeEvent(this, node, agent);
-    this.#emit(enterEvent);
+    this.#emit({ type: "agententer", network: this, agent });
   }
 
   moveAgent(agent: Agent, toNode: NetworkNode) {
@@ -211,11 +203,8 @@ export class Network {
 
     this.#reassignAgentNode(agent, fromNode, toNode);
 
-    const exitEvent = new events.AgentExitNodeEvent(this, toNode, agent);
-    this.#emit(exitEvent);
-
-    const enterEvent = new events.AgentEnterNodeEvent(this, toNode, agent);
-    this.#emit(enterEvent);
+    this.#emit({ type: "agentexit", network: this, node: fromNode, agent });
+    this.#emit({ type: "agententer", network: this, node: toNode, agent });
   }
 
   removeAgent(agent: Agent) {
@@ -226,11 +215,8 @@ export class Network {
 
     this.#reassignAgentNode(agent, fromNode, null);
 
-    const exitEvent = new events.AgentExitNodeEvent(this, fromNode, agent);
-    this.#emit(exitEvent);
-
-    const removeEvent = new events.NetworkRemoveAgentEvent(this, agent);
-    this.#emit(removeEvent);
+    this.#emit({ type: "agentexit", network: this, node: fromNode, agent });
+    this.#emit({ type: "removeagent", network: this, agent });
   }
 
   /**

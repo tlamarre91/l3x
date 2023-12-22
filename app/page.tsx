@@ -4,14 +4,15 @@ import React from "react";
 
 import Footer from "@/components/Footer";
 import NetworkSandbox from "@/components/network/NetworkSandbox";
-import AuthHeader from "@/components/AuthHeader";
+import { Flex } from "@radix-ui/themes";
+import Header from "@/components/Header";
 
 export default async function Index() {
   return (
-    <div className="flex-1 w-full flex flex-col">
-      <AuthHeader />
+    <Flex direction="column" width="100%">
+      <Header />
       <NetworkSandbox />
       <Footer />
-    </div>
+    </Flex>
   );
 }

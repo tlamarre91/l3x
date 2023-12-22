@@ -1,9 +1,13 @@
 import React from "react";
+import AuthHeader from "./AuthHeader";
+import { Flex, Heading } from "@radix-ui/themes";
 
 export default function Header() {
   return (
-    <div className="flex flex-col gap-16 items-center">
-      it&apos;s tewnas!
-    </div>
+    <nav>
+      <Flex gap="3" m="1">
+        <Heading>tewnas</Heading>
+      </Flex>
+    </nav>
   );
 }

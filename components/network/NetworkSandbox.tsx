@@ -2,14 +2,15 @@
 
 import React, { useCallback, useState, useMemo } from "react";
 import { Network, NetworkNode } from "@/model/network";
-import NetworkMonitor from "./NetworkMonitor";
-import NetworkMonitorControl from "./NetworkMonitorControl";
 import { Agent } from "@/model/agent";
 import { AgentCommand } from "@/model/agent/commands";
 
+import NetworkMonitor from "./NetworkMonitor";
+import Button from "@/components/ui/Button";
+import { Card, Flex } from "@radix-ui/themes";
+
 function setupTestNetwork(): Network {
   const network = new Network(`testnet-${Date.now()}`);
-  network.addNode;
   return network;
 }
 
@@ -60,25 +61,29 @@ export default function NetworkSandbox() {
   }, []);
 
   const addNodeControl = (
-    <NetworkMonitorControl onClick={testAddNode}>
+    <Button onClick={testAddNode}>
         add node
-    </NetworkMonitorControl>
+    </Button>
   );
 
   return (
-    <div className="flex flex-col m-5 p-5">
+    <Flex direction="column" p="3" m="3" gap="3">
+      <Card>
+        <Flex gap="3">
+          {addNodeControl}
+          <Button onClick={testAddAgent}>
+            add agent
+          </Button>
+          <Button onClick={testAddCommand}>
+            add echo
+          </Button>
+          <Button onClick={testTest}>
+            test process
+          </Button>
+        </Flex>
+      </Card>
       <NetworkMonitor network={network} />
-      {addNodeControl}
-      <NetworkMonitorControl onClick={testAddAgent}>
-        add agent
-      </NetworkMonitorControl>
-      <NetworkMonitorControl onClick={testAddCommand}>
-        add echo to {mostRecentAgent?.name}
-      </NetworkMonitorControl>
-      <NetworkMonitorControl onClick={testTest}>
-        test process
-      </NetworkMonitorControl>
-    </div>
+    </Flex>
   );
 }
 

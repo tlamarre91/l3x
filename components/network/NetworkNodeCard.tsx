@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useReducer } from "react";
 
 import { Network, NetworkNode } from "@/model/network";
 import { NetworkNodeEvent, isAboutNode } from "@/model/network/events";
@@ -6,6 +6,9 @@ import { filter } from "rxjs";
 
 import { useSubscription } from "@/hooks";
 import { Agent } from "@/model/agent";
+import { Box, Card, Flex, Heading } from "@radix-ui/themes";
+import Button from "@/components/ui/Button";
+import { Sequential } from "@/model/types";
 
 export type NetworkNodeCardProps = {
   network: Network;
@@ -13,9 +16,16 @@ export type NetworkNodeCardProps = {
   onClick?: () => void;
 };
 
+// function eventReducer(events: NetworkEvent[], event: NetworkEvent) {
+//   return [...events, event];
+// }
+
 export default function NetworkNodeCard({ network, node }: NetworkNodeCardProps) {
-  const handleNetworkEvent = useCallback((event: NetworkNodeEvent) => {
+  // const [eventLog, eventLogDispatch] = useReducer(eventReducer, []);
+
+  const handleNetworkNodeEvent = useCallback((event: NetworkNodeEvent) => {
     console.log({ [`${node.name}-heard-that`]: event });
+    // eventLogDispatch(event);
   }, [network, node]);
 
   const handleClickRemove = useCallback(() => {
@@ -38,16 +48,21 @@ export default function NetworkNodeCard({ network, node }: NetworkNodeCardProps)
     );
   }, [network, node]);
 
-  useSubscription(nodeEvents, handleNetworkEvent);
+  useSubscription(nodeEvents, handleNetworkNodeEvent);
 
 
   return (
-    <div className="rounded-md border m-1">
-      <div className="bold">
-        {node.name}
-      </div>
-      <button onClick={handleClickAddAgent}>add agent</button>
-      <button onClick={handleClickRemove}>delete node</button>
-    </div>
+    <Card>
+      <Flex direction="column" gap="3" width="max-content">
+        <Heading size="3">
+          {node.name}
+        </Heading>
+        <Flex gap="3">
+          <Button onClick={handleClickAddAgent}>add agent</Button>
+          <Button onClick={handleClickRemove}>delete node</Button>
+        </Flex>
+      </Flex>
+    </Card>
+    
   );
 }

@@ -42,6 +42,10 @@ module.exports = {
       "error",
       "unix"
     ],
+    "max-len": [
+      "warn",
+      { "code": 120 }
+    ],
     "quotes": [
       "error",
       "double"
@@ -53,6 +57,18 @@ module.exports = {
     "object-curly-spacing": [
       "error",
       "always"
+    ],
+    "comma-spacing": [
+      "error",
+      {
+        "after": true
+      }
+    ],
+    "key-spacing": [
+      "error",
+      {
+        "afterColon": true
+      }
     ],
     "@typescript-eslint/no-unused-vars": [
       "warn", // or "error"

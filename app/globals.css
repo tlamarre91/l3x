@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @layer base {
   :root {
     --background: 200 20% 98%;
@@ -39,4 +35,10 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+ul {
+  padding-left: 0px;
+  margin: 0px;
+  list-style-type: none;
 }

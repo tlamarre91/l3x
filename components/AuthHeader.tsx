@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 
 import AuthButton from "./AuthButton";
+import { Flex } from "@radix-ui/themes";
 
 export default async function AuthHeader() {
   const cookieStore = cookies();
@@ -24,10 +25,8 @@ export default async function AuthHeader() {
   const isSupabaseConnected = canInitSupabaseClient();
 
   return (
-    <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-      <div className="w-full max-w-4xl flex justify-between items-center p-3 text-sm">
-        {isSupabaseConnected && <AuthButton />}
-      </div>
-    </nav>
+    <Flex>
+      {isSupabaseConnected && <AuthButton />}
+    </Flex>
   );
 }
