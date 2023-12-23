@@ -4,18 +4,22 @@ import * as events from "./events";
 import { AgentNetworkInterface } from "./AgentNetworkInterface";
 
 export interface NetworkNode<T = unknown> {
+  id: number;
   name: string;
   data: T;
   agents$: Observable<Agent[]>;
   events$: Observable<events.NetworkNodeEvent>;
+  edges$: Observable<NetworkEdge[]>;
 }
 
-export interface NetworkNodeController {
-  node: NetworkNode;
-  agentsSubject: BehaviorSubject<Agent[]>
+export interface NetworkNodeController<NodeData = unknown, EdgeData = unknown> {
+  node: NetworkNode<NodeData>;
+  agentsSubject: BehaviorSubject<Agent[]>;
+  edgesSubject: BehaviorSubject<NetworkEdge<EdgeData, NodeData>[]>;
 }
 
 export interface NetworkEdge<T = unknown, FromData = unknown, ToData = FromData> {
+  id: number;
   name?: string | undefined;
   data?: T;
   from: NetworkNode<FromData>;
@@ -36,7 +40,7 @@ type EdgeFromMap<NodeData, EdgeData> = Map<
 export class Network<NodeData, EdgeData> {
   name: string;
   nodesByName: Map<string, NetworkNode<NodeData>>;
-  nodeControllers: Map<NetworkNode<NodeData>, NetworkNodeController>;
+  nodeControllers: Map<NetworkNode<NodeData>, NetworkNodeController<NodeData, EdgeData>>;
 
   /** Nested map where first key maps to collection of edges out of a node, second maps to specific edges */
   edges: EdgeFromMap<NodeData, EdgeData>;
@@ -58,6 +62,7 @@ export class Network<NodeData, EdgeData> {
   #agentPositions: Map<Agent, NetworkNode<NodeData>>;
   #nextEventId: number = 0;
   #nextNodeId: number = 0;
+  #nextEdgeId: number = 0;
 
   constructor(name: string) {
     this.name = name;
@@ -79,8 +84,9 @@ export class Network<NodeData, EdgeData> {
   }
 
   addNode(data: NodeData, name?: string): NetworkNode<NodeData> {
+    const id = this.#nextNodeId++;
     if (name == null) {
-      name = `@n${this.#nextNodeId++}`;
+      name = `@n${id}`;
     } else if (name?.startsWith("@")) {
       throw new Error("illegal char");
     }
@@ -90,19 +96,23 @@ export class Network<NodeData, EdgeData> {
     }
 
     const agentsSubject = new BehaviorSubject<Agent[]>([]);
+    const edgesSubject = new BehaviorSubject<NetworkEdge<EdgeData, NodeData>[]>([]);
     const events$ = this.nodeEvents$.pipe(filter((ev) => ev.node === node));
 
     const node: NetworkNode<NodeData> = {
+      id,
       name,
       data,
       agents$: agentsSubject.asObservable(),
+      edges$: edgesSubject.asObservable(),
       events$
     };
 
     const controller = {
       node,
-      agentsSubject
-    } satisfies NetworkNodeController;
+      agentsSubject,
+      edgesSubject
+    } satisfies NetworkNodeController<NodeData, EdgeData>;
     this.nodeControllers.set(node, controller);
 
     this.#emit({ type: "addnode", network: this, node });
@@ -139,12 +149,21 @@ export class Network<NodeData, EdgeData> {
     return this.getAgentsAt(node).includes(agent);
   }
 
-  addEdge(name: string, data: EdgeData, from: NetworkNode<NodeData>, to: NetworkNode<NodeData>) {
-    if (!this.nodeControllers.has(from)) {
+  addEdge(data: EdgeData, from: NetworkNode<NodeData>, to: NetworkNode<NodeData>, name?: string) {
+    const id = this.#nextEdgeId++;
+    if (name == null) {
+      name = `@e${id}`;
+    } else if (name?.startsWith("@")) {
+      throw new Error("illegal char");
+    }
+
+    const fromController = this.nodeControllers.get(from);
+    if (fromController == null) {
       throw new Error(`Node ${from.name} not in network`);
     }
 
-    if (!this.nodeControllers.has(to)) {
+    const toController = this.nodeControllers.get(to);
+    if (toController == null) {
       throw new Error(`Node ${to.name} not in network`);
     }
 
@@ -158,11 +177,20 @@ export class Network<NodeData, EdgeData> {
     const events$ = this.edgeEvents$.pipe(filter((ev) => ev.edge === edge));
 
     const edge: NetworkEdge<EdgeData, NodeData> = {
-      name, data, from, to, events$
+      id,
+      name,
+      data,
+      from,
+      to,
+      events$
     };
 
     // TODO: yeah we need to handle if this is overwriting an existing edge
     edgesOut.set(to, edge);
+
+    for (const controller of [fromController, toController]) {
+      this.#registerEdge(controller, edge);
+    }
 
     this.#emit({ type: "addedge", network: this, edge });
   }
@@ -174,14 +202,42 @@ export class Network<NodeData, EdgeData> {
     if (toEdgeMap == null) {
       throw new Error("edge out don't exist");
     }
-    this.#removeEdgeTo(toEdgeMap, to);
+
+    const edge = this.#removeEdgeTo(toEdgeMap, to);
+    if (edge == null) {
+      throw new Error("failed to remove edge?");
+    }
+  }
+
+  #registerEdge(controller: NetworkNodeController<NodeData, EdgeData>, edge: NetworkEdge<EdgeData, NodeData>) {
+    const subject = controller.edgesSubject;
+    const edges = subject.getValue();
+    subject.next([...edges, edge]);
+  }
+
+  #unregisterEdge(edge: NetworkEdge<EdgeData, NodeData>) {
+    for (const node of [edge.from, edge.to]) {
+      const controller = this.nodeControllers.get(node);
+      if (controller == null) {
+        throw new Error(`couldn't get controller to unregister node ${node.name}`);
+      }
+
+      const subject = controller.edgesSubject;
+      const edges = subject.getValue();
+      const newEdges = edges.filter((_edge) => _edge !== edge);
+      console.log(edge, newEdges);
+
+      subject.next(newEdges);
+    }
+
+    this.#emit({ type: "removeedge", network: this, edge });
   }
 
   #removeAllEdgesFrom(fromNode: NetworkNode<NodeData>) {
     const edgesFrom = this.edges.get(fromNode) ?? [];
 
     for (const [_toNode, edge] of edgesFrom) {
-      this.#emit({ type: "removeedge", network: this, edge });
+      this.#unregisterEdge(edge)
     }
 
     this.edges.delete(fromNode);
@@ -190,6 +246,7 @@ export class Network<NodeData, EdgeData> {
   #removeAllEdgesTo(toNode: NetworkNode<NodeData>) {
     [... this.edges.values()].forEach(
       (toEdgeMap) => {
+        console.log("unreg!", toNode);
         this.#removeEdgeTo(toEdgeMap, toNode, false);
       }
     );
@@ -206,7 +263,9 @@ export class Network<NodeData, EdgeData> {
     }
 
     toEdgeMap.delete(toNode);
-    this.#emit({ type: "removeedge", network: this, edge });
+    this.#unregisterEdge(edge);
+
+    return edge;
   }
 
   hasEdge(from: NetworkNode<NodeData>, to: NetworkNode<NodeData>): boolean {

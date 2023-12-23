@@ -64,7 +64,7 @@ export default function NetworkEventLog({
       <Flex direction="column" gap="3">
         <Heading size="3">network events</Heading>
         <Separator size="4" />
-        <Box ref={logBox} style={{ overflowY: "scroll", height: "24rem", width: "100%" }}>
+        <Box ref={logBox} style={{ overflowY: "scroll", height: "60rem", width: "100%" }}>
           <Table.Root>
             <Table.Header>
               <Table.Row>

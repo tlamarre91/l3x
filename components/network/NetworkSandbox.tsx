@@ -50,14 +50,14 @@ export default function NetworkSandbox() {
 
     if (mostRecentNode != null) {
       try {
-        network.addEdge("forward", _timestamp, node, mostRecentNode);
+        network.addEdge(_timestamp, node, mostRecentNode, "backward");
       } catch (error) {
-        console.error(error);
+        console.warn(error);
       }
       try {
-        network.addEdge("backward", _timestamp, mostRecentNode, node);
+        network.addEdge(_timestamp, mostRecentNode, node, "forward");
       } catch (error) {
-        console.error(error);
+        console.warn(error);
       }
     }
     setMostRecentNode(() => node);

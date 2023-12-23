@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 
-import { Network, NetworkNode } from "@/model/network";
+import { Network, NetworkEdge, NetworkNode } from "@/model/network";
 import { NetworkNodeEvent, isAboutNode } from "@/model/network/events";
 import { filter } from "rxjs";
 
@@ -17,9 +17,12 @@ export type NetworkNodeCardProps = {
 
 export default function NetworkNodeCard({ network, node }: NetworkNodeCardProps) {
   const handleNetworkNodeEvent = useCallback((event: NetworkNodeEvent) => {
-    console.log({ [`${node.name}-heard-that`]: event });
+    console.log({ [`${node.name}-heard-that-yep`]: event });
     // eventLogDispatch(event);
   }, [network, node]);
+
+  /** Observable for events about this node */
+  useSubscription(node.events$, handleNetworkNodeEvent);
 
   const handleClickRemove = useCallback(() => {
     network.removeNode(node);
@@ -30,18 +33,19 @@ export default function NetworkNodeCard({ network, node }: NetworkNodeCardProps)
     network.addAgent(agent, node);
   }, [network, node]);
 
-  /** Observable for events about this node */
-  const nodeEvents$ = useMemo(() => {
-    return network.events$.pipe(
-      filter(isAboutNode),
-      filter((event) => event.node === node)
-    );
-  }, [network, node]);
-
-  useSubscription(nodeEvents$, handleNetworkNodeEvent);
-
   const [agents, setAgents] = useState(new Array<Agent>());
   useSubscription(node.agents$, setAgents);
+
+  const handleClickClearAgents = useCallback(() => {
+
+    for (const agent of agents) {
+      console.log("asking to remove", agent);
+      network.removeAgent(agent);
+    }
+  }, [network, node, agents]);
+
+  const [edges, setEdges] = useState(new Array<NetworkEdge>());
+  useSubscription(node.edges$, setEdges);
 
   return (
     <Card>
@@ -51,13 +55,28 @@ export default function NetworkNodeCard({ network, node }: NetworkNodeCardProps)
         </Heading>
         <Flex gap="3">
           <Button onClick={handleClickAddAgent}>add agent</Button>
-          <Button onClick={handleClickRemove}>delete node</Button>
+          <Button onClick={handleClickClearAgents}>clear</Button>
+          <Button onClick={handleClickRemove}>delete</Button>
         </Flex>
-        {agents.map((agent) => {
-          return (
-            <div key={agent.name}>{agent?.name}</div>
-          );
-        })}
+        <div>
+          <Heading size="2">
+            agents
+          </Heading>
+          {agents.map((agent) => {
+            return (
+              <div key={agent.name}>{agent?.name}</div>
+            );
+          })}
+        </div><div>
+          <Heading size="2">
+            edges
+          </Heading>
+          {edges.map((edge) => {
+            return (
+              <div key={edge.id}>{edge?.name} from {edge?.from?.name} to {edge?.to?.name}</div>
+            );
+          })}
+        </div>
       </Flex>
     </Card>
     
