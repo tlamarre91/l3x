@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState, useMemo } from "react";
+import React, { useCallback, useState, useMemo, useEffect } from "react";
 import { Network, NetworkNode } from "@/model/network";
 import { Agent } from "@/model/agent";
 import { AgentCommand } from "@/model/agent/commands";
@@ -9,27 +9,53 @@ import NetworkMonitor from "./NetworkMonitor";
 import Button from "@/components/ui/Button";
 import { Card, Flex } from "@radix-ui/themes";
 
-function setupTestNetwork(): Network {
-  const network = new Network(`testnet-${Date.now()}`);
+function timestamp() {
+  return String(Date.now()).slice(-8);
+}
+
+export type NetworkSandboxProps = {
+  query?: string;
+}
+
+function setupTestNetwork(): Network<string, string> {
+  const network = new Network<string, string>(`testnet-${timestamp()}`);
   return network;
 }
 
 export default function NetworkSandbox() {
+  const [fragmentId, setFragmentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handle = () => setFragmentId(window.location.hash);
+
+    addEventListener("hashchange", handle);
+    handle();
+
+    return () => {
+      removeEventListener("hashchange", handle);
+    };
+  }, []);
+
   const network = useMemo(() => setupTestNetwork(), []);
-  const [mostRecentNode, setMostRecentNode] = useState<NetworkNode>();
+  const [mostRecentNode, setMostRecentNode] = useState<NetworkNode<string>>();
   const [mostRecentAgent, setMostRecentAgent] = useState<Agent>();
 
   const testAddNode = useCallback(() => {
-    const node = { name: "node-" + Date.now(), agents: [] } satisfies NetworkNode;
-    network.addNode(node);
+    const _timestamp = timestamp();
+    const node = network.addNode("sandbox-" + _timestamp);
+
     if (mostRecentNode != null) {
       try {
-        network.addEdge(node, mostRecentNode, { name: "forward" });
+        network.addEdge("forward", _timestamp, node, mostRecentNode);
       } catch (error) {
         console.error(error);
       }
       try {
-        network.addEdge(mostRecentNode, node, { name: "backward" });
+        network.addEdge("backward", _timestamp, mostRecentNode, node);
       } catch (error) {
         console.error(error);
       }
@@ -60,14 +86,34 @@ export default function NetworkSandbox() {
     network.agents.forEach((agent) => {console.log({ agent }); agent.process();});
   }, []);
 
+  const testGoHome = () => window.location.hash = "#";
+
   const addNodeControl = (
     <Button onClick={testAddNode}>
         add node
     </Button>
   );
 
+  const monitorView = (
+    <NetworkMonitor network={network} />
+  );
+
+  const nodeView = useMemo(() => {
+    if (fragmentId == null) {
+      return null;
+    }
+
+    const [keyType, key] = fragmentId.split(":");
+    if (keyType !== "#node") {
+      return null;
+    }
+
+    return key;
+  }, [fragmentId]);
+
   return (
-    <Flex direction="column" p="2" m="2" gap="3">
+    <Flex direction="column" p="2" m="2" gap="2">
+      query: {fragmentId}
       <Card>
         <Flex gap="2">
           {addNodeControl}
@@ -80,9 +126,12 @@ export default function NetworkSandbox() {
           <Button onClick={testTest}>
             test process
           </Button>
+          <Button onClick={testGoHome}>
+            test go home
+          </Button>
         </Flex>
       </Card>
-      <NetworkMonitor network={network} />
+      {nodeView || monitorView}
     </Flex>
   );
 }

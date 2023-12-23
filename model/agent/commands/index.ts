@@ -48,7 +48,8 @@ export interface AgentSetStateCommand extends AgentUnaryCommand<string> {
   instruction: "state";
 }
 
-export interface AgentBinaryCommand<LeftOperandType, RightOperandType> extends AgentCommand<LeftOperandType, RightOperandType> {
+export interface AgentBinaryCommand<LeftOperandType, RightOperandType>
+  extends AgentCommand<LeftOperandType, RightOperandType> {
   left: LeftOperandType;
   right: RightOperandType;
 }

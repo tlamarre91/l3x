@@ -21,7 +21,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning> {/* suppress warning because radix theme appearance affects the <html> element */}
+    <html lang="en" suppressHydrationWarning>
+      {/* suppress warning because radix theme appearance affects the <html> element */}
       <body>
         <Theme appearance="dark" accentColor="jade" radius="medium" >
           <main>

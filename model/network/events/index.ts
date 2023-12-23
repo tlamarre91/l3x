@@ -1,17 +1,26 @@
 import { Agent } from "@/model/agent";
-import { Network, NetworkEdgeSpec, NetworkNode } from "../Network";
+import { Network, NetworkEdge, NetworkNode } from "../Network";
 import { Sequential } from "@/model/types";
 
-type NetworkEventType = "addagent" | "removeagent" | "addnode" | "removenode" | "addedge" | "removeedge" | "agententer" | "agentexit";
+type NetworkEventType =
+  | "addagent"
+  | "removeagent"
+  | "addnode"
+  | "removenode"
+  | "addedge"
+  | "removeedge"
+  | "agententer"
+  | "agentexit"
+  | "agentcross";
 
 // TODO: there probably shouldn't be an "Emittable" type limited to concrete events like NetworkAddAgentEvent... right?
 export interface NetworkEvent {
   id?: number;
   type: NetworkEventType;
-  network: Network;
+  network: Network<any, any>; // TODO: any
   agent?: Agent;
   node?: NetworkNode;
-  edgeSpec?: NetworkEdgeSpec;
+  edge?: NetworkEdge;
 }
 
 export interface SequentialNetworkEvent extends NetworkEvent {
@@ -22,43 +31,57 @@ export function isSequential<T extends NetworkEvent>(event: T): event is Sequent
   return event.id !== undefined;
 }
 
-export interface NetworkAgentEvent extends NetworkEvent {
+export interface AgentEvent extends NetworkEvent {
   agent: Agent;
 }
 
-export function isAboutAgent(event: NetworkEvent): event is NetworkAgentEvent {
+export function isAboutAgent(event: NetworkEvent): event is AgentEvent {
   return event.agent !== undefined;
 }
 
-export interface NetworkAddAgentEvent extends NetworkAgentEvent {
+export interface AddAgentEvent extends AgentEvent {
   type: "addagent";
 }
 
-export function isAddAgent(event: NetworkEvent): event is NetworkAddAgentEvent {
+export function isAddAgent(event: NetworkEvent): event is AddAgentEvent {
   return isAboutAgent(event) && event.type === "addagent";
 }
 
-export interface NetworkRemoveAgentEvent extends NetworkAgentEvent {
+export interface RemoveAgentEvent extends AgentEvent {
   type: "removeagent";
 }
 
-export function isRemoveAgent(event: NetworkEvent): event is NetworkRemoveAgentEvent {
+export function isRemoveAgent(event: NetworkEvent): event is RemoveAgentEvent {
   return isAboutAgent(event) && event.type === "removeagent";
 }
 
 export interface NetworkEdgeEvent extends NetworkEvent {
-  edgeSpec: NetworkEdgeSpec;
+  edge: NetworkEdge;
 }
 
 export function isAboutEdge(event: NetworkEvent): event is NetworkEdgeEvent {
-  return event.edgeSpec !== undefined;
+  return event.edge !== undefined;
+}
+
+export interface AddEdgeEvent extends NetworkEdgeEvent {
+  type: "addedge";
+}
+
+export function isAddEdge(event: NetworkEvent): event is NetworkEdgeEvent {
+  return isAboutEdge(event) && event.type === "addedge";
+}
+
+export interface RemoveEdgeEvent extends NetworkEdgeEvent {
+  type: "removeedge";
+}
+
+export function isRemoveEdge(event: NetworkEvent): event is NetworkEdgeEvent {
+  return isAboutEdge(event) && event.type === "removeedge";
 }
 
 export interface NetworkNodeEvent extends NetworkEvent {
   node: NetworkNode;
 }
-
-// TODO: add/remove edge events
 
 export function isAboutNode(event: NetworkEvent): event is NetworkNodeEvent {
   return event.node !== undefined;
@@ -78,4 +101,22 @@ export interface NetworkRemoveNodeEvent extends NetworkNodeEvent {
 
 export function isRemoveNode(event: NetworkEvent): event is NetworkAddNodeEvent {
   return isAboutNode(event) && event.type === "removenode";
+}
+
+export interface AgentEnterEvent extends NetworkEvent {
+  type: "agententer";
+  node: NetworkNode;
+  agent: Agent;
+}
+
+export interface AgentExitEvent extends NetworkEvent {
+  type: "agentexit";
+  node: NetworkNode;
+  agent: Agent;
+}
+
+export interface AgentCrossEvent extends NetworkEvent {
+  type: "agentcross";
+  agent: Agent;
+  edge: NetworkEdge;
 }

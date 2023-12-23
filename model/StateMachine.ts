@@ -1,12 +1,17 @@
 import { IStateful } from "./IStateful";
 
-export class StateMachine<StateKeyType, StateDataType> implements IStateful<StateKeyType, StateDataType> {
+export class StateMachine<StateKeyType, StateDataType>
+implements IStateful<StateKeyType, StateDataType> {
+
   states: Map<StateKeyType, StateDataType>;
 
   currentStateKey: StateKeyType | undefined;
   currentState: StateDataType | undefined;
 
-  constructor(states: Map<StateKeyType, StateDataType> = new Map(), initialStateKey: StateKeyType | undefined = undefined) {
+  constructor(
+    states: Map<StateKeyType, StateDataType> = new Map(),
+    initialStateKey: StateKeyType | undefined = undefined
+  ) {
     this.states = states;
 
     if (initialStateKey == null) {

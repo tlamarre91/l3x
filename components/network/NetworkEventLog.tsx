@@ -16,6 +16,7 @@ export type NetworkEventLogProps = {
     network?: boolean;
     node?: boolean;
     agent?: boolean;
+    edge?: boolean;
     from?: boolean;
     to?: boolean;
   };
@@ -33,6 +34,7 @@ const DEFAULT_SHOW = {
   network: true,
   node: true,
   agent: true,
+  edge: true,
   from: true,
   to: true,
 };
@@ -71,6 +73,7 @@ export default function NetworkEventLog({
                 { show.network && <Table.ColumnHeaderCell>network</Table.ColumnHeaderCell> }
                 { show.node && <Table.ColumnHeaderCell>node</Table.ColumnHeaderCell> }
                 { show.agent && <Table.ColumnHeaderCell>agent</Table.ColumnHeaderCell> }
+                { show.edge && <Table.ColumnHeaderCell>edge</Table.ColumnHeaderCell> }
                 { show.from && <Table.ColumnHeaderCell>edge.from</Table.ColumnHeaderCell> }
                 { show.to && <Table.ColumnHeaderCell>edge.to</Table.ColumnHeaderCell> }
               </Table.Row>

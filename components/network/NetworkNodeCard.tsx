@@ -1,39 +1,19 @@
-import React, { useCallback, useMemo, useReducer } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 
 import { Network, NetworkNode } from "@/model/network";
-import { NetworkEvent, NetworkNodeEvent, isAboutAgent, isAboutNode } from "@/model/network/events";
+import { NetworkNodeEvent, isAboutNode } from "@/model/network/events";
 import { filter } from "rxjs";
 
 import { useSubscription } from "@/hooks";
 import { Agent } from "@/model/agent";
-import { Box, Card, Flex, Heading } from "@radix-ui/themes";
+import { Card, Flex, Heading } from "@radix-ui/themes";
 import Button from "@/components/ui/Button";
-import { Sequential } from "@/model/types";
 
 export type NetworkNodeCardProps = {
-  network: Network;
+  network: Network<any, any>; // TODO: any
   node: NetworkNode;
   onClick?: () => void;
 };
-
-// function eventReducer(events: NetworkEvent[], event: NetworkEvent) {
-//   return [...events, event];
-// }
-
-function agentsReducer(agents: Agent[], event: NetworkEvent) {
-  switch (event.type) {
-  case "agententer":
-    if (agents.includes(event.agent!)) {
-      break;
-    }
-    return [...agents, event.agent!];
-
-  case "agentexit":
-    return agents.filter((agent) => agent !== event.agent!);
-  }
-
-  return agents;
-}
 
 export default function NetworkNodeCard({ network, node }: NetworkNodeCardProps) {
   const handleNetworkNodeEvent = useCallback((event: NetworkNodeEvent) => {
@@ -46,9 +26,6 @@ export default function NetworkNodeCard({ network, node }: NetworkNodeCardProps)
   }, [network, node]);
 
   const handleClickAddAgent = useCallback(() => {
-    console.log(network, node);
-    console.log(network.nodes);
-    console.log(network.nodes.has(node));
     const agent = new Agent("node-agent-" + Date.now());
     network.addAgent(agent, node);
   }, [network, node]);
@@ -63,19 +40,8 @@ export default function NetworkNodeCard({ network, node }: NetworkNodeCardProps)
 
   useSubscription(nodeEvents$, handleNetworkNodeEvent);
 
-  const nodeAgentEvents$ = useMemo(() => {
-    return network.events$.pipe(
-      filter((event) => {
-        console.log({ cmon: event });
-        return isAboutAgent(event) && event.node === node;
-      })
-    );
-  }, [network, node]);
-
-  // TODO: this kinda makes me feel like nodes could just have an agents$ observable
-  // that lets observers know the current list of agents
-  const [agents, agentsDispatch] = useReducer(agentsReducer, [...node.agents]);
-  useSubscription(nodeAgentEvents$, agentsDispatch);
+  const [agents, setAgents] = useState(new Array<Agent>());
+  useSubscription(node.agents$, setAgents);
 
   return (
     <Card>

@@ -7,7 +7,7 @@ export type ButtonProps = {
   size?: "s" | "m" | "l";
 };
 
-export default function _Button({ children, onClick, size = "m" }: ButtonProps) {
+export default function _Button({ children, onClick, size: _size = "m" }: ButtonProps) {
   return (
     <Button variant="soft" onClick={onClick}>
       {children}

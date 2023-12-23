@@ -1,14 +1,13 @@
 import React, { useCallback, useReducer } from "react";
 import { Network, NetworkNode } from "@/model/network";
-import { NetworkEvent, isAddNode, isRemoveNode, isAddAgent, isRemoveAgent } from "@/model/network/events";
-import { Agent } from "@/model/agent";
+import { NetworkEvent, isAddNode, isRemoveNode } from "@/model/network/events";
 import { useSubscription } from "@/hooks";
 import NetworkNodeCard from "./NetworkNodeCard";
 import NetworkEventLog from "./NetworkEventLog";
 import { Flex, Heading } from "@radix-ui/themes";
 
 export type NetworkMonitorProps = {
-  network: Network;
+  network: Network<any, any>;
 };
 
 function networkNodeStateReducer(knownNodes: NetworkNode[], event: NetworkEvent): NetworkNode[] {
@@ -24,8 +23,7 @@ function networkNodeStateReducer(knownNodes: NetworkNode[], event: NetworkEvent)
 }
 
 export default function NetworkMonitor({ network }: NetworkMonitorProps) {
-  // const [knownAgents, knownAgentsDispatch] = useReducer(networkAgentStateReducer, []);
-  const [knownNodes, knownNodesDispatch] = useReducer(networkNodeStateReducer, []);
+  const [knownNodes, knownNodesDispatch] = useReducer(networkNodeStateReducer, [...network.nodeControllers.keys()]);
   
 
   const handleNetworkEvent = useCallback((event: NetworkEvent) => {
@@ -46,7 +44,8 @@ export default function NetworkMonitor({ network }: NetworkMonitorProps) {
             node={node}/>
         ))}
       </Flex>
-      {/* TODO: yooo it'd be cool if you could click on the name of a node and have it "selected" in the window and see details*/}
+      {/* TODO: it'd be cool if you could click on the name of a node and have
+        it "selected" in the window and see details*/}
       <NetworkEventLog show={{ network: false }} events$={network.events$} />
     </Flex>
   );
