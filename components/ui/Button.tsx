@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { Button } from "@radix-ui/themes";
+import { Button as RadixButton } from "@radix-ui/themes";
 
 export type ButtonProps = {
   children: ReactNode;
@@ -7,11 +7,11 @@ export type ButtonProps = {
   size?: "s" | "m" | "l";
 };
 
-export default function _Button({ children, onClick, size: _size = "m" }: ButtonProps) {
+export default function Button({ children, onClick, size: _size = "m" }: ButtonProps) {
   return (
-    <Button variant="soft" onClick={onClick}>
+    <RadixButton variant="soft" onClick={onClick}>
       {children}
-    </Button>
+    </RadixButton>
   );
 }
 

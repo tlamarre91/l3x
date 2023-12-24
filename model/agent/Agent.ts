@@ -3,7 +3,7 @@ import { StateMachine } from "../StateMachine";
 import { Subject } from "rxjs";
 import { AgentEvent, AgentEchoEvent, AgentSetStateEvent } from "./events";
 import { AgentCommand, AgentEchoCommand, AgentSetStateCommand } from "./commands";
-import { AgentNetworkInterface } from "../network/AgentNetworkInterface";
+import { NetworkClient } from "@/model/network/NetworkClient";
 
 export interface AgentState {
   onExit?: (agent: Agent) => void;
@@ -17,7 +17,7 @@ type AgentStateMachine = StateMachine<string, AgentState>;
 
 export class Agent implements IStateful<string, AgentState> {
   name: string;
-  networkInterface: AgentNetworkInterface | null = null;
+  networkClient: NetworkClient<Agent> | null = null;
   // TODO: make private, expose public observables
   readonly eventSubject: Subject<AgentEvent>;
   #stateMachine: AgentStateMachine;

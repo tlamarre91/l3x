@@ -22,11 +22,7 @@ export type NetworkEventLogProps = {
   };
 };
 
-const DEFAULT_COUNT = 1000; // DEFAULT_COUNT = Infinity
-
-function eventLogReducer(eventLog: NetworkEvent[], event: NetworkEvent) {
-  return [...eventLog, event];
-}
+const DEFAULT_COUNT = 50;
 
 const DEFAULT_SHOW = {
   type: true,
@@ -39,6 +35,9 @@ const DEFAULT_SHOW = {
   to: true,
 };
 
+function eventLogReducer(eventLog: NetworkEvent[], event: NetworkEvent) {
+  return [...eventLog, event];
+}
 
 export default function NetworkEventLog({
   events$,
@@ -64,7 +63,7 @@ export default function NetworkEventLog({
       <Flex direction="column" gap="3">
         <Heading size="3">network events</Heading>
         <Separator size="4" />
-        <Box ref={logBox} style={{ overflowY: "scroll", height: "60rem", width: "100%" }}>
+        <Box ref={logBox} style={{ overflowY: "scroll", height: "40rem", width: "100%" }}>
           <Table.Root>
             <Table.Header>
               <Table.Row>

@@ -1,15 +1,15 @@
 import { BehaviorSubject, Observable, Subject, filter } from "rxjs";
 import { Agent } from "@/model/agent";
 import * as events from "./events";
-import { AgentNetworkInterface } from "./AgentNetworkInterface";
+import { NetworkClient } from "./NetworkClient";
 
-export interface NetworkNode<T = unknown> {
+export interface NetworkNode<NodeData = unknown> {
   id: number;
   name: string;
-  data: T;
+  data: NodeData;
   agents$: Observable<Agent[]>;
   events$: Observable<events.NetworkNodeEvent>;
-  edges$: Observable<NetworkEdge[]>;
+  edges$: Observable<NetworkEdge<NodeData>[]>;
 }
 
 export interface NetworkNodeController<NodeData = unknown, EdgeData = unknown> {
@@ -293,16 +293,19 @@ export class Network<NodeData, EdgeData> {
 
     this.#reassignAgentNode(agent, null, node);
 
-    // TODO: do somethin with this
-    agent.networkInterface = {
-      agent,
-      send(_request) {
-        return { status: "fu" };
-      }
-    };
+    agent.networkClient = this.#makeNetworkClient(agent);
 
     this.#emit({ type: "addagent", network: this, agent });
     this.#emit({ type: "agententer", network: this, agent, node });
+  }
+
+  #makeNetworkClient<T>(client: T): NetworkClient<T> {
+    return {
+      client,
+      request(_request) {
+        return { status: "fu" };
+      }
+    }
   }
 
   moveAgent(agent: Agent, toNode: NetworkNode<NodeData>) {

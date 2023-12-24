@@ -48,18 +48,18 @@ export default function NetworkSandbox() {
     const _timestamp = timestamp();
     const node = network.addNode("sandbox-" + _timestamp);
 
-    if (mostRecentNode != null) {
-      try {
-        network.addEdge(_timestamp, node, mostRecentNode, "backward");
-      } catch (error) {
-        console.warn(error);
+    const others = [...network.nodeControllers.keys()].filter((_node) => _node !== node);;
+    const p = 1 / others.length;
+    for (const otherNode of others) {
+      if (Math.random() < p) {
+        network.addEdge(String(p) + "-1", node, otherNode)
       }
-      try {
-        network.addEdge(_timestamp, mostRecentNode, node, "forward");
-      } catch (error) {
-        console.warn(error);
+
+      if (Math.random() < p) {
+        network.addEdge(String(p) + "-2", otherNode, node)
       }
     }
+
     setMostRecentNode(() => node);
   }, [mostRecentNode]);
 
@@ -77,13 +77,20 @@ export default function NetworkSandbox() {
     setMostRecentAgent(() => agent);
   }, [mostRecentNode]);
 
-  const testAddCommand = useCallback(() => {
+  const testAddEcho = useCallback(() => {
     mostRecentAgent?.queueCommand(new AgentCommand("echo", `hey queued ${Date.now()}`));
     console.log({ mostRecentAgent });
   }, [mostRecentAgent]);
+  
+  const testAddMove = useCallback(() => {
+    mostRecentAgent?.queueCommand(new AgentCommand("move", "TODO"));
+  }, [mostRecentAgent]);
 
-  const testTest = useCallback(() => {
-    network.agents.forEach((agent) => {console.log({ agent }); agent.process();});
+  const testProcess = useCallback(() => {
+    network.agents.forEach((agent) => {
+      console.log({ agent });
+      agent.process();
+    });
   }, []);
 
   const testGoHome = () => window.location.hash = "#";
@@ -120,10 +127,13 @@ export default function NetworkSandbox() {
           <Button onClick={testAddAgent}>
             add agent
           </Button>
-          <Button onClick={testAddCommand}>
+          <Button onClick={testAddEcho}>
             add echo
           </Button>
-          <Button onClick={testTest}>
+          <Button onClick={testAddMove}>
+            add move
+          </Button>
+          <Button onClick={testProcess}>
             test process
           </Button>
           <Button onClick={testGoHome}>
