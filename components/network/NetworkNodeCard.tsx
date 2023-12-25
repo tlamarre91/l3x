@@ -1,51 +1,35 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useContext } from "react";
 
-import { Network, NetworkEdge, NetworkNode } from "@/model/network";
-import { NetworkNodeEvent, isAboutNode } from "@/model/network/events";
-import { filter } from "rxjs";
+import { NetworkNode } from "@/model/network";
 
-import { useSubscription } from "@/hooks";
+import { useStateSubscription } from "@/hooks";
 import { Agent } from "@/model/agent";
 import { Card, Flex, Heading } from "@radix-ui/themes";
 import Button from "@/components/ui/Button";
+import { NetworkContext } from "./NetworkContext";
 
 export type NetworkNodeCardProps = {
-  network: Network<any, any>; // TODO: any
   node: NetworkNode;
   onClick?: () => void;
 };
 
-export default function NetworkNodeCard({ network, node }: NetworkNodeCardProps) {
-  const handleNetworkNodeEvent = useCallback((event: NetworkNodeEvent) => {
-    console.log({ [`${node.name}-heard-that-yep`]: event });
-    // eventLogDispatch(event);
-  }, [network, node]);
+export default function NetworkNodeCard({ node }: NetworkNodeCardProps) {
+  const network = useContext(NetworkContext);
+  const agents = useStateSubscription(node.agents$, []);
+  const edges = useStateSubscription(node.edges$, []);
 
-  /** Observable for events about this node */
-  useSubscription(node.events$, handleNetworkNodeEvent);
-
-  const handleClickRemove = useCallback(() => {
+  const handleClickRemove = () => {
     network.removeNode(node);
-  }, [network, node]);
+  };
 
-  const handleClickAddAgent = useCallback(() => {
+  const handleClickAddAgent = () => {
     const agent = new Agent("node-agent-" + Date.now());
     network.addAgent(agent, node);
-  }, [network, node]);
+  };
 
-  const [agents, setAgents] = useState(new Array<Agent>());
-  useSubscription(node.agents$, setAgents);
-
-  const handleClickClearAgents = useCallback(() => {
-
-    for (const agent of agents) {
-      console.log("asking to remove", agent);
-      network.removeAgent(agent);
-    }
-  }, [network, node, agents]);
-
-  const [edges, setEdges] = useState(new Array<NetworkEdge>());
-  useSubscription(node.edges$, setEdges);
+  const handleClickClearAgents = () => {
+    agents.forEach((agent) => network.removeAgent(agent));
+  };
 
   return (
     <Card>

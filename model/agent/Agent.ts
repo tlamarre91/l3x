@@ -16,6 +16,7 @@ export interface AgentState {
 type AgentStateMachine = StateMachine<string, AgentState>;
 
 export class Agent implements IStateful<string, AgentState> {
+  type = "agent" as const; // TODO: use type field to switch color of networkobjectlink
   name: string;
   networkClient: NetworkClient<Agent> | null = null;
   // TODO: make private, expose public observables

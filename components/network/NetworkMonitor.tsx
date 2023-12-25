@@ -1,52 +1,20 @@
-import React, { useCallback, useReducer } from "react";
-import { Network, NetworkNode } from "@/model/network";
-import { NetworkEvent, isAddNode, isRemoveNode } from "@/model/network/events";
-import { useSubscription } from "@/hooks";
-import NetworkNodeCard from "./NetworkNodeCard";
+import React from "react";
+import { Network } from "@/model/network";
+import NetworkNodeList from "./NetworkNodeList";
 import NetworkEventLog from "./NetworkEventLog";
-import { Flex, Heading } from "@radix-ui/themes";
+import { Flex } from "@radix-ui/themes";
 
 export type NetworkMonitorProps = {
-  network: Network<any, any>;
+  // network: Network<any, any>;
 };
 
-function networkNodeStateReducer(knownNodes: NetworkNode[], event: NetworkEvent): NetworkNode[] {
-  if (isAddNode(event)) {
-    return [...knownNodes, event.node];
-  }
-
-  if (isRemoveNode(event)) {
-    return knownNodes.filter((node) => node !== event.node);
-  }
-
-  return knownNodes;
-}
-
-export default function NetworkMonitor({ network }: NetworkMonitorProps) {
-  const [knownNodes, knownNodesDispatch] = useReducer(networkNodeStateReducer, [...network.nodeControllers.keys()]);
-  
-
-  const handleNetworkEvent = useCallback((event: NetworkEvent) => {
-    console.log(`NetworkMonitor got an event for network ${network.name}!`);
-    knownNodesDispatch(event);
-  }, [network]);
-
-  useSubscription(network.events$, handleNetworkEvent);
-
+export default function NetworkMonitor({}: NetworkMonitorProps) {
   return (
-    <Flex direction="column" gap="2">
-      <Heading size="4">network monitor</Heading>
-      <Flex direction="row" gap="2" wrap="wrap">
-        {knownNodes.map((node) => (
-          <NetworkNodeCard
-            key={node.name}
-            network={network}
-            node={node}/>
-        ))}
-      </Flex>
+    <Flex direction="row" gap="2">
+      <NetworkNodeList />
       {/* TODO: it'd be cool if you could click on the name of a node and have
         it "selected" in the window and see details*/}
-      <NetworkEventLog show={{ network: false }} events$={network.events$} />
+      <NetworkEventLog show={{ network: false }} />
     </Flex>
   );
 }

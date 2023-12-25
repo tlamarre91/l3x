@@ -6,7 +6,7 @@ import "@radix-ui/themes/styles.css";
 import NavSidebar from "@/components/ui/NavSidebar";
 import { ClockIcon, MagicWandIcon, ReloadIcon } from "@radix-ui/react-icons";
 import Header from "@/components/Header";
-import Link from "next/link";
+import NextLink from "next/link";
 
 
 const defaultUrl = process.env.VERCEL_URL
@@ -30,34 +30,34 @@ export default function RootLayout({
       <body>
         <Theme appearance="dark" accentColor="jade" radius="medium" >
           <Header />
-          <Flex width="100%" gap="2">
+          <Flex width="100%">
             <NavSidebar>
               <Tooltip delayDuration={0} content="restart" side="right">
-                <Link href="#yolo">
+                <NextLink href="#yolo">
                   <IconButton variant="soft">
                     <ReloadIcon />
                   </IconButton>
-                </Link>
+                </NextLink>
               </Tooltip>
               <Tooltip
                 delayDuration={0}
                 content="event log"
                 side="right">
-                <Link href="#events">
+                <NextLink href="#events">
                   <IconButton variant="soft">
                     <ClockIcon />
                   </IconButton>
-                </Link>
+                </NextLink>
               </Tooltip>
               <Tooltip
                 delayDuration={0}
                 content="agent editor"
                 side="right">
-                <Link href="#yolo">
+                <NextLink href="#yolo">
                   <IconButton variant="soft">
                     <MagicWandIcon />
                   </IconButton>
-                </Link>
+                </NextLink>
               </Tooltip>
             </NavSidebar>
             <Box width="100%">

@@ -1,13 +1,16 @@
 "use client";
 
-import React, { useCallback, useState, useMemo, useEffect } from "react";
+import React, { useCallback, useState, useMemo, useEffect, useContext } from "react";
 import { Network, NetworkNode } from "@/model/network";
 import { Agent } from "@/model/agent";
 import { AgentCommand } from "@/model/agent/commands";
 
 import NetworkMonitor from "./NetworkMonitor";
+import { NetworkContext } from "./NetworkContext";
+
 import Button from "@/components/ui/Button";
 import { Card, Flex } from "@radix-ui/themes";
+import { useStateSubscription } from "@/hooks";
 
 function timestamp() {
   return String(Date.now()).slice(-8);
@@ -15,11 +18,6 @@ function timestamp() {
 
 export type NetworkSandboxProps = {
   query?: string;
-}
-
-function setupTestNetwork(): Network<string, string> {
-  const network = new Network<string, string>(`testnet-${timestamp()}`);
-  return network;
 }
 
 export default function NetworkSandbox() {
@@ -40,27 +38,26 @@ export default function NetworkSandbox() {
     };
   }, []);
 
-  const network = useMemo(() => setupTestNetwork(), []);
-  const [mostRecentNode, setMostRecentNode] = useState<NetworkNode<string>>();
+  const network = useContext(NetworkContext);
   const [mostRecentAgent, setMostRecentAgent] = useState<Agent>();
+  const nodes = useStateSubscription(network.nodes$, []);
+  const mostRecentNode = nodes.at(-1);
 
   const testAddNode = useCallback(() => {
     const _timestamp = timestamp();
-    const node = network.addNode("sandbox-" + _timestamp);
+    const node = network.addNode(_timestamp);
 
-    const others = [...network.nodeControllers.keys()].filter((_node) => _node !== node);;
+    const others = nodes.filter((_node) => _node !== node);
     const p = 1 / others.length;
     for (const otherNode of others) {
       if (Math.random() < p) {
-        network.addEdge(String(p) + "-1", node, otherNode)
+        network.addEdge(String(p) + "-1", node, otherNode);
       }
 
       if (Math.random() < p) {
-        network.addEdge(String(p) + "-2", otherNode, node)
+        network.addEdge(String(p) + "-2", otherNode, node);
       }
     }
-
-    setMostRecentNode(() => node);
   }, [mostRecentNode]);
 
   const testAddAgent = useCallback(() => {
@@ -77,21 +74,19 @@ export default function NetworkSandbox() {
     setMostRecentAgent(() => agent);
   }, [mostRecentNode]);
 
-  const testAddEcho = useCallback(() => {
+  const testAddEcho = () => {
     mostRecentAgent?.queueCommand(new AgentCommand("echo", `hey queued ${Date.now()}`));
-    console.log({ mostRecentAgent });
-  }, [mostRecentAgent]);
+  };
   
-  const testAddMove = useCallback(() => {
+  const testAddMove = () => {
     mostRecentAgent?.queueCommand(new AgentCommand("move", "TODO"));
-  }, [mostRecentAgent]);
+  };
 
-  const testProcess = useCallback(() => {
+  const testProcess = () => {
     network.agents.forEach((agent) => {
-      console.log({ agent });
       agent.process();
     });
-  }, []);
+  };
 
   const testGoHome = () => window.location.hash = "#";
 
@@ -102,7 +97,7 @@ export default function NetworkSandbox() {
   );
 
   const monitorView = (
-    <NetworkMonitor network={network} />
+    <NetworkMonitor />
   );
 
   const nodeView = useMemo(() => {
@@ -119,30 +114,32 @@ export default function NetworkSandbox() {
   }, [fragmentId]);
 
   return (
-    <Flex direction="column" p="2" m="2" gap="2">
-      query: {fragmentId}
-      <Card>
-        <Flex gap="2">
-          {addNodeControl}
-          <Button onClick={testAddAgent}>
-            add agent
-          </Button>
-          <Button onClick={testAddEcho}>
-            add echo
-          </Button>
-          <Button onClick={testAddMove}>
-            add move
-          </Button>
-          <Button onClick={testProcess}>
-            test process
-          </Button>
-          <Button onClick={testGoHome}>
-            test go home
-          </Button>
-        </Flex>
-      </Card>
-      {nodeView || monitorView}
-    </Flex>
+    <NetworkContext.Provider value={network}>
+      <Flex direction="column" p="2" m="2" gap="2">
+        query: {fragmentId}
+        <Card>
+          <Flex gap="2">
+            {addNodeControl}
+            <Button onClick={testAddAgent}>
+              add agent
+            </Button>
+            <Button onClick={testAddEcho}>
+              add echo
+            </Button>
+            <Button onClick={testAddMove}>
+              add move
+            </Button>
+            <Button onClick={testProcess}>
+              test process
+            </Button>
+            <Button onClick={testGoHome}>
+              test go home
+            </Button>
+          </Flex>
+        </Card>
+        {nodeView || monitorView}
+      </Flex>
+    </NetworkContext.Provider>
   );
 }
 
