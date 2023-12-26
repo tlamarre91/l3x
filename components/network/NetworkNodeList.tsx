@@ -15,7 +15,7 @@ export default function NetworkNodeList({ }: NetworkNodeListProps) {
   return (
     <Card>
       <Flex direction="column" gap="2" style={{ height: "42rem", overflowY: "scroll" }}>
-        <Heading size="4">nodes</Heading>
+        <Heading size="3">nodes</Heading>
         {nodes.map((node) => (
           <NetworkNodeCard key={node.id} node={node}/>
         ))}
