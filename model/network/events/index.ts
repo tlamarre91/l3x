@@ -13,11 +13,9 @@ type NetworkEventType =
   | "agentexit"
   | "agentcross";
 
-// TODO: there probably shouldn't be an "Emittable" type limited to concrete events like NetworkAddAgentEvent... right?
 export interface NetworkEvent {
   id?: number;
   type: NetworkEventType;
-  network: Network<any, any>; // TODO: any
   agent?: Agent;
   node?: NetworkNode;
   edge?: NetworkEdge;

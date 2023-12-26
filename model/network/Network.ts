@@ -150,13 +150,13 @@ export class Network<NodeData, EdgeData> {
   #registerNode(node: NetworkNode<NodeData, EdgeData>) {
     const nodes = this.#nodeSubject.getValue();
     this.#nodeSubject.next([...nodes, node]);
-    this.#emit({ type: "addnode", network: this, node });
+    this.#emit({ type: "addnode", node });
   }
 
   #unregisterNode(node: NetworkNode) {
     const nodes = this.#nodeSubject.getValue();
     this.#nodeSubject.next(nodes.filter((_node) => _node !== node));
-    this.#emit({ type: "removenode", network: this, node });
+    this.#emit({ type: "removenode", node });
   }
 
   getAgentsSubject(node: NetworkNode): BehaviorSubject<Agent[]> | undefined {
@@ -216,7 +216,7 @@ export class Network<NodeData, EdgeData> {
       this.#registerEdge(controller, edge);
     }
 
-    this.#emit({ type: "addedge", network: this, edge });
+    this.#emit({ type: "addedge", edge });
   }
 
   // TODO: if you just make this call a method that takes an "edgesOut" map,
@@ -254,7 +254,7 @@ export class Network<NodeData, EdgeData> {
       subject.next(newEdges);
     }
 
-    this.#emit({ type: "removeedge", network: this, edge });
+    this.#emit({ type: "removeedge", edge });
   }
 
   #removeAllEdgesFrom(fromNode: NetworkNode) {
@@ -319,8 +319,8 @@ export class Network<NodeData, EdgeData> {
 
     agent.networkClient = this.#makeNetworkClient(agent);
 
-    this.#emit({ type: "addagent", network: this, agent });
-    this.#emit({ type: "agententer", network: this, agent, node });
+    this.#emit({ type: "addagent", agent });
+    this.#emit({ type: "agententer", agent, node });
   }
 
   #makeNetworkClient<T>(client: T): NetworkClient<T> {
@@ -347,8 +347,8 @@ export class Network<NodeData, EdgeData> {
 
     this.#reassignAgentNode(agent, fromNode, toNode);
 
-    this.#emit({ type: "agentexit", network: this, node: fromNode, agent });
-    this.#emit({ type: "agententer", network: this, node: toNode, agent });
+    this.#emit({ type: "agentexit", node: fromNode, agent });
+    this.#emit({ type: "agententer", node: toNode, agent });
   }
 
   removeAgent(agent: Agent) {
@@ -359,8 +359,8 @@ export class Network<NodeData, EdgeData> {
 
     this.#reassignAgentNode(agent, fromNode, null);
 
-    this.#emit({ type: "agentexit", network: this, node: fromNode, agent });
-    this.#emit({ type: "removeagent", network: this, agent });
+    this.#emit({ type: "agentexit", node: fromNode, agent });
+    this.#emit({ type: "removeagent", agent });
   }
 
   /**

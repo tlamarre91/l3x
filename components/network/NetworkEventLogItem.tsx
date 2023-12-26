@@ -8,7 +8,6 @@ export type NetworkEventLogItemProps = {
   show: {
     type?: boolean;
     id?: boolean;
-    network?: boolean;
     node?: boolean;
     agent?: boolean;
     edge?: boolean;
@@ -22,7 +21,6 @@ export default function NetworkEventLogItem({
   show: {
     type: showType = true,
     id: showId = true,
-    network: showNetwork = true,
     node: showNode = true,
     agent: showAgent = true,
     edge: showEdge = true,
@@ -35,8 +33,6 @@ export default function NetworkEventLogItem({
         && <Table.Cell><span style={{ textWrap: "nowrap" }}>{event.id}</span></Table.Cell>}
       {showType
         && <Table.Cell><span style={{ textWrap: "nowrap" }}>{event.type}</span></Table.Cell>}
-      {showNetwork
-        && <Table.Cell><span style={{ textWrap: "nowrap" }}>{event.network?.name}</span></Table.Cell>}
       {showNode
         && <Table.Cell><span style={{ textWrap: "nowrap" }}>{event.node?.name}</span></Table.Cell>}
       {showAgent
