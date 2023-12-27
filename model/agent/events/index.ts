@@ -1,17 +1,30 @@
 import { Agent } from "../Agent";
-import { NetworkEdgeSpec } from "@/model/network";
-import { AgentInstruction } from "../commands";
+import {  } from "@/model/network";
+import { AgentCommand } from "../commands";
+import { Status } from "@/utils";
 
 export type AgentEventType =
-  | AgentInstruction // each type of instruction corresponds to an event type saying the command was completed
   | "error"
-  | "process";
+  | "process"
+  | "request"
+  | "response"
+  | "idle"
+  | "echo"
+  | "enterstate"
+  | "exitstate"
+  | "die";
 
 // TODO: refactor to be like network events
 export interface AgentEvent {
   type: AgentEventType;
-  agent: Agent;
   error?: string;
+  message?: string;
+  command?: AgentCommand;
+  status?: Status;
+}
+
+export interface SequentialAgentEvent extends AgentEvent {
+  id: number;
 }
 
 export interface AgentErrorEvent extends AgentEvent {
@@ -24,14 +37,8 @@ export interface AgentEchoEvent extends AgentEvent {
   message: string;
 }
 
-export interface AgentSetStateEvent extends AgentEvent {
-  type: "state";
-  fromStateKey: string;
-  toStateKey: string;
+export interface AgentProcessEvent extends AgentEvent {
+  type: "process";
+  command: AgentCommand;
+  status: Status;
 }
-
-export interface AgentMoveEvent extends AgentEvent {
-  type: "move";
-  edgeSpec: NetworkEdgeSpec;
-}
-

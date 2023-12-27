@@ -29,15 +29,15 @@ export function isSequential<T extends NetworkEvent>(event: T): event is Sequent
   return event.id !== undefined;
 }
 
-export interface AgentEvent extends NetworkEvent {
+export interface NetworkAgentEvent extends NetworkEvent {
   agent: Agent;
 }
 
-export function isAboutAgent(event: NetworkEvent): event is AgentEvent {
+export function isAboutAgent(event: NetworkEvent): event is NetworkAgentEvent {
   return event.agent !== undefined;
 }
 
-export interface AddAgentEvent extends AgentEvent {
+export interface AddAgentEvent extends NetworkAgentEvent {
   type: "addagent";
 }
 
@@ -45,7 +45,7 @@ export function isAddAgent(event: NetworkEvent): event is AddAgentEvent {
   return isAboutAgent(event) && event.type === "addagent";
 }
 
-export interface RemoveAgentEvent extends AgentEvent {
+export interface RemoveAgentEvent extends NetworkAgentEvent {
   type: "removeagent";
 }
 

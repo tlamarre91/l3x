@@ -22,7 +22,7 @@ export interface NetworkNodeController<NodeData = unknown, EdgeData = unknown> {
 export interface NetworkEdge<T = unknown, FromData = unknown, ToData = FromData> {
   type: "edge";
   id: number;
-  name?: string | undefined;
+  name: string;
   data?: T;
   from: NetworkNode<FromData, T>;
   to: NetworkNode<ToData, T>;
@@ -73,11 +73,9 @@ export class Network<NodeData, EdgeData> {
     this.nodesByName = new Map();
     this.nodeControllers = new Map();
     this.#edges = new Map();
-
     this.#agentPositions = new Map();
-
     this.#eventSubject = new Subject();
-    this.#nodeSubject = new BehaviorSubject([]);
+    this.#nodeSubject = new BehaviorSubject(new Array<NetworkNode<NodeData, EdgeData>>());
     this.events$ = this.#eventSubject.asObservable();
     this.nodes$ = this.#nodeSubject.asObservable();
     this.nodeEvents$ = this.events$.pipe(filter(events.isAboutNode));
@@ -97,7 +95,7 @@ export class Network<NodeData, EdgeData> {
     if (name == null) {
       name = `@n${id}`;
     } else if (name?.startsWith("@")) {
-      throw new Error("illegal char");
+      throw new Error("Names starting with @ are reserved");
     }
 
     if (this.nodesByName.has(name)) {
@@ -117,6 +115,8 @@ export class Network<NodeData, EdgeData> {
       edges$: edgesSubject.asObservable(),
       events$
     };
+
+    this.nodesByName.set(name, node);
 
     const controller = {
       node,
@@ -172,12 +172,19 @@ export class Network<NodeData, EdgeData> {
     return this.getAgentsAt(node).includes(agent);
   }
 
-  addEdge(data: EdgeData, from: NetworkNode<NodeData, EdgeData>, to: NetworkNode<NodeData, EdgeData>, name?: string) {
+  addEdge(
+    data: EdgeData,
+    from: NetworkNode<NodeData,
+    EdgeData>,
+    to: NetworkNode<NodeData, EdgeData>,
+    name?: string
+  ) {
     const id = this.#nextEdgeId++;
+
     if (name == null) {
       name = `@e${id}`;
     } else if (name?.startsWith("@")) {
-      throw new Error("illegal char");
+      throw new Error("Names starting with @ are reserved");
     }
 
     const fromController = this.nodeControllers.get(from);
@@ -209,7 +216,18 @@ export class Network<NodeData, EdgeData> {
       events$
     };
 
-    // TODO: yeah we need to handle if this is overwriting an existing edge
+    // TODO: better handling if this is overwriting an existing edge
+    for (const [existingEdgeDest, existingEdge] of [...edgesOut.entries()]) {
+      // TODO: surely you want to just check this with toController.
+      if (existingEdgeDest === to) {
+        throw new Error(`can't overwrite existing edge ${existingEdge.name} from ${from.name} to ${to.name}`);
+      }
+
+      if (existingEdge.name === name) {
+        console.warn(`adding edge from ${from.name} to ${to.name} with duplicate name ${name}`);
+      }
+    }
+
     edgesOut.set(to, edge);
 
     for (const controller of [fromController, toController]) {

@@ -1,60 +1,41 @@
-// export type AgentInstruction = "echo" | "move" | "read" | "write" | "state";
 export type AgentInstruction =
   | "echo"    // Send a message
-  | "move"    // Cross a link
-  | "pwrite"  // Peek stack and write value to cell
-  | "write"   // Pop stack and write to cell
-  | "push"
-  | "state";
+  | "move"    // Request to cross a link
+  | "links"   // Request names of edges out of this node
+  | "route"   // Request a route to a node
+  | "get"     // Request the data stored in the current node
+  | "state";  // Switch to a new state
 
-// TODO: refactor to be like network events
-export class AgentCommand<LeftOperandType = unknown, RightOperandType = unknown> {
+export interface AgentCommand {
   instruction: AgentInstruction;
-  left?: LeftOperandType;
-  right?: RightOperandType;
-
-  constructor(instruction: AgentInstruction, leftOperand?: LeftOperandType, rightOperand?: RightOperandType) {
-    this.instruction = instruction;
-    this.left = leftOperand;
-    this.right = rightOperand;
-  }
-
-  isEcho(): this is AgentEchoCommand {
-    return this.instruction === "echo";
-  }
-
-  isSetState(): this is AgentSetStateCommand {
-    return this.instruction === "state";
-  }
-
-  isWrite(): this is AgentWriteCommand {
-    return this.instruction === "pwrite";
-  }
+  output?: "prepend" | "append" | "insert" | "ignore";
+  edgeName?: string;
+  nodeName?: string;
 }
 
-export interface AgentEchoCommand extends AgentCommand<string | undefined, undefined> {
+export interface AgentEchoCommand extends AgentCommand {
   instruction: "echo";
+  message: string;
 }
 
-export interface AgentMoveCommand extends AgentCommand<string | undefined, undefined> {
+export function isEcho(command: AgentCommand): command is AgentEchoCommand {
+  return command.instruction === "echo";
+}
+
+export interface AgentMoveCommand extends AgentCommand {
   instruction: "move";
+  edgeName: string;
 }
 
-export interface AgentUnaryCommand<OperandType> extends AgentCommand<OperandType, void> {
-  left: OperandType
+export function isMove(command: AgentCommand): command is AgentMoveCommand {
+  return command.instruction === "move";
 }
 
-export interface AgentSetStateCommand extends AgentUnaryCommand<string> {
-  instruction: "state";
+export interface AgentLinksCommand extends AgentCommand {
+  instruction: "links";
+  edgeName: string;
 }
 
-export interface AgentBinaryCommand<LeftOperandType, RightOperandType>
-  extends AgentCommand<LeftOperandType, RightOperandType> {
-  left: LeftOperandType;
-  right: RightOperandType;
-}
-
-
-export interface AgentWriteCommand extends AgentBinaryCommand<string, number> {
-  instruction: "write"
+export function isLinks(command: AgentCommand): command is AgentLinksCommand {
+  return command.instruction === "links";
 }

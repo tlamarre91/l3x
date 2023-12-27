@@ -1,71 +1,95 @@
 import { IStateful } from "../IStateful";
 import { StateMachine } from "../StateMachine";
-import { Subject } from "rxjs";
-import { AgentEvent, AgentEchoEvent, AgentSetStateEvent } from "./events";
-import { AgentCommand, AgentEchoCommand, AgentSetStateCommand } from "./commands";
+import { BehaviorSubject, Observable, Subject } from "rxjs";
 import { NetworkClient } from "@/model/network/NetworkClient";
+import * as events from "./events";
+import * as commands from "./commands";
+
+// export interface AgentState {
+//   onExit?: (agent: Agent) => void;
+//   onCommandStart?: (agent: Agent, command: AgentCommand) => void;
+//   onCommandEnd?: (agent: Agent, command: AgentCommand) => void;
+//   onEnter?: (agent: Agent) => void;
+//   // onOutput?: (output: AgentCommandOutput) => void;
+// }
+//
+// type AgentStateMachine = StateMachine<string, AgentState>;
 
 export interface AgentState {
-  onExit?: (agent: Agent) => void;
-  onCommandStart?: (agent: Agent, command: AgentCommand) => void;
-  onCommandEnd?: (agent: Agent, command: AgentCommand) => void;
-  onEnter?: (agent: Agent) => void;
-  // onOutput?: (output: AgentCommandOutput) => void;
+  name: string;
+  commands: commands.AgentCommand[];
+  commandIndex: number;
 }
 
-type AgentStateMachine = StateMachine<string, AgentState>;
+const newAgentId = (() => {
+  let agentId = 0;
 
-export class Agent implements IStateful<string, AgentState> {
-  type = "agent" as const; // TODO: use type field to switch color of networkobjectlink
+  function _newAgentId() {
+    return agentId++;
+  }
+
+  return _newAgentId;
+})();
+
+export class Agent {
+  type = "agent" as const;
+  id: number;
   name: string;
   networkClient: NetworkClient<Agent> | null = null;
-  // TODO: make private, expose public observables
-  readonly eventSubject: Subject<AgentEvent>;
-  #stateMachine: AgentStateMachine;
-  #commandQueue: AgentCommand[];
+  readonly #eventSubject: Subject<events.AgentEvent>;
+  readonly events$: Observable<events.AgentEvent>;
+  readonly stateSubject: BehaviorSubject<AgentState | null>;
+  readonly state$: Observable<AgentState | null>;
+  #states: Map<string, AgentState>;
+  #commandQueue: commands.AgentCommand[];
   #stack: string[];
-  // #registers?: string[];
+  #indexInStack: BehaviorSubject<number>;
 
   constructor(name?: string) {
+    this.id = newAgentId();
     if (name == null) {
       name = `agent-${Math.floor(Math.random() * 1000000)}`;
     }
 
     this.name = name;
-    this.eventSubject = new Subject();
-    this.#stateMachine = new StateMachine<string, AgentState>();
+    this.#eventSubject = new Subject();
+    this.events$ = this.#eventSubject.asObservable();
+    this.#states = new Map();
+    this.stateSubject = new BehaviorSubject<AgentState | null>(null);
+    this.state$ = this.stateSubject.asObservable();
     this.#commandQueue = [];
     this.#stack = [];
+    this.#indexInStack = new BehaviorSubject(0);
   }
 
   setState(key: string) {
     this.currentState?.onExit?.(this);
-    const newState = this.#stateMachine.setState(key);
+    const newState = this.#states.setState(key);
     newState.onEnter?.(this);
     return newState;
   }
 
   addState(key: string, callbacks: AgentState) {
-    return this.#stateMachine.addState(key, callbacks);
+    return this.#states.addState(key, callbacks);
   }
 
   get currentStateKey() {
-    return this.#stateMachine.currentStateKey;
+    return this.#states.currentStateKey;
   }
 
   get currentState() {
-    return this.#stateMachine.currentState;
+    return this.#states.currentState;
   }
 
-  queueCommand(command: AgentCommand) {
+  queueCommand(command: commands.AgentCommand) {
     this.#commandQueue.push(command);
   }
 
-  peekCommand(): AgentCommand | undefined {
+  peekCommand(): commands.AgentCommand | undefined {
     return this.#commandQueue[0];
   }
 
-  dequeueCommand(): AgentCommand | undefined{
+  dequeueCommand(): commands.AgentCommand | undefined{
     return this.#commandQueue.shift();
   }
 
@@ -83,7 +107,7 @@ export class Agent implements IStateful<string, AgentState> {
       return;
     }
 
-    this.eventSubject.next(output);
+    this.#eventSubject.next(output);
   }
 
   pushStack(value: string): void {
@@ -114,44 +138,34 @@ export class Agent implements IStateful<string, AgentState> {
   //   this.#registers[index] = value;
   // }
 
-  executeCommand(command: AgentCommand): AgentEvent | void {
+  executeCommand(command: commands.AgentCommand): events.AgentEvent | void {
     try {
       const eventToEmit = this.executeCommandUnsafe(command);
       if (eventToEmit == null) {
         return;
       }
 
-      this.eventSubject.next(eventToEmit);
+      this.#eventSubject.next(eventToEmit);
     } catch (err) {
-      return { type: "error", agent: this, error: String(err) };
+      return { type: "error", error: String(err) };
     }
 
   }
 
-  executeCommandUnsafe(command: AgentCommand): AgentEvent | void {
-    if (command.isEcho()) {
+  executeCommandUnsafe(command: commands.AgentCommand): events.AgentEvent | void {
+    if (commands.isEcho(command)) {
       return this.executeEcho(command);
     }
 
-    if (command.isSetState()) {
-      return this.executeSetState(command);
-    }
-
-    if (command.isWrite()) {
-      throw new Error("not implemented");
-      // return this.executeWrite(command);
-    }
+    throw new Error("not implemented");
   }
 
-  executeEcho(command: AgentEchoCommand): AgentEchoEvent {
-    const message = (() => {
-      return `${command.left}: ${this.peekStack()}`;
-    })();
+  executeEcho({ message }: commands.AgentEchoCommand): events.AgentEchoEvent {
 
-    return { type: "echo", agent: this, message };
+    return { type: "echo", message };
   }
 
-  executeSetState(command: AgentSetStateCommand): AgentSetStateEvent {
+  executeSetState(command: commands.AgentSetStateCommand): events.AgentSetStateEvent {
     console.log(command);
     throw new Error("not implemented");
     // const fromStateKey = this.currentStateKey;

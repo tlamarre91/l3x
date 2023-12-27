@@ -4,7 +4,7 @@ import { NetworkNode } from "@/model/network";
 
 import { useStateSubscription } from "@/hooks";
 import { Agent } from "@/model/agent";
-import { Card, Flex } from "@radix-ui/themes";
+import { Card, Flex, Heading } from "@radix-ui/themes";
 import Button from "@/components/ui/Button";
 import { NetworkContext } from "./NetworkContext";
 import { timestamp } from "@/utils";
@@ -45,13 +45,14 @@ export default function NetworkTestControls({}: NetworkTestControlsProps) {
     }
 
     const agent = new Agent();
-    agent.eventSubject.subscribe((event) => console.log(`agent event in node ${mostRecentNode.name}`, event));
+    agent.events$.subscribe((event) => console.log(`agent event in node ${mostRecentNode.name}`, event));
     network.addAgent(agent, mostRecentNode);
     setMostRecentAgent(() => agent);
   }, [mostRecentNode]);
 
   const testAddEcho = () => {
-    mostRecentAgent?.queueCommand(new AgentCommand("echo", `hey queued ${Date.now()}`));
+    // mostRecentAgent?.queueCommand(new AgentCommand("echo", `hey queued ${Date.now()}`));
+    mostRecentAgent?.queueCommand({ instruction: "echo", message: `hey queued ${Date.now()}` });
   };
   
   const testAddMove = () => {
@@ -73,25 +74,26 @@ export default function NetworkTestControls({}: NetworkTestControlsProps) {
   );
 
   return (
-        <Card>
-          <Flex gap="2">
-            {addNodeControl}
-            <Button onClick={testAddAgent}>
-              add agent
-            </Button>
-            <Button onClick={testAddEcho}>
-              add echo
-            </Button>
-            <Button onClick={testAddMove}>
-              add move
-            </Button>
-            <Button onClick={testProcess}>
-              test process
-            </Button>
-            <Button onClick={testGoHome}>
-              test go home
-            </Button>
-          </Flex>
-        </Card>
+    <Card>
+      <Flex gap="2" align="center">
+        <Heading size="3">test controls</Heading>
+        {addNodeControl}
+        <Button onClick={testAddAgent}>
+          add agent
+        </Button>
+        <Button onClick={testAddEcho}>
+          add echo
+        </Button>
+        <Button onClick={testAddMove}>
+          add move
+        </Button>
+        <Button onClick={testProcess}>
+          test process
+        </Button>
+        <Button onClick={testGoHome}>
+          test go home
+        </Button>
+      </Flex>
+    </Card>
   );
 }

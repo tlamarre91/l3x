@@ -1,3 +1,5 @@
+import { Status } from "@/utils";
+
 export interface NetworkRequest {
   type: "move" | "route";
   nodeName?: string;
@@ -5,7 +7,7 @@ export interface NetworkRequest {
 }
 
 export interface NetworkResponse {
-  status: "ok" | "fu";
+  status: Status;
   message?: string;
 }
 
