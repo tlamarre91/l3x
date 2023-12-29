@@ -18,11 +18,17 @@ it("parse+compile works", () => {
 });
 
 it("parse+compile throws", () => {
-  const parsed = programs.parse(UNCOMPILEABLE_PROGRAM);
+  const program = programs.parse(UNCOMPILEABLE_PROGRAM);
   const tryCompile = () => {
-    programs.compile(parsed);
+    programs.compile(program);
   };
   expect(tryCompile).toThrowErrorMatchingSnapshot();
+});
+
+it("sandbox", () => {
+  const program = programs.parse(TEST_PROGRAM);
+  const stateMachine = programs.compile(program);
+  expect(stateMachine).toMatchSnapshot();
 });
 
 const PARSEABLE_PROGRAM = `def start
@@ -70,6 +76,14 @@ def end
 echo bye dudes
 `;
 
-const SANDBOX_PROGRAM = `def start
-echo hello sandbox
+const TEST_PROGRAM = `def start
+echo hey1
+echo hey2
+go loop
+
+def loop
+echo woo1
+echo woo2
+go start
 `;
+

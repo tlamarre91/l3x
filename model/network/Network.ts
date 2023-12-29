@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable, Subject, filter } from "rxjs";
 import { Agent } from "@/model/agent";
 import * as events from "./events";
-import { NetworkClient } from "./NetworkClient";
+import { NetworkClient, NetworkRequest, NetworkResponse } from "./NetworkClient";
 
 export interface NetworkNode<NodeData = unknown, EdgeData = unknown> {
   type: "node";
@@ -342,12 +342,21 @@ export class Network<NodeData, EdgeData> {
   }
 
   #makeNetworkClient<T>(client: T): NetworkClient<T> {
+    if (!(client instanceof Agent)) {
+      throw new Error("not ready for clients that aren't agents");
+    }
+
+    const request = (_request: NetworkRequest) => this.#handleAgentRequest(client, _request);
+
     return {
       client,
-      request(_request) {
-        return { status: "fu" };
-      }
+      request
     };
+  }
+
+  #handleAgentRequest(agent: Agent, request: NetworkRequest): NetworkResponse {
+    console.log("handling request", agent, request);
+    return { status: "fu", message: "yo yo yo i can't do nothin for you" } as const;
   }
 
   moveAgent(agent: Agent, toNode: NetworkNode<NodeData, EdgeData>) {

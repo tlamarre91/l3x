@@ -539,3 +539,320 @@ exports[`parse+compile works 1`] = `
   },
 }
 `;
+
+exports[`sandbox 1`] = `
+{
+  "procedures": Map {
+    "start" => {
+      "commands": [
+        {
+          "instruction": "echo",
+          "message": "hey1",
+        },
+        {
+          "instruction": "echo",
+          "message": "hey2",
+        },
+        {
+          "instruction": "go",
+          "state": "loop",
+        },
+      ],
+      "name": "start",
+    },
+    "loop" => {
+      "commands": [
+        {
+          "instruction": "echo",
+          "message": "woo1",
+        },
+        {
+          "instruction": "echo",
+          "message": "woo2",
+        },
+        {
+          "instruction": "go",
+          "state": "start",
+        },
+      ],
+      "name": "loop",
+    },
+  },
+  "program": {
+    "codeLines": [
+      "def start",
+      "echo hey1",
+      "echo hey2",
+      "go loop",
+      "",
+      "def loop",
+      "echo woo1",
+      "echo woo2",
+      "go start",
+      "",
+    ],
+    "statements": [
+      {
+        "start": {
+          "column": 0,
+          "line": 0,
+        },
+        "tokens": [
+          {
+            "start": {
+              "column": 0,
+              "line": 0,
+            },
+            "symbol": "def",
+          },
+          {
+            "start": {
+              "column": 4,
+              "line": 0,
+            },
+            "symbol": "start",
+          },
+        ],
+      },
+      {
+        "start": {
+          "column": 0,
+          "line": 1,
+        },
+        "tokens": [
+          {
+            "start": {
+              "column": 0,
+              "line": 1,
+            },
+            "symbol": "echo",
+          },
+          {
+            "start": {
+              "column": 5,
+              "line": 1,
+            },
+            "symbol": "hey1",
+          },
+        ],
+      },
+      {
+        "start": {
+          "column": 0,
+          "line": 2,
+        },
+        "tokens": [
+          {
+            "start": {
+              "column": 0,
+              "line": 2,
+            },
+            "symbol": "echo",
+          },
+          {
+            "start": {
+              "column": 5,
+              "line": 2,
+            },
+            "symbol": "hey2",
+          },
+        ],
+      },
+      {
+        "start": {
+          "column": 0,
+          "line": 3,
+        },
+        "tokens": [
+          {
+            "start": {
+              "column": 0,
+              "line": 3,
+            },
+            "symbol": "go",
+          },
+          {
+            "start": {
+              "column": 3,
+              "line": 3,
+            },
+            "symbol": "loop",
+          },
+        ],
+      },
+      {
+        "start": {
+          "column": 0,
+          "line": 5,
+        },
+        "tokens": [
+          {
+            "start": {
+              "column": 0,
+              "line": 5,
+            },
+            "symbol": "def",
+          },
+          {
+            "start": {
+              "column": 4,
+              "line": 5,
+            },
+            "symbol": "loop",
+          },
+        ],
+      },
+      {
+        "start": {
+          "column": 0,
+          "line": 6,
+        },
+        "tokens": [
+          {
+            "start": {
+              "column": 0,
+              "line": 6,
+            },
+            "symbol": "echo",
+          },
+          {
+            "start": {
+              "column": 5,
+              "line": 6,
+            },
+            "symbol": "woo1",
+          },
+        ],
+      },
+      {
+        "start": {
+          "column": 0,
+          "line": 7,
+        },
+        "tokens": [
+          {
+            "start": {
+              "column": 0,
+              "line": 7,
+            },
+            "symbol": "echo",
+          },
+          {
+            "start": {
+              "column": 5,
+              "line": 7,
+            },
+            "symbol": "woo2",
+          },
+        ],
+      },
+      {
+        "start": {
+          "column": 0,
+          "line": 8,
+        },
+        "tokens": [
+          {
+            "start": {
+              "column": 0,
+              "line": 8,
+            },
+            "symbol": "go",
+          },
+          {
+            "start": {
+              "column": 3,
+              "line": 8,
+            },
+            "symbol": "start",
+          },
+        ],
+      },
+    ],
+  },
+  "sourceMap": Map {
+    {
+      "commands": [
+        {
+          "instruction": "echo",
+          "message": "hey1",
+        },
+        {
+          "instruction": "echo",
+          "message": "hey2",
+        },
+        {
+          "instruction": "go",
+          "state": "loop",
+        },
+      ],
+      "name": "start",
+    } => {
+      "column": 0,
+      "line": 0,
+    },
+    {
+      "instruction": "echo",
+      "message": "hey1",
+    } => {
+      "column": 0,
+      "line": 1,
+    },
+    {
+      "instruction": "echo",
+      "message": "hey2",
+    } => {
+      "column": 0,
+      "line": 2,
+    },
+    {
+      "instruction": "go",
+      "state": "loop",
+    } => {
+      "column": 0,
+      "line": 3,
+    },
+    {
+      "commands": [
+        {
+          "instruction": "echo",
+          "message": "woo1",
+        },
+        {
+          "instruction": "echo",
+          "message": "woo2",
+        },
+        {
+          "instruction": "go",
+          "state": "start",
+        },
+      ],
+      "name": "loop",
+    } => {
+      "column": 0,
+      "line": 5,
+    },
+    {
+      "instruction": "echo",
+      "message": "woo1",
+    } => {
+      "column": 0,
+      "line": 6,
+    },
+    {
+      "instruction": "echo",
+      "message": "woo2",
+    } => {
+      "column": 0,
+      "line": 7,
+    },
+    {
+      "instruction": "go",
+      "state": "start",
+    } => {
+      "column": 0,
+      "line": 8,
+    },
+  },
+}
+`;

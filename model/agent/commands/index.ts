@@ -1,3 +1,6 @@
+import { Status } from "@/utils";
+import { AgentEvent } from "../events";
+
 export const Instructions = {
   echo: "echo",
   move: "move",
@@ -22,6 +25,7 @@ export interface AgentCommand {
   edgeName?: string;
   nodeName?: string;
   message?: string;
+  state?: string;
   leftOperand?: string;
   rightOperand?: string;
   comparison?: string;
@@ -39,6 +43,15 @@ export interface AgentEchoCommand extends AgentCommand {
 
 export function isEcho(command: AgentCommand): command is AgentEchoCommand {
   return command.instruction === Instructions.echo;
+}
+
+export interface AgentGoCommand extends AgentCommand {
+  instruction: typeof Instructions.go;
+  state: string;
+}
+
+export function isGo(command: AgentCommand): command is AgentGoCommand {
+  return command.instruction === Instructions.go;
 }
 
 export interface AgentMoveCommand extends AgentCommand {
@@ -68,4 +81,31 @@ export interface AgentTestCommand extends AgentCommand {
 
 export function isTest(command: AgentCommand): command is AgentTestCommand {
   return command.instruction === Instructions.test;
+}
+
+export interface CommandResult {
+  status: Status;
+  errorName?: string;
+  errorMessage?: string;
+  eventsToEmit?: AgentEvent[];
+  setCommandIndex?: number;
+  incrementCommandIndex?: number;
+}
+
+export interface ErrorResult extends CommandResult {
+  status: "fu";
+  errorName: string;
+  errorMessage: string;
+}
+
+export function resultFromError(error: unknown): ErrorResult {
+  const status = "fu";
+
+  if (error instanceof Error) {
+    return { status, errorName: error.name, errorMessage: error.message };
+  }
+
+  console.warn("Creating ErrorResult from non-Error object", error);
+
+  return { status, errorName: "Unexpected error", errorMessage: String(error) };
 }

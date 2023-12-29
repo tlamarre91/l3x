@@ -1,24 +1,8 @@
-import { BehaviorSubject, Observable, Subject } from "rxjs";
+import { BehaviorSubject, Observable, Subject, of } from "rxjs";
 import { NetworkClient } from "@/model/network/NetworkClient";
 import * as events from "./events";
 import * as commands from "./commands";
 import * as programs from "./programs";
-
-// export interface AgentState {
-//   onExit?: (agent: Agent) => void;
-//   onCommandStart?: (agent: Agent, command: AgentCommand) => void;
-//   onCommandEnd?: (agent: Agent, command: AgentCommand) => void;
-//   onEnter?: (agent: Agent) => void;
-//   // onOutput?: (output: AgentCommandOutput) => void;
-// }
-//
-// type AgentStateMachine = StateMachine<string, AgentState>;
-
-export interface AgentState {
-  name: string;
-  commands: commands.AgentCommand[];
-  commandIndex: number;
-}
 
 const newAgentId = (() => {
   let agentId = 0;
@@ -30,100 +14,120 @@ const newAgentId = (() => {
   return _newAgentId;
 })();
 
+
 export class Agent {
   type = "agent" as const;
   id: number;
   name: string;
   networkClient: NetworkClient<Agent> | null = null;
-  readonly #eventSubject: Subject<events.AgentEvent>;
-  readonly events$: Observable<events.AgentEvent>;
-  readonly #stateSubject: BehaviorSubject<AgentState | null>;
-  readonly state$: Observable<AgentState | null>;
-  readonly #stateMachine: programs.AgentStateMachine;
-  #commandQueue: commands.AgentCommand[]; // TODO: use subject+observable
-  #stack: string[]; // TODO: should this be extracted to some `AgentMemory` type deal? 😈
-  #indexInStack: BehaviorSubject<number>;
+  readonly #eventSubject: Subject<events.SequentialAgentEvent>;
+  readonly events$: Observable<events.SequentialAgentEvent>;
+  readonly #executionState: programs.ExecutionState;
+  readonly observableExecutionState: programs.ExecutionStateObservable;
+  #stateMachine: programs.AgentStateMachine;
+
+  #nextEventId: number = 0;
 
   constructor(name?: string) {
     this.id = newAgentId();
+
     if (name == null) {
       name = `agent-${Math.floor(Math.random() * 1000000)}`;
     }
-
     this.name = name;
+
     this.#eventSubject = new Subject();
     this.events$ = this.#eventSubject.asObservable();
-    this.#stateMachine = new Map();
-    this.#stateSubject = new BehaviorSubject<AgentState | null>(null);
-    this.state$ = this.#stateSubject.asObservable();
-    this.#commandQueue = [];
-    this.#stack = [];
-    this.#indexInStack = new BehaviorSubject(0);
+
+    this.#stateMachine = programs.emptyStateMachine();
+    this.#executionState = new programs.ExecutionState();
+    this.observableExecutionState = this.#executionState.asObservables();
+
   }
 
-
-
-  setState(key: string) {
-    this.currentState?.onExit?.(this);
-    const newState = this.#stateMachine.setState(key);
-    newState.onEnter?.(this);
-    return newState;
+  #emit(event: events.AgentEvent) {
+    const seqEvent = { id: this.#nextEventId++, ...event } satisfies events.SequentialAgentEvent;
+    this.#eventSubject.next(seqEvent);
   }
 
-  // TODO: cleanup
-  // addState(key: string, callbacks: AgentState) {
-  //   return this.#stateMachine.addState(key, callbacks);
-  // }
-
-  get currentStateKey() {
-    return this.#stateMachine.currentStateKey;
+  die() {
+    this.#executionState.alive$.next(false);
+    // TODO: emit death knell
   }
 
-  get currentState() {
-    return this.#stateMachine.currentState;
+  reprogram(code: string) {
+    const program = programs.parse(code);
+    const stateMachine = programs.compile(program);
+    this.#stateMachine = stateMachine;
+    this.#executionState.initialize();
+    console.log("reprogrammed", this);
   }
 
-  queueCommand(command: commands.AgentCommand) {
-    this.#commandQueue.push(command);
+  setState(state: string) {
+    if (!this.#stateMachine.procedures.has(state)) {
+      throw new Error(`state machine doesn't have state ${state}`);
+    }
+
+    this.#executionState.stateName$.next(state);
   }
 
-  peekCommand(): commands.AgentCommand | undefined {
-    return this.#commandQueue[0];
-  }
+  #getSelectedCommand(): commands.AgentCommand {
+    const commandIndex = this.#executionState.commandIndex$.getValue();
+    console.log({ commandIndex });
+    const stateName = this.#executionState.stateName$.getValue();
+    // console.log(this.#stateMachine.procedures);
+    const procedure = this.#stateMachine.procedures.get(stateName);
 
-  dequeueCommand(): commands.AgentCommand | undefined{
-    return this.#commandQueue.shift();
+    if (procedure == null) {
+      throw new Error(`ain't no procedure for state ${stateName}`);
+    }
+
+    const command = procedure.commands[commandIndex];
+    return command;
   }
 
   process() {
-    const command = this.dequeueCommand();
-
-    if (command == null) {
-      console.log(`${this.name} processed empty queue`);
+    if (!this.#executionState.alive$.getValue()) {
+      console.log(`can't process; agent ${this.name} is dead`);
       return;
     }
+    const command = this.#getSelectedCommand();
 
-    const output = this.executeCommand(command);
+    const result = this.executeCommand(command);
 
-    if (output == null) {
-      return;
+    if (result.status !== "ok") {
+      this.#emit({ type: "error", errorName: result.errorName, errorMessage: result.errorMessage });
+      this.die();
     }
 
-    this.#eventSubject.next(output);
+    const index$ = this.#executionState.commandIndex$;
+    if (result.setCommandIndex != null) {
+      index$.next(result.setCommandIndex);
+    } else {
+      index$.next(index$.getValue() + 1);
+    }
+
+    if (result.eventsToEmit != null) {
+      for (const event of result.eventsToEmit) {
+        this.#emit(event);
+      }
+    }
+
+    // TODO: handle increment command index
   }
 
-  pushStack(value: string): void {
-    this.#stack.push(value);
-  }
-
-  popStack(): string | undefined {
-    return this.#stack.pop();
-  }
-
-  peekStack(): string | undefined {
-    return this.#stack.at(-1);
-  }
-
+  // pushStack(value: string): void {
+  //   this.#stack.push(value);
+  // }
+  //
+  // popStack(): string | undefined {
+  //   return this.#stack.pop();
+  // }
+  //
+  // peekStack(): string | undefined {
+  //   return this.#stack.at(-1);
+  // }
+  //
   // getRegister(index: number): string {
   //   if (this.#registers == null) {
   //     throw new Error("got no registers");
@@ -140,39 +144,58 @@ export class Agent {
   //   this.#registers[index] = value;
   // }
 
-  executeCommand(command: commands.AgentCommand): events.AgentEvent | void {
+  executeCommand(command: commands.AgentCommand): commands.CommandResult {
     try {
-      const eventToEmit = this.executeCommandUnsafe(command);
-      if (eventToEmit == null) {
-        return;
-      }
-
-      this.#eventSubject.next(eventToEmit);
-    } catch (err) {
-      return { type: "error", error: String(err) };
+      const result = this.#executeCommandUnsafe(command);
+      return result;
+    } catch (error) {
+      return commands.resultFromError(error);
     }
-
   }
 
-  executeCommandUnsafe(command: commands.AgentCommand): events.AgentEvent | void {
+  #executeCommandUnsafe(command: commands.AgentCommand): commands.CommandResult {
     if (commands.isEcho(command)) {
-      return this.executeEcho(command);
+      return this.#executeEcho(command);
     }
 
-    throw new Error("not implemented");
+    if (commands.isGo(command)) {
+      return this.#executeGo(command);
+    }
+
+    if (commands.isMove(command)) {
+      return this.#executeMove(command);
+    }
+
+    throw new Error(`${command.instruction} not implemented`);
   }
 
-  executeEcho({ message }: commands.AgentEchoCommand): events.AgentEchoEvent {
-
-    return { type: "echo", message };
+  #executeEcho({ message }: commands.AgentEchoCommand): commands.CommandResult {
+    const eventsToEmit = [{ type: "echo", message } as const];
+    return { status: "ok", eventsToEmit };
   }
 
-  executeSetState(command: commands.AgentSetStateCommand): events.AgentSetStateEvent {
-    console.log(command);
-    throw new Error("not implemented");
-    // const fromStateKey = this.currentStateKey;
-    // this.setState(command.left);
-    // return { type: "setstate", agent: this, fromStateKey, toStateKey: command.left };;
+  #executeGo({ state }: commands.AgentGoCommand): commands.CommandResult {
+    this.setState(state);
+
+    return {
+      status: "ok",
+      setCommandIndex: 0
+    };
+  }
+
+  #executeMove({ edgeName }: commands.AgentMoveCommand): commands.CommandResult {
+    if (this.networkClient == null) {
+      throw new Error("can't move when i don't have a network client");
+    }
+
+    const req = { type: "move", edgeName } as const; 
+    const { status, message } = this.networkClient.request(req);
+
+    if (status !== "ok") {
+      throw new Error(`got a bad response from the network: ${message}`);
+    }
+
+    return { status };
   }
 
   // executeWrite(command: AgentWriteCommand) {

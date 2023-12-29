@@ -17,7 +17,8 @@ export type AgentEventType =
 // TODO: refactor to be like network events
 export interface AgentEvent {
   type: AgentEventType;
-  error?: string;
+  errorName?: string;
+  errorMessage?: string;
   message?: string;
   command?: AgentCommand;
   status?: Status;
@@ -29,7 +30,12 @@ export interface SequentialAgentEvent extends AgentEvent {
 
 export interface AgentErrorEvent extends AgentEvent {
   type: "error"
-  error: string;
+  errorName: string;
+  errorMessage: string;
+}
+
+export function isError(ev: AgentEvent): ev is AgentErrorEvent {
+  return ev.type === "error";
 }
 
 export interface AgentEchoEvent extends AgentEvent {

@@ -7,7 +7,7 @@ import { NetworkContext } from "./NetworkContext";
 import { NetworkNode } from "@/model/network";
 import { Agent } from "@/model/agent";
 import NetworkObjectLink from "./NetworkObjectLink";
-import { ArrowRightIcon, ChevronDownIcon } from "@radix-ui/react-icons";
+import { ArrowLeftIcon, ArrowRightIcon, ChevronDownIcon } from "@radix-ui/react-icons";
 
 export type NetworkNodeTreeProps = {
   node: NetworkNode
@@ -28,18 +28,19 @@ export function NetworkNodeTree({ node }: NetworkNodeTreeProps) {
         </Flex>
         <Flex direction="column" pl="2" ml="2" style={{ borderLeft: "1px solid gray" }}>
           {edges.map((edge) => {
-            const nodeToLink = edge.from === node ? edge.to : edge.from;
+            const toOther = edge.from === node;
+            const nodeToLink = toOther ? edge.to : edge.from;
             return (
-              <Flex gap="1" align="center">
+              <Flex key={edge.id} gap="1" align="center">
                 <NetworkObjectLink object={edge} />
-                <ArrowRightIcon />
+                { toOther ? <ArrowRightIcon /> : <ArrowLeftIcon /> }
                 <NetworkObjectLink object={nodeToLink} />
               </Flex>
             );
           })}
           {agents.map((agent) => {
             return (
-              <NetworkObjectLink object={agent} />
+              <NetworkObjectLink key={agent.id} object={agent} />
             );
           })}
         </Flex>
