@@ -1,9 +1,8 @@
-import { IStateful } from "../IStateful";
-import { StateMachine } from "../StateMachine";
 import { BehaviorSubject, Observable, Subject } from "rxjs";
 import { NetworkClient } from "@/model/network/NetworkClient";
 import * as events from "./events";
 import * as commands from "./commands";
+import * as programs from "./programs";
 
 // export interface AgentState {
 //   onExit?: (agent: Agent) => void;
@@ -38,11 +37,11 @@ export class Agent {
   networkClient: NetworkClient<Agent> | null = null;
   readonly #eventSubject: Subject<events.AgentEvent>;
   readonly events$: Observable<events.AgentEvent>;
-  readonly stateSubject: BehaviorSubject<AgentState | null>;
+  readonly #stateSubject: BehaviorSubject<AgentState | null>;
   readonly state$: Observable<AgentState | null>;
-  #states: Map<string, AgentState>;
-  #commandQueue: commands.AgentCommand[];
-  #stack: string[];
+  readonly #stateMachine: programs.AgentStateMachine;
+  #commandQueue: commands.AgentCommand[]; // TODO: use subject+observable
+  #stack: string[]; // TODO: should this be extracted to some `AgentMemory` type deal? 😈
   #indexInStack: BehaviorSubject<number>;
 
   constructor(name?: string) {
@@ -54,31 +53,34 @@ export class Agent {
     this.name = name;
     this.#eventSubject = new Subject();
     this.events$ = this.#eventSubject.asObservable();
-    this.#states = new Map();
-    this.stateSubject = new BehaviorSubject<AgentState | null>(null);
-    this.state$ = this.stateSubject.asObservable();
+    this.#stateMachine = new Map();
+    this.#stateSubject = new BehaviorSubject<AgentState | null>(null);
+    this.state$ = this.#stateSubject.asObservable();
     this.#commandQueue = [];
     this.#stack = [];
     this.#indexInStack = new BehaviorSubject(0);
   }
 
+
+
   setState(key: string) {
     this.currentState?.onExit?.(this);
-    const newState = this.#states.setState(key);
+    const newState = this.#stateMachine.setState(key);
     newState.onEnter?.(this);
     return newState;
   }
 
-  addState(key: string, callbacks: AgentState) {
-    return this.#states.addState(key, callbacks);
-  }
+  // TODO: cleanup
+  // addState(key: string, callbacks: AgentState) {
+  //   return this.#stateMachine.addState(key, callbacks);
+  // }
 
   get currentStateKey() {
-    return this.#states.currentStateKey;
+    return this.#stateMachine.currentStateKey;
   }
 
   get currentState() {
-    return this.#states.currentState;
+    return this.#stateMachine.currentState;
   }
 
   queueCommand(command: commands.AgentCommand) {
