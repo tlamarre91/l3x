@@ -1,6 +1,5 @@
 import React from "react";
-import { Badge, Box, Flex, Heading } from "@radix-ui/themes";
-import NextLink from "next/link";
+import { Badge } from "@radix-ui/themes";
 import { NetworkEdge, NetworkNode } from "@/model/network";
 import { Agent } from "@/model/agent";
 

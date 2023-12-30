@@ -1,18 +1,19 @@
 import React from "react";
 import NetworkObjectTree from "./NetworkObjectTree";
 import NetworkEventLog from "./NetworkEventLog";
-import { Flex } from "@radix-ui/themes";
+import { Box, Flex } from "@radix-ui/themes";
+import NetworkNodeList from "./NetworkNodeList";
 
-export type NetworkMonitorProps = {
-  // network: Network<any, any>;
-};
-
-export default function NetworkMonitor({}: NetworkMonitorProps) {
+export default function NetworkMonitor() {
   return (
     <Flex direction="row" gap="2">
-      {/* <NetworkNodeList /> */}
       <NetworkObjectTree />
-      <NetworkEventLog />
+      <Box width="100%">
+        <Flex direction="column">
+          <NetworkEventLog />
+          <NetworkNodeList />
+        </Flex>
+      </Box>
     </Flex>
   );
 }

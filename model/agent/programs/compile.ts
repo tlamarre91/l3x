@@ -43,6 +43,7 @@ export function compileStatement(statement: parse.Statement): commands.AgentComm
     command.leftOperand = operands[0].symbol;
     command.comparison = operands[1].symbol;
     command.rightOperand = operands[2].symbol;
+    break;
 
   default:
     throw new Error(`i'm dumb and can't compile a ${instruction.symbol} or anything really`);

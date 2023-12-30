@@ -7,7 +7,7 @@ export type NavSidebarProps = {
   size?: "s" | "m" | "l";
 };
 
-export default function NavSidebar({ children, onClick, size: _size = "m" }: ButtonProps) {
+export default function NavSidebar({ children, onClick: _onClick, size: _size = "m" }: NavSidebarProps) {
   return (
     <nav>
       <Flex direction="column" gap="2">

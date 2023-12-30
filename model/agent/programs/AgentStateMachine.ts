@@ -1,4 +1,4 @@
-import { BehaviorSubject, Observable, combineLatestWith, map } from "rxjs";
+import { BehaviorSubject, Observable } from "rxjs";
 
 import * as commands from "@/model/agent/commands";
 import * as parse from "./parse";

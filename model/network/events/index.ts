@@ -1,5 +1,5 @@
 import { Agent } from "@/model/agent";
-import { Network, NetworkEdge, NetworkNode } from "../Network";
+import { NetworkEdge, NetworkNode } from "../Network";
 import { Sequential } from "@/model/types";
 
 type NetworkEventType =

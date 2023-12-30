@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Container, Flex, IconButton, Theme, Tooltip } from "@radix-ui/themes";
+import { Box, Flex, IconButton, Theme, Tooltip } from "@radix-ui/themes";
 
 import "./globals.css";
 import "@radix-ui/themes/styles.css";

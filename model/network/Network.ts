@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable, Subject, filter } from "rxjs";
 import { Agent } from "@/model/agent";
 import * as events from "./events";
-import { NetworkClient, NetworkRequest, NetworkResponse } from "./NetworkClient";
+import { NetworkClient, NetworkRequest, NetworkResponse, isMove, responseFromError } from "./NetworkClient";
 
 export interface NetworkNode<NodeData = unknown, EdgeData = unknown> {
   type: "node";
@@ -17,6 +17,7 @@ export interface NetworkNodeController<NodeData = unknown, EdgeData = unknown> {
   node: NetworkNode<NodeData, EdgeData>;
   agentsSubject: BehaviorSubject<Agent[]>;
   edgesSubject: BehaviorSubject<NetworkEdge<EdgeData, NodeData>[]>;
+  edgesOutByName: Map<string, NetworkEdge<EdgeData, NodeData>>;
 }
 
 export interface NetworkEdge<T = unknown, FromData = unknown, ToData = FromData> {
@@ -64,6 +65,7 @@ export class Network<NodeData, EdgeData> {
   readonly edgeEvents$: Observable<events.NetworkEdgeEvent>;
 
   #agentPositions: Map<Agent, NetworkNode>;
+  #pendingRequestCallbacks: (() => void)[] = [];
   #nextEventId: number = 0;
   #nextNodeId: number = 0;
   #nextEdgeId: number = 0;
@@ -88,6 +90,26 @@ export class Network<NodeData, EdgeData> {
   #emit(event: events.NetworkEvent) {
     const seqEvent = { id: this.#nextEventId++, ...event } satisfies events.SequentialNetworkEvent;
     this.#eventSubject.next(seqEvent);
+  }
+
+  process() {
+    for (const agent of this.agents) {
+      agent.process();
+      // try {
+      //   agent.process();
+      // } catch (error) {
+      //   console.error
+      // }
+    }
+
+    console.log("now the pending...", this.#pendingRequestCallbacks);
+    for (const callback of this.#pendingRequestCallbacks) {
+      console.log("calling", callback);
+      callback();
+      // TODO: process by popping off priority queue
+    }
+
+    this.#pendingRequestCallbacks = [];
   }
 
   addNode(data: NodeData, name?: string): NetworkNode<NodeData, EdgeData> {
@@ -121,7 +143,8 @@ export class Network<NodeData, EdgeData> {
     const controller = {
       node,
       agentsSubject,
-      edgesSubject
+      edgesSubject,
+      edgesOutByName: new Map()
     } satisfies NetworkNodeController<NodeData, EdgeData>;
     this.nodeControllers.set(node, controller);
 
@@ -206,6 +229,14 @@ export class Network<NodeData, EdgeData> {
 
     const events$ = this.edgeEvents$.pipe(filter((ev) => ev.edge === edge));
 
+    if (edgesOut.has(to)) {
+      throw new Error(`can't overwrite existing edge from ${from.name} to ${to.name}`);
+    }
+
+    if (fromController.edgesOutByName.has(name)) {
+      throw new Error(`edge with name ${name} already exists out of ${from.name}`);
+    }
+
     const edge: NetworkEdge<EdgeData, NodeData> = {
       type: "edge",
       id,
@@ -216,19 +247,8 @@ export class Network<NodeData, EdgeData> {
       events$
     };
 
-    // TODO: better handling if this is overwriting an existing edge
-    for (const [existingEdgeDest, existingEdge] of [...edgesOut.entries()]) {
-      // TODO: surely you want to just check this with toController.
-      if (existingEdgeDest === to) {
-        throw new Error(`can't overwrite existing edge ${existingEdge.name} from ${from.name} to ${to.name}`);
-      }
-
-      if (existingEdge.name === name) {
-        console.warn(`adding edge from ${from.name} to ${to.name} with duplicate name ${name}`);
-      }
-    }
-
     edgesOut.set(to, edge);
+    fromController.edgesOutByName.set(name, edge);
 
     for (const controller of [fromController, toController]) {
       this.#registerEdge(controller, edge);
@@ -316,10 +336,10 @@ export class Network<NodeData, EdgeData> {
   }
 
   get agents() {
-    console.log("getting agents");
-    console.log(this.#agentPositions);
+    // console.log("getting agents");
+    // console.log(this.#agentPositions);
     const agents = [...this.#agentPositions.keys()];
-    console.log({ agents });
+    // console.log({ agents });
     return agents;
   }
 
@@ -355,27 +375,67 @@ export class Network<NodeData, EdgeData> {
   }
 
   #handleAgentRequest(agent: Agent, request: NetworkRequest): NetworkResponse {
-    console.log("handling request", agent, request);
-    return { status: "fu", message: "yo yo yo i can't do nothin for you" } as const;
+    try {
+      console.log("handling request", agent, request);
+      // TODO: add to a collection of stuff to do for agents after all their `process()` 
+      // calls. (i.e. cross edges, um... whatever else...)
+      if (isMove(request)) {
+        const agentPosition = this.#agentPositions.get(agent);
+        if (agentPosition == null) {
+          throw new Error(`couldn't find agent ${agent.name}`);
+        }
+
+        const edge = this.nodeControllers.get(agentPosition)?.edgesOutByName.get(request.edgeName);
+        if (edge == null) {
+          throw new Error(`no edge out of ${agentPosition.name} with name ${request.edgeName}`);
+        }
+
+        const callback = () => {
+          this.moveAgent(agent, edge);
+        };
+        this.#pendingRequestCallbacks.push(callback);
+        console.log("hm", this.#pendingRequestCallbacks);
+        return { status: "ok" };
+      }
+
+      throw new Error(`can't handle ${request.type} request`);
+    } catch (error) {
+      console.error(error);
+      return responseFromError(error);
+    }
   }
 
-  moveAgent(agent: Agent, toNode: NetworkNode<NodeData, EdgeData>) {
-    const fromNode = this.#agentPositions.get(agent);
+  validateMoveAgent(agent: Agent, edge: NetworkEdge) {
+    // TODO: is this needed?
+    const toNode = edge.to;
+    const agentPosition = this.#agentPositions.get(agent);
 
-    if (fromNode == null) {
+    if (agentPosition == null) {
       throw new Error(`Agent ${agent.name} ain't here`);
     }
 
-    const edgeExists = this.hasEdge(fromNode, toNode);
-
-    if (!edgeExists) {
-      throw new Error(`ain't no edge from ${fromNode.name} to ${toNode.name}`);
+    if (agentPosition !== edge.from) {
+      throw new Error(`Agent ${agent.name} can't cross edge ${edge.name} from node ${agentPosition}`);
     }
 
-    this.#reassignAgentNode(agent, fromNode, toNode);
+    // TODO: actually shouldn't this be comparing `edge` to the contents of the edge map?
+    const edgeExists = this.hasEdge(agentPosition, toNode);
 
-    this.#emit({ type: "agentexit", node: fromNode, agent });
-    this.#emit({ type: "agententer", node: toNode, agent });
+    if (!edgeExists) {
+      throw new Error(`ain't no edge from ${agentPosition.name} to ${toNode.name}`);
+    }
+  }
+
+  moveAgent(agent: Agent, edge: NetworkEdge) {
+    this.validateMoveAgent(agent, edge);
+
+    const { from, to } = edge;
+
+    this.#reassignAgentNode(agent, from, to);
+
+    this.#emit({ type: "agentexit", node: from, agent });
+    this.#emit({ type: "agententer", node: to, agent });
+    this.#emit({ type: "agentcross", edge, agent });
   }
 
   removeAgent(agent: Agent) {

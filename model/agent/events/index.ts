@@ -1,5 +1,3 @@
-import { Agent } from "../Agent";
-import {  } from "@/model/network";
 import { AgentCommand } from "../commands";
 import { Status } from "@/utils";
 
@@ -14,7 +12,6 @@ export type AgentEventType =
   | "exitstate"
   | "die";
 
-// TODO: refactor to be like network events
 export interface AgentEvent {
   type: AgentEventType;
   errorName?: string;

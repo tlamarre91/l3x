@@ -1,6 +1,5 @@
 import React, { useContext } from "react";
 
-import NextLink from "next/link";
 import { Card, Flex, Heading } from "@radix-ui/themes";
 
 import { useStateSubscription } from "@/hooks";

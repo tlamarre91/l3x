@@ -1,4 +1,4 @@
-import { DependencyList, useEffect, useState } from "react";
+import { DependencyList, useCallback, useEffect, useState } from "react";
 import { Observable } from "rxjs";
 
 export function useEventListener<K extends keyof WindowEventMap>(
@@ -18,6 +18,24 @@ export function useEventListener<K extends keyof WindowEventMap>(
       removeEventListener(type, listener, options);
     };
   }, dependencies.concat(listener));
+}
+
+export function useFragmentId() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const [fragmentId, setFragmentId] = useState<string | null>(null);
+
+  const listener = useCallback(() => setFragmentId(window.location.hash), []);
+
+  useEffect(() => {
+    addEventListener("hashchange", listener);
+    listener();
+    return () => removeEventListener("hashchange", listener);
+  }, []);
+
+  return fragmentId;
 }
 
 export function useSubscription<T>(

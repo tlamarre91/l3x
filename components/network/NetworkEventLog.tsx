@@ -1,10 +1,9 @@
 import React, { useContext, useEffect, useReducer, useRef } from "react";
 
 import { NetworkEvent } from "@/model/network/events";
-import { Box, Card, Flex, Heading, Separator, Table } from "@radix-ui/themes";
+import { Box, Card, Flex, Heading, Table } from "@radix-ui/themes";
 import NetworkEventLogItem from "./NetworkEventLogItem";
 import { useSubscription } from "@/hooks";
-import { Observable } from "rxjs";
 import { NetworkContext } from "./NetworkContext";
 
 export type NetworkEventLogProps = {

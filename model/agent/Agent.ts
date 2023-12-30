@@ -1,4 +1,4 @@
-import { BehaviorSubject, Observable, Subject, of } from "rxjs";
+import { Observable, Subject } from "rxjs";
 import { NetworkClient } from "@/model/network/NetworkClient";
 import * as events from "./events";
 import * as commands from "./commands";
@@ -28,7 +28,7 @@ export class Agent {
 
   #nextEventId: number = 0;
 
-  constructor(name?: string) {
+  constructor(name?: string, stateMachine?: programs.AgentStateMachine) {
     this.id = newAgentId();
 
     if (name == null) {
@@ -39,10 +39,15 @@ export class Agent {
     this.#eventSubject = new Subject();
     this.events$ = this.#eventSubject.asObservable();
 
-    this.#stateMachine = programs.emptyStateMachine();
+    this.#stateMachine = stateMachine ?? programs.emptyStateMachine();
     this.#executionState = new programs.ExecutionState();
     this.observableExecutionState = this.#executionState.asObservables();
+  }
 
+  static fromCode(name: string, code: string) {
+    const program = programs.parse(code);
+    const stateMachine = programs.compile(program);
+    return new Agent(name, stateMachine);
   }
 
   #emit(event: events.AgentEvent) {
@@ -116,34 +121,6 @@ export class Agent {
     // TODO: handle increment command index
   }
 
-  // pushStack(value: string): void {
-  //   this.#stack.push(value);
-  // }
-  //
-  // popStack(): string | undefined {
-  //   return this.#stack.pop();
-  // }
-  //
-  // peekStack(): string | undefined {
-  //   return this.#stack.at(-1);
-  // }
-  //
-  // getRegister(index: number): string {
-  //   if (this.#registers == null) {
-  //     throw new Error("got no registers");
-  //   }
-  //
-  //   return this.#registers[index];
-  // }
-  //
-  // setRegister(index: number, value: string): void {
-  //   if (this.#registers == null) {
-  //     this.#registers = [];
-  //   }
-  //
-  //   this.#registers[index] = value;
-  // }
-
   executeCommand(command: commands.AgentCommand): commands.CommandResult {
     try {
       const result = this.#executeCommandUnsafe(command);
@@ -185,7 +162,7 @@ export class Agent {
 
   #executeMove({ edgeName }: commands.AgentMoveCommand): commands.CommandResult {
     if (this.networkClient == null) {
-      throw new Error("can't move when i don't have a network client");
+      throw new Error("can't ask to move when i don't have a network client");
     }
 
     const req = { type: "move", edgeName } as const; 

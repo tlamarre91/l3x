@@ -6,9 +6,7 @@ import { useStateSubscription } from "@/hooks";
 import NetworkNodeCard from "./NetworkNodeCard";
 import { NetworkContext } from "./NetworkContext";
 
-export type NetworkNodeListProps = { };
-
-export default function NetworkNodeList({ }: NetworkNodeListProps) {
+export default function NetworkNodeList() {
   const network = useContext(NetworkContext);
   const nodes = useStateSubscription(network.nodes$, []);
 

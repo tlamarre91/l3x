@@ -5,9 +5,8 @@ import { Box, Card, Flex } from "@radix-ui/themes";
 import { useStateSubscription } from "@/hooks";
 import { NetworkContext } from "./NetworkContext";
 import { NetworkNode } from "@/model/network";
-import { Agent } from "@/model/agent";
 import NetworkObjectLink from "./NetworkObjectLink";
-import { ArrowLeftIcon, ArrowRightIcon, ChevronDownIcon } from "@radix-ui/react-icons";
+import { ArrowRightIcon, ChevronDownIcon } from "@radix-ui/react-icons";
 
 export type NetworkNodeTreeProps = {
   node: NetworkNode
@@ -16,7 +15,6 @@ export type NetworkNodeTreeProps = {
 export function NetworkNodeTree({ node }: NetworkNodeTreeProps) {
   const agents = useStateSubscription(node.agents$, []);
   const edges = useStateSubscription(node.edges$, []);
-  console.log("render node tree");
 
   // TODO: this layout ain't good
   return (
@@ -30,10 +28,10 @@ export function NetworkNodeTree({ node }: NetworkNodeTreeProps) {
           {edges.map((edge) => {
             const toOther = edge.from === node;
             const nodeToLink = toOther ? edge.to : edge.from;
-            return (
+            return ( toOther &&
               <Flex key={edge.id} gap="1" align="center">
                 <NetworkObjectLink object={edge} />
-                { toOther ? <ArrowRightIcon /> : <ArrowLeftIcon /> }
+                <ArrowRightIcon />
                 <NetworkObjectLink object={nodeToLink} />
               </Flex>
             );
@@ -49,7 +47,7 @@ export function NetworkNodeTree({ node }: NetworkNodeTreeProps) {
   );
 }
 
-export default function NetworkObjectTree({ }: { }) {
+export default function NetworkObjectTree() {
   const network = useContext(NetworkContext);
   const nodes = useStateSubscription(network.nodes$, []);
 
@@ -63,7 +61,6 @@ export default function NetworkObjectTree({ }: { }) {
         })}
       </Flex>
     </Card>
-
   );
 }
 
