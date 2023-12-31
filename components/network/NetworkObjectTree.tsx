@@ -53,7 +53,7 @@ export default function NetworkObjectTree() {
 
   return (
     <Card>
-      <Flex direction="column" gap="3" width="max-content">
+      <Flex direction="column" gap="3" width="max-content" style={{ maxHeight: "10rem" }}>
         {nodes.map((node) => {
           return (
             <NetworkNodeTree key={node.id} node={node} />

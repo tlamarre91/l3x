@@ -1,12 +1,13 @@
 import React, { useContext } from "react";
 
-import { Card, Flex, Heading } from "@radix-ui/themes";
+import { Box, Card, Flex, Heading } from "@radix-ui/themes";
 
 import { useStateSubscription } from "@/hooks";
 import Button from "@/components/ui/Button";
 import { NetworkContext } from "./NetworkContext";
 import { NetworkNode } from "@/model/network";
 import { Agent } from "@/model/agent";
+import { DiscIcon } from "@radix-ui/react-icons";
 
 export type NetworkNodeCardProps = {
   node: NetworkNode;
@@ -34,11 +35,14 @@ export default function NetworkNodeCard({ node }: NetworkNodeCardProps) {
   return (
     <Card>
       <Flex direction="column" gap="3" width="max-content">
-        <Heading size="3">
-          <a href={`#node:${node.name}`}>
-            {node.name}
-          </a>
-        </Heading>
+        <Flex align="center" gap="3">
+          <DiscIcon />
+          <Box>
+            <a href={`#node:${node.name}`}>
+              {node.name}
+            </a>
+          </Box>
+        </Flex>
         <Flex gap="3">
           <Button onClick={handleClickAddAgent}>add agent</Button>
           <Button onClick={handleClickClearAgents}>clear</Button>

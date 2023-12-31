@@ -5,6 +5,6 @@ import { createContext } from "react";
 //   network: Network<string, string>; // TODO: can contexts be "generic"?
 // }
 
-const testNetwork = NetworkFactory.grid(10, 10);
+const testNetwork = NetworkFactory.grid(2, 2);
 
 export const NetworkContext = createContext(testNetwork);

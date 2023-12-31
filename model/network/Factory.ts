@@ -84,7 +84,7 @@ move up
 go start
 `;
     const agent2 = Agent.fromCode("circleguy", CIRCLE_PROGRAM);
-    network.addAgent(agent2, nodes[4]);
+    network.addAgent(agent2, nodes[1]);
 
     return network;
   }

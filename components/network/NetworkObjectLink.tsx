@@ -1,18 +1,13 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Badge } from "@radix-ui/themes";
 import { NetworkEdge, NetworkNode } from "@/model/network";
 import { Agent } from "@/model/agent";
+import { makeFragmentId } from "@/model/network/queryObjects";
 
-export const DEFAULT_BADGE_COLORS = {
+export const DefaultBadgeColors = {
   node: "purple",
   edge: "green",
-  agent: "blue"
-} as const;
-
-export const FRAGMENT_ID_PREFIXES = {
-  node: "#n:",
-  edge: "#e:",
-  agent: "#a:",
+  agent: "crimson"
 } as const;
 
 export type NetworkObjectLinkProps = {
@@ -23,8 +18,11 @@ export default function NetworkObjectLink({
   object,
 }: NetworkObjectLinkProps) {
 
-  const badgeColor = DEFAULT_BADGE_COLORS[object.type];
-  const fragmentId = FRAGMENT_ID_PREFIXES[object.type] + object.name;
+  const [badgeColor, fragmentId] = useMemo(() => {
+    const badgeColor = DefaultBadgeColors[object.type];
+    const fragmentId = makeFragmentId(object);
+    return [badgeColor, fragmentId];
+  }, [object]);
 
   return (
     <a href={fragmentId}>

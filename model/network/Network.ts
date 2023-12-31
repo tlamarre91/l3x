@@ -95,21 +95,30 @@ export class Network<NodeData, EdgeData> {
   process() {
     for (const agent of this.agents) {
       agent.process();
-      // try {
-      //   agent.process();
-      // } catch (error) {
-      //   console.error
-      // }
     }
 
-    console.log("now the pending...", this.#pendingRequestCallbacks);
     for (const callback of this.#pendingRequestCallbacks) {
-      console.log("calling", callback);
       callback();
       // TODO: process by popping off priority queue
     }
 
     this.#pendingRequestCallbacks = [];
+  }
+
+  dumpState() {
+    // TODO: right now this is just for the purpose of rendering to a mermaid chart
+    // but will want to handle full serialization (and remove circular references)
+
+    const edges = [...this.#edges.values()].flatMap((edgeMap) => [...edgeMap.values()]);
+    const agentPositions = [...this.#agentPositions.entries()];
+
+    const state = {
+      nodes: [...this.#nodeSubject.getValue()],
+      edges,
+      agentPositions
+    };
+
+    return state;
   }
 
   addNode(data: NodeData, name?: string): NetworkNode<NodeData, EdgeData> {
@@ -186,19 +195,9 @@ export class Network<NodeData, EdgeData> {
     return this.nodeControllers.get(node)?.agentsSubject;
   }
 
-  getAgentsAt(node: NetworkNode<NodeData, EdgeData>): Agent[] {
-    const agents = this.getAgentsSubject(node)?.getValue();
-    return agents ?? [];
-  }
-
-  nodeHasAgent(node: NetworkNode<NodeData, EdgeData>, agent: Agent): boolean {
-    return this.getAgentsAt(node).includes(agent);
-  }
-
   addEdge(
     data: EdgeData,
-    from: NetworkNode<NodeData,
-    EdgeData>,
+    from: NetworkNode<NodeData, EdgeData>,
     to: NetworkNode<NodeData, EdgeData>,
     name?: string
   ) {
@@ -257,8 +256,6 @@ export class Network<NodeData, EdgeData> {
     this.#emit({ type: "addedge", edge });
   }
 
-  // TODO: if you just make this call a method that takes an "edgesOut" map,
-  // then you could also call that method from the part of removeNode that prunes edges
   removeEdge(from: NetworkNode<NodeData, EdgeData>, to: NetworkNode<NodeData, EdgeData>) {
     const toEdgeMap = this.#edges.get(from);
     if (toEdgeMap == null) {
@@ -336,11 +333,7 @@ export class Network<NodeData, EdgeData> {
   }
 
   get agents() {
-    // console.log("getting agents");
-    // console.log(this.#agentPositions);
-    const agents = [...this.#agentPositions.keys()];
-    // console.log({ agents });
-    return agents;
+    return [...this.#agentPositions.keys()];
   }
 
   addAgent(agent: Agent, node: NetworkNode) {
@@ -368,17 +361,11 @@ export class Network<NodeData, EdgeData> {
 
     const request = (_request: NetworkRequest) => this.#handleAgentRequest(client, _request);
 
-    return {
-      client,
-      request
-    };
+    return { client, request };
   }
 
   #handleAgentRequest(agent: Agent, request: NetworkRequest): NetworkResponse {
     try {
-      console.log("handling request", agent, request);
-      // TODO: add to a collection of stuff to do for agents after all their `process()` 
-      // calls. (i.e. cross edges, um... whatever else...)
       if (isMove(request)) {
         const agentPosition = this.#agentPositions.get(agent);
         if (agentPosition == null) {
@@ -394,7 +381,6 @@ export class Network<NodeData, EdgeData> {
           this.moveAgent(agent, edge);
         };
         this.#pendingRequestCallbacks.push(callback);
-        console.log("hm", this.#pendingRequestCallbacks);
         return { status: "ok" };
       }
 

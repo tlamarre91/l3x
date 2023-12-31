@@ -2,6 +2,7 @@ import { Box, Card, Flex, Heading } from "@radix-ui/themes";
 import React from "react";
 import { NetworkNode } from "@/model/network";
 import { useStateSubscription } from "@/hooks";
+import { DiscIcon } from "@radix-ui/react-icons";
 
 export type NetworkNodeDetailsProps = {
   node: NetworkNode;
@@ -14,7 +15,7 @@ export default function NetworkNodeDetails({ node }: NetworkNodeDetailsProps) {
       <Card>
         <Flex direction="column" gap="3" width="max-content">
           <Heading size="3">
-            {node.name}
+            <DiscIcon /> {node.name}
           </Heading>
           {agents.map((agent) => {
             return (
