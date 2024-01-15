@@ -6,7 +6,7 @@ import { NetworkNode } from "@/model/network";
 import { useSubscription } from "@/hooks";
 
 export interface Positioned {
-  position: Vector3
+  position: readonly [number, number, number];
 }
 
 function NodeBox({ position, highlighted }: {
@@ -30,7 +30,7 @@ function NodeBox({ position, highlighted }: {
       onClick={() => setActive(!active)}
     >
       <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial wireframe color={highlighted ? "orange" : "hotpink"} />
+      <meshStandardMaterial wireframe wireframeLinewidth={5} color={highlighted ? "orange" : "hotpink"} />
     </mesh>
   );
 }

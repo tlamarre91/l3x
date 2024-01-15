@@ -1,45 +1,21 @@
 import React, { useCallback, useContext, useMemo, useRef, useState }  from "react";
+import { filter } from "rxjs";
+import * as THREE from "three";
+import { Vector3, useFrame } from "@react-three/fiber";
+import { useSpring, animated } from '@react-spring/three'
+import { Sphere, Wireframe } from "@react-three/drei";
 
 import { NetworkContext } from "@/components/network/NetworkContext";
-import { Vector3, useFrame } from "@react-three/fiber";
 import { NetworkNode } from "@/model/network";
 import { Agent } from "@/model/agent";
 import { useStateSubscription, useSubscription } from "@/hooks";
-import { filter } from "rxjs";
-import { Sphere } from "@react-three/drei";
 
 export interface Positioned {
-  position: Vector3
-}
-
-function AgentMesh({ position, highlighted }: {
-  position: Vector3,
-  highlighted: boolean
-}) {
-  const scale = 1.2
-
-  return (
-    <Sphere position={position} scale={[scale, scale, scale]}>
-      <meshStandardMaterial color={highlighted ? "green" : "gray"} wireframe/>
-    </Sphere>
-  );
+  position: [number, number, number];
 }
 
 export default function DfAgent({ agent }: { agent: Agent }) {
   const network = useContext(NetworkContext);
-
-  const [position, setPosition] = useState(() => {
-    const agentNode = network.getAgentLocation(agent);
-    if (agentNode == null) {
-      console.error("couldn't find agent position", agent);
-      throw new Error("couldn't find agent position");
-    }
-
-    return agentNode.data.position
-  });
-
-  // const [animationStartPosition, setAnimationStartPosition] = useState(position);
-  // const [animationEndPosition, setAnimationEndPosition] = useState<Vector3 | null>(null);
 
   const alive = useStateSubscription(agent.observableExecutionState.alive$, false);
 
@@ -49,18 +25,96 @@ export default function DfAgent({ agent }: { agent: Agent }) {
     )
   ), [network, agent]);
 
-  const animateToPosition = useCallback((targetPosition: Vector3) => {
-    setPosition(targetPosition) // TODO: ♂️
+  const meshRef = useRef<THREE.Mesh<any>>(null!);
+
+  // const position = useRef((() => {
+  //   const agentNode = network.getAgentLocation(agent);
+  //   if (agentNode == null) {
+  //     console.error("couldn't find agent position", agent);
+  //     throw new Error("couldn't find agent position");
+  //   }
+  //
+  //   const [x, y, z] = agentNode.data.position;
+  //   return new THREE.Vector3(x, y, z);
+  // })());  // TODO: ♂️
+
+  // const [animationStartPosition, setAnimationStartPosition] = useState(position.current);
+  // const [animationEndPosition, setAnimationEndPosition] = useState<THREE.Vector3 | null>(null);
+  // const animationProgress = useRef(1);
+  //
+  // const animateToPosition = useCallback(([x, y, z]: [number, number, number]) => {
+  //   setAnimationStartPosition(position.current);
+  //   setAnimationEndPosition(new THREE.Vector3(x, y, z));
+  //   // animationProgress.current = 0;
+  //   // setPosition(targetPosition) // TODO: ♂️
+  // }, []);
+  //
+  // useFrame((state, delta) => {
+  //   if (animationProgress.current >= 1 || animationEndPosition == null) {
+  //     return;
+  //   }
+  //
+  //   const DURATION = 2; // TODO: extract
+  //
+  //   const newAnimationProgress = Math.min(1, animationProgress.current + (delta / DURATION));
+  //   const newPosition = new THREE.Vector3().lerpVectors(animationStartPosition, animationEndPosition, newAnimationProgress);
+  //
+  //   position.current = newPosition;
+  //   meshRef.current.position.copy(newPosition);
+  //   animationProgress.current = newAnimationProgress;
+  // });
+
+  const initialPosition = useMemo(() => {
+    const agentNode = network.getAgentLocation(agent);
+    if (agentNode == null) {
+      console.error("couldn't find agent position", agent);
+      throw new Error("couldn't find agent position");
+    }
+
+    const [x, y, z] = agentNode.data.position;
+    return new THREE.Vector3(x, y, z);
   }, []);
 
+  const [springs, api] = useSpring(
+    () => ({
+      scale: 1,
+      position: [0, 0],
+      color: '#ff6d6d',
+      config: key => {
+        switch (key) {
+          case 'scale':
+            return {
+              mass: 4,
+              friction: 10,
+            }
+          case 'position':
+            return { mass: 4, friction: 220 }
+          default:
+            return {}
+        }
+      },
+    }),
+    []
+  )
+
   useSubscription(agentCrossEvents, (ev) => {
-    const data = ev.edge?.to.data as any; // TODO: ♂️
-    animateToPosition(data.position);
+    const data = ev.edge?.to.data as Positioned; // TODO: ♂️
+    // api.start({ scale: 100, position: data.position });
+    api.start({ position: data.position });
   });
 
-  return (
-    <AgentMesh position={position} highlighted={alive}/>
-  );
+  const meshScale = 1.2;
+
+  const AnimatedSphere = animated(Sphere);
+
+  const sphere = (
+    <AnimatedSphere position={springs.position.to((pos) => pos)} scale={springs.scale} ref={meshRef}>
+      <meshStandardMaterial opacity={1} color={alive ? "green" : "gray"} />
+      <Wireframe />
+    </AnimatedSphere>
+  )
+
+  return sphere;
 }
 
 

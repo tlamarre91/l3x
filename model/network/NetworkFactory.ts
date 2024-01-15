@@ -1,6 +1,4 @@
 import { Network, NetworkNode } from "./Network";
-// TODO: move Buffer to types.ts or something
-import { Buffer } from "../agent/programs/AgentStateMachine";
 import { Agent } from "../agent";
 import { Positioned } from "@/components/datafield/DfNetworkNode";
 
@@ -24,7 +22,13 @@ export class NetworkFactory {
 
     function computePosition(x: number, y: number) {
       const offset = -separationScale * height / 2;
-      return { position: [x * separationScale + offset, y * separationScale + offset, 0] } as const;
+      return {
+        position: [
+          x * separationScale + offset,
+          y * separationScale + offset,
+          0
+        ]
+      } as const;
     }
 
     const separationScale = 3;

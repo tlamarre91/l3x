@@ -1,4 +1,4 @@
-import { NetworkFactory } from "@/model/network/Factory";
+import { NetworkFactory } from "@/model/network/NetworkFactory";
 import { createContext } from "react";
 
 const testNetwork = NetworkFactory.grid(5, 5);
