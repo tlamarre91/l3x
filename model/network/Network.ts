@@ -20,25 +20,18 @@ export interface NetworkNodeController<NodeData = unknown, EdgeData = unknown> {
   edgesOutByName: Map<string, NetworkEdge<EdgeData, NodeData>>;
 }
 
-export interface NetworkEdge<T = unknown, FromData = unknown, ToData = FromData> {
+export interface NetworkEdge<EdgeData = unknown, FromData = unknown, ToData = FromData> {
   type: "edge";
   id: number;
   name: string;
-  data?: T;
-  from: NetworkNode<FromData, T>;
-  to: NetworkNode<ToData, T>;
+  data?: EdgeData;
+  from: NetworkNode<FromData, EdgeData>;
+  to: NetworkNode<ToData, EdgeData>;
   events$: Observable<events.NetworkEdgeEvent>;
 }
 
-type EdgeToMap = Map<
-  NetworkNode,
-  NetworkEdge
->;
-
-type EdgeFromMap = Map<
-  NetworkNode,
-  EdgeToMap
->;
+type EdgeToMap = Map<NetworkNode, NetworkEdge>;
+type EdgeFromMap = Map<NetworkNode, EdgeToMap>;
 
 export class Network<NodeData, EdgeData> {
   name: string;
@@ -63,8 +56,10 @@ export class Network<NodeData, EdgeData> {
   readonly nodeEvents$: Observable<events.NetworkNodeEvent>;
   /** Public `Observable` for network events related to edges */
   readonly edgeEvents$: Observable<events.NetworkEdgeEvent>;
+  /** Public `Observable` for network events related to agents */
+  readonly agentEvents$: Observable<events.NetworkAgentEvent>;
 
-  #agentPositions: Map<Agent, NetworkNode>;
+  #agentPositions: Map<Agent, NetworkNode<NodeData, EdgeData>>;
   #pendingRequestCallbacks: (() => void)[] = [];
   #nextEventId: number = 0;
   #nextNodeId: number = 0;
@@ -82,6 +77,7 @@ export class Network<NodeData, EdgeData> {
     this.nodes$ = this.#nodeSubject.asObservable();
     this.nodeEvents$ = this.events$.pipe(filter(events.isAboutNode));
     this.edgeEvents$ = this.events$.pipe(filter(events.isAboutEdge));
+    this.agentEvents$ = this.events$.pipe(filter(events.isAboutAgent));
   }
 
   /**
@@ -336,7 +332,7 @@ export class Network<NodeData, EdgeData> {
     return [...this.#agentPositions.keys()];
   }
 
-  addAgent(agent: Agent, node: NetworkNode) {
+  addAgent(agent: Agent, node: NetworkNode<NodeData, EdgeData>) {
     console.log(this, agent, node);
     if (this.#agentPositions.get(agent) != null) {
       throw new Error(`Agent ${agent.name} is already in the network`);
@@ -391,6 +387,10 @@ export class Network<NodeData, EdgeData> {
     }
   }
 
+  getAgentLocation(agent: Agent) {
+    return this.#agentPositions.get(agent);
+  }
+
   validateMoveAgent(agent: Agent, edge: NetworkEdge) {
     // TODO: is this needed?
     const toNode = edge.to;
@@ -412,7 +412,7 @@ export class Network<NodeData, EdgeData> {
     }
   }
 
-  moveAgent(agent: Agent, edge: NetworkEdge) {
+  moveAgent(agent: Agent, edge: NetworkEdge<EdgeData, NodeData>) {
     this.validateMoveAgent(agent, edge);
 
     const { from, to } = edge;
@@ -443,8 +443,8 @@ export class Network<NodeData, EdgeData> {
    */
   #reassignAgentNode(
     agent: Agent,
-    removeFromNode: NetworkNode | null,
-    addToNode: NetworkNode | null
+    removeFromNode: NetworkNode<NodeData, EdgeData> | null,
+    addToNode: NetworkNode<NodeData, EdgeData> | null
   ) {
     if (removeFromNode != null) {
       const agentsSubject = this.getAgentsSubject(removeFromNode);

@@ -101,20 +101,21 @@ export function isRemoveNode(event: NetworkEvent): event is NetworkAddNodeEvent 
   return isAboutNode(event) && event.type === "removenode";
 }
 
-export interface AgentEnterEvent extends NetworkEvent {
+export interface NetworkAgentEvent extends NetworkEvent {
+  agent: Agent;
+}
+
+export interface AgentEnterEvent extends NetworkAgentEvent {
   type: "agententer";
   node: NetworkNode;
-  agent: Agent;
 }
 
-export interface AgentExitEvent extends NetworkEvent {
+export interface AgentExitEvent extends NetworkAgentEvent {
   type: "agentexit";
   node: NetworkNode;
-  agent: Agent;
 }
 
-export interface AgentCrossEvent extends NetworkEvent {
+export interface AgentCrossEvent extends NetworkAgentEvent {
   type: "agentcross";
-  agent: Agent;
   edge: NetworkEdge;
 }
