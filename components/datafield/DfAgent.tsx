@@ -71,14 +71,16 @@ export default function DfAgent({ agent }: { agent: Agent }) {
       throw new Error("couldn't find agent position");
     }
 
-    const [x, y, z] = agentNode.data.position;
-    return new THREE.Vector3(x, y, z);
-  }, []);
+    console.log("found", agent, agentNode.data.position);
+    return agentNode.data.position;
+  }, [network, agent]);
 
-  const [springs, api] = useSpring(
+  const meshScale = 1.2;
+
+  const [meshSprings, api] = useSpring(
     () => ({
-      scale: 1,
-      position: [0, 0],
+      scale: meshScale,
+      position: initialPosition,
       color: '#ff6d6d',
       config: key => {
         switch (key) {
@@ -94,21 +96,20 @@ export default function DfAgent({ agent }: { agent: Agent }) {
         }
       },
     }),
-    []
+    [initialPosition] // TODO: cleanup
   )
 
   useSubscription(agentCrossEvents, (ev) => {
     const data = ev.edge?.to.data as Positioned; // TODO: ♂️
     // api.start({ scale: 100, position: data.position });
+    console.log("goin to", agent, data.position);
     api.start({ position: data.position });
   });
-
-  const meshScale = 1.2;
 
   const AnimatedSphere = animated(Sphere);
 
   const sphere = (
-    <AnimatedSphere position={springs.position.to((pos) => pos)} scale={springs.scale} ref={meshRef}>
+    <AnimatedSphere position={meshSprings.position} scale={meshSprings.scale} ref={meshRef}>
       <meshStandardMaterial opacity={1} color={alive ? "green" : "gray"} />
       <Wireframe />
     </AnimatedSphere>
