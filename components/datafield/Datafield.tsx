@@ -2,7 +2,7 @@ import React, { useContext, useRef, useState }  from "react";
 
 import { NetworkContext } from "@/components/network/NetworkContext";
 import { Canvas, Vector3, useFrame, LineBasicMaterialProps } from "@react-three/fiber";
-import { CameraControls, PerspectiveCamera, Sphere } from '@react-three/drei'
+import { CameraControls, PerspectiveCamera, Sphere } from "@react-three/drei";
 import { Mesh } from "three";
 import DfNetwork from "./DfNetwork";
 import { Box } from "@radix-ui/themes";

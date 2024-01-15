@@ -10,16 +10,16 @@ export class NetworkFactory {
     width: number,
   ) {
     function _addUpEdge(index: number, data: Positioned) {
-        network.addEdge(data, nodes[index], nodes[index - width], "up");
+      network.addEdge(data, nodes[index], nodes[index - width], "up");
     }
     function _addRightEdge(index: number, data: Positioned) {
-        network.addEdge(data, nodes[index], nodes[index + 1], "right");
+      network.addEdge(data, nodes[index], nodes[index + 1], "right");
     }
     function _addDownEdge(index: number, data: Positioned) {
-        network.addEdge(data, nodes[index], nodes[index + width], "down");
+      network.addEdge(data, nodes[index], nodes[index + width], "down");
     }
     function _addLeftEdge(index: number, data: Positioned) {
-        network.addEdge(data, nodes[index], nodes[index - 1], "left");
+      network.addEdge(data, nodes[index], nodes[index - 1], "left");
     }
 
     function computePosition(x: number, y: number) {

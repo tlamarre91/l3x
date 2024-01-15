@@ -14,9 +14,9 @@ function NodeBox({ position, highlighted }: {
   highlighted: boolean
 }) {
   // This reference will give us direct access to the mesh
-  const meshRef = useRef<any>()
+  const meshRef = useRef<any>();
   // Set up state for the hovered and active state
-  const [active, setActive] = useState(false)
+  const [active, setActive] = useState(false);
 
   // Subscribe this component to the render-loop, rotate the mesh every frame
   // useFrame((state, delta) => (meshRef.current!.rotation.x += delta))
@@ -30,9 +30,9 @@ function NodeBox({ position, highlighted }: {
       onClick={() => setActive(!active)}
     >
       <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial wireframe color={highlighted ? 'orange' : 'hotpink'} />
+      <meshStandardMaterial wireframe color={highlighted ? "orange" : "hotpink"} />
     </mesh>
-  )
+  );
 }
 
 export default function DfNetworkNode({ node }: { node: NetworkNode<Positioned> }) {

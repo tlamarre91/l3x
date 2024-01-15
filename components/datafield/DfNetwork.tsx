@@ -9,13 +9,13 @@ import DfNetworkNode from "./DfNetworkNode";
 
 export default function DfNetwork() {
   const network = useContext(NetworkContext);
-  const nodes = useStateSubscription(network.nodes$, [])
+  const nodes = useStateSubscription(network.nodes$, []);
 
   return (
     <>
       {
         nodes.map((node) => {
-          return <DfNetworkNode node={node} />
+          return <DfNetworkNode node={node} />;
         })
       }
     </>
