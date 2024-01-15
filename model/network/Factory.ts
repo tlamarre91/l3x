@@ -2,34 +2,41 @@ import { Network, NetworkNode } from "./Network";
 // TODO: move Buffer to types.ts or something
 import { Buffer } from "../agent/programs/AgentStateMachine";
 import { Agent } from "../agent";
+import { Positioned } from "@/components/datafield/DfNetworkNode";
 
 export class NetworkFactory {
-  static grid(height: number, width: number): Network<Buffer, Buffer> {
-    function _addUpEdge(index: number) {
-      const buffer = [];
-      network.addEdge(buffer, nodes[index], nodes[index - width], "up");
+  static grid(
+    height: number,
+    width: number,
+  ) {
+    function _addUpEdge(index: number, data: Positioned) {
+        network.addEdge(data, nodes[index], nodes[index - width], "up");
     }
-    function _addRightEdge(index: number) {
-      const buffer = [];
-      network.addEdge(buffer, nodes[index], nodes[index + 1], "right");
+    function _addRightEdge(index: number, data: Positioned) {
+        network.addEdge(data, nodes[index], nodes[index + 1], "right");
     }
-    function _addDownEdge(index: number) {
-      const buffer = [];
-      network.addEdge(buffer, nodes[index], nodes[index + width], "down");
+    function _addDownEdge(index: number, data: Positioned) {
+        network.addEdge(data, nodes[index], nodes[index + width], "down");
     }
-    function _addLeftEdge(index: number) {
-      const buffer = [];
-      network.addEdge(buffer, nodes[index], nodes[index - 1], "left");
+    function _addLeftEdge(index: number, data: Positioned) {
+        network.addEdge(data, nodes[index], nodes[index - 1], "left");
     }
 
-    const network = new Network<Buffer, Buffer>("gridnet");
+    function computePosition(x: number, y: number) {
+      const offset = -separationScale * height / 2;
+      return { position: [x * separationScale + offset, y * separationScale + offset, 0] } as const;
+    }
 
-    const nodes = new Array<NetworkNode<Buffer, Buffer>>();
+    const separationScale = 3;
+
+    const network = new Network<Positioned, Positioned>("gridnet");
+
+    const nodes = new Array<NetworkNode<Positioned, Positioned>>();
 
     for (let x = 0; x < width; x++) {
       for (let y = 0; y < height; y++) {
-        const buffer: Buffer = [];
-        const node = network.addNode(buffer);
+        const data = computePosition(x, y);
+        const node = network.addNode(data);
         nodes.push(node);
       }
     }
@@ -37,21 +44,22 @@ export class NetworkFactory {
     for (let x = 0; x < width; x++) {
       for (let y = 0; y < height; y++) {
         const index = y * width + x;
+        const data = computePosition(x, y);
 
         if (x > 0) {
-          _addLeftEdge(index);
+          _addLeftEdge(index, data);
         }
 
         if (x < width - 1) {
-          _addRightEdge(index);
+          _addRightEdge(index, data);
         }
 
         if (y > 0) {
-          _addUpEdge(index);
+          _addUpEdge(index, data);
         }
 
         if (y < height - 1) {
-          _addDownEdge(index);
+          _addDownEdge(index, data);
         }
       }
     }
