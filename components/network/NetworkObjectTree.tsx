@@ -3,10 +3,10 @@ import React, { useContext } from "react";
 import { Box, Card, Flex } from "@radix-ui/themes";
 
 import { useStateSubscription } from "@/hooks";
-import { NetworkContext } from "./NetworkContext";
 import { NetworkNode } from "@/model/network";
 import NetworkObjectLink from "./NetworkObjectLink";
 import { ArrowRightIcon, ChevronDownIcon } from "@radix-ui/react-icons";
+import { GameContext } from "../game/GameContext";
 
 export type NetworkNodeTreeProps = {
   node: NetworkNode
@@ -48,7 +48,7 @@ export function NetworkNodeTree({ node }: NetworkNodeTreeProps) {
 }
 
 export default function NetworkObjectTree() {
-  const network = useContext(NetworkContext);
+  const { network } = useContext(GameContext);
   const nodes = useStateSubscription(network.nodes$, []);
 
   return (

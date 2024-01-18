@@ -4,10 +4,10 @@ import React, { useContext } from "react";
 import { Card, Flex, Heading } from "@radix-ui/themes";
 import { useStateSubscription } from "@/hooks";
 import NetworkNodeCard from "./NetworkNodeCard";
-import { NetworkContext } from "./NetworkContext";
+import { GameContext } from "../game/GameContext";
 
 export default function NetworkNodeList() {
-  const network = useContext(NetworkContext);
+  const { network } = useContext(GameContext);
   const nodes = useStateSubscription(network.nodes$, []);
 
   return (

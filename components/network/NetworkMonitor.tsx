@@ -1,17 +1,12 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Box, Flex } from "@radix-ui/themes";
-import mermaid from "mermaid";
+import React, { useContext, useMemo } from "react";
 
 import NetworkObjectTree from "./NetworkObjectTree";
-import NetworkEventLog from "./NetworkEventLog";
-import NetworkNodeList from "./NetworkNodeList";
 import { useFragmentId } from "@/hooks";
-import { NetworkContext } from "./NetworkContext";
 import { queryObjects } from "@/model/network/queryObjects";
-import { renderToMermaidChart } from "@/model/network/render";
+import { GameContext } from "../game/GameContext";
 
 export default function NetworkMonitor() {
-  const network = useContext(NetworkContext);
+  const { network } = useContext(GameContext);
   const fragmentId = useFragmentId();
 
   // useEffect(() => {
@@ -69,15 +64,23 @@ export default function NetworkMonitor() {
   // });
 
   return (
-    <Flex direction="row" gap="2">
+    <>
+      <div>{queriedObject?.name ?? "didn't find nothin"}</div>
       <NetworkObjectTree />
-      <Box width="100%">
-        <Flex direction="column">
-          <NetworkEventLog />
-          <NetworkNodeList />
-        </Flex>
-      </Box>
-    </Flex>
+    </>
   );
+
+
+  // return (
+  //   <Flex direction="row" gap="2">
+  //     <NetworkObjectTree />
+  //     <Box width="100%">
+  //       <Flex direction="column">
+  //         {/* <NetworkEventLog />
+  //         <NetworkNodeList />
+  //       </Flex>
+  //     </Box>
+  //   </Flex>
+  // );
 }
 

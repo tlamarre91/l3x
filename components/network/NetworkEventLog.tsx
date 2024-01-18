@@ -4,7 +4,7 @@ import { NetworkEvent } from "@/model/network/events";
 import { Box, Card, Flex, Heading, Table } from "@radix-ui/themes";
 import NetworkEventLogItem from "./NetworkEventLogItem";
 import { useSubscription } from "@/hooks";
-import { NetworkContext } from "./NetworkContext";
+import { GameContext } from "../game/GameContext";
 
 export type NetworkEventLogProps = {
   // events$: Observable<NetworkEvent>;
@@ -43,7 +43,7 @@ export default function NetworkEventLog({
 }: NetworkEventLogProps) {
   show = { ...DEFAULT_SHOW, ...show };
 
-  const network = useContext(NetworkContext);
+  const { network } = useContext(GameContext);
   const [eventLog, eventLogDispatch] = useReducer(eventLogReducer, []);
 
   useSubscription(network.events$, eventLogDispatch);

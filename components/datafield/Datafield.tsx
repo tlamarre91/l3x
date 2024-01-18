@@ -1,11 +1,17 @@
-import React, { useContext, useRef, useState }  from "react";
+import React, { CSSProperties }  from "react";
 
-import { NetworkContext } from "@/components/network/NetworkContext";
-import { Canvas, Vector3, useFrame, LineBasicMaterialProps } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { CameraControls, PerspectiveCamera, Sphere } from "@react-three/drei";
-import { Mesh } from "three";
 import DfNetwork from "./DfNetwork";
-import { Box } from "@radix-ui/themes";
+
+export function DfCamera() {
+  return (
+    <>
+      <CameraControls minPolarAngle={0} maxPolarAngle={Math.PI / 1.6} />
+      <PerspectiveCamera makeDefault position={[5, 0, 30]} />
+    </>
+  );
+}
 
 export function DfSkybox() {
   const scale = 80;
@@ -29,12 +35,19 @@ export function DfEnvironment() {
 }
 
 export default function Datafield() {
+  const style = {
+    position: "absolute",
+    top: "0px",
+    left: "0px",
+    height: "100vh",
+    width: "100vw",
+    zIndex: -99
+  } satisfies CSSProperties;
 
   return (
-    <div style={{ height: "60rem", width: "60rem" }}>
+    <div style={style}>
       <Canvas>
-        <CameraControls minPolarAngle={0} maxPolarAngle={Math.PI / 1.6} />
-        <PerspectiveCamera makeDefault position={[5, 0, 30]} />
+        <DfCamera />
         <DfEnvironment />
         <DfNetwork />
       </Canvas>

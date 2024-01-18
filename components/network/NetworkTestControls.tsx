@@ -5,6 +5,7 @@ import { Agent } from "@/model/agent";
 import { Card, Flex, Heading } from "@radix-ui/themes";
 import Button from "@/components/ui/Button";
 import { NetworkContext } from "./NetworkContext";
+import { GameContext } from "../game/GameContext";
 
 const TEST_PROGRAM = `def start
 echo hey1
@@ -18,7 +19,7 @@ go start
 `;
 
 export default function NetworkTestControls() {
-  const network = useContext(NetworkContext);
+  const { network } = useContext(GameContext);
   const nodes = useStateSubscription(network.nodes$, []);
   const [mostRecentAgent, setMostRecentAgent] = useState<Agent>();
   const mostRecentNode = nodes.at(-1);

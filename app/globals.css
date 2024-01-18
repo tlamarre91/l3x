@@ -37,6 +37,10 @@
   }
 }
 
+body {
+  margin: 0px;
+}
+
 ul {
   padding-left: 0px;
   margin: 0px;

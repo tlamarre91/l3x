@@ -1,13 +1,10 @@
 import React, { useContext, useRef, useState }  from "react";
 
-import { NetworkContext } from "@/components/network/NetworkContext";
-import { Vector3, useFrame } from "@react-three/fiber";
+import { Vector3 } from "@react-three/fiber";
 import { NetworkNode } from "@/model/network";
 import { useSubscription } from "@/hooks";
-
-export interface Positioned {
-  position: readonly [number, number, number];
-}
+import { Positioned } from "@/model/types";
+import { GameContext } from "../game/GameContext";
 
 function NodeBox({ position, highlighted }: {
   position: Vector3,
@@ -36,7 +33,7 @@ function NodeBox({ position, highlighted }: {
 }
 
 export default function DfNetworkNode({ node }: { node: NetworkNode<Positioned> }) {
-  const network = useContext(NetworkContext);
+  const { network } = useContext(GameContext);
 
   const [highlighted, setHighlighted] = useState(false);
   useSubscription(node.agents$, (agents) => {

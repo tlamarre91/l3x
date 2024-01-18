@@ -59,6 +59,8 @@ export class Network<NodeData, EdgeData> {
   /** Public `Observable` for network events related to agents */
   readonly agentEvents$: Observable<events.NetworkAgentEvent>;
 
+  /** Map to `Observable` for network events related to each particular agent */
+  #agentEventsMap: Map<Agent, Observable<events.NetworkAgentEvent>>;
   #agentPositions: Map<Agent, NetworkNode<NodeData, EdgeData>>;
   #pendingRequestCallbacks: (() => void)[] = [];
   #nextEventId: number = 0;
@@ -70,6 +72,7 @@ export class Network<NodeData, EdgeData> {
     this.nodesByName = new Map();
     this.nodeControllers = new Map();
     this.#edges = new Map();
+    this.#agentEventsMap = new Map();
     this.#agentPositions = new Map();
     this.#eventSubject = new Subject();
     this.#nodeSubject = new BehaviorSubject(new Array<NetworkNode<NodeData, EdgeData>>());
@@ -328,6 +331,7 @@ export class Network<NodeData, EdgeData> {
     return edge != null;
   }
 
+  // TODO: make observable list of agents?
   get agents() {
     return [...this.#agentPositions.keys()];
   }
@@ -387,10 +391,22 @@ export class Network<NodeData, EdgeData> {
     }
   }
 
-  getAgentLocation(agent: Agent) {
+  getAgentEvents(agent: Agent): Observable<events.NetworkAgentEvent> {
+    let events$ = this.#agentEventsMap.get(agent);
+
+    if (events$ == null) {
+      events$ = this.agentEvents$.pipe(filter((ev) => ev.agent === agent));
+      this.#agentEventsMap.set(agent, events$);
+    }
+
+    return events$;
+  }
+
+  getAgentNode(agent: Agent): NetworkNode<NodeData, EdgeData> | undefined {
     return this.#agentPositions.get(agent);
   }
 
+  /** throws if move is invalid. */
   validateMoveAgent(agent: Agent, edge: NetworkEdge) {
     // TODO: is this needed?
     const toNode = edge.to;

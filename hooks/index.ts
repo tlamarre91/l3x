@@ -17,7 +17,7 @@ export function useEventListener<K extends keyof WindowEventMap>(
     return () => {
       removeEventListener(type, listener, options);
     };
-  }, dependencies.concat(listener));
+  }, [listener, ...dependencies]);
 }
 
 export function useFragmentId() {
@@ -41,19 +41,21 @@ export function useFragmentId() {
 export function useSubscription<T>(
   observable$: Observable<T>,
   handler: (t: T) => void,
+  dependencies: DependencyList = []
 ) {
   useEffect(() => {
     const subscription = observable$.subscribe(handler);
     return () => subscription.unsubscribe();
-  }, [observable$, handler]);
+  }, [observable$, handler, ...dependencies]);
 }
 
 export function useStateSubscription<T>(
   observable$: Observable<T>,
   initialValue: T | (() => T),
+  dependencies: DependencyList = []
 ) {
   const [state, setState] = useState<T>(initialValue);
-  useSubscription(observable$, setState);
+  useSubscription(observable$, setState, dependencies);
   return state;
 }
 
