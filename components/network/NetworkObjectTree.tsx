@@ -52,15 +52,13 @@ export default function NetworkObjectTree() {
   const nodes = useStateSubscription(network.nodes$, []);
 
   return (
-    <Card>
-      <Flex direction="column" gap="3" width="max-content" style={{ maxHeight: "10rem" }}>
-        {nodes.map((node) => {
-          return (
-            <NetworkNodeTree key={node.id} node={node} />
-          );
-        })}
-      </Flex>
-    </Card>
+    <Flex direction="column" gap="3" width="max-content" style={{ overflowY: "scroll", height: "100vh" }}>
+      {nodes.map((node) => {
+        return (
+          <NetworkNodeTree key={node.id} node={node} />
+        );
+      })}
+    </Flex>
   );
 }
 

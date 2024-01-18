@@ -1,4 +1,4 @@
-import React from "react";
+import React, { CSSProperties, useMemo } from "react";
 
 import { Card, Flex, Heading } from "@radix-ui/themes";
 import { Agent } from "@/model/agent";
@@ -20,6 +20,32 @@ export default function AgentCard({ agent }: { agent: Agent }) {
   const operandIndex = useStateSubscription(operandIndex$, 0);
   const buffer = useStateSubscription(buffer$, []);
   const bufferCursor = useStateSubscription(bufferCursor$, 0);
+
+  const currentCodeLine = useMemo(() => {
+    // TODO: could make this easier. have a "pending command" observable?
+    const currentProc = agent.stateMachine.procedures.get(stateName);
+    const currentCmd = currentProc?.commands[commandIndex];
+    if (currentCmd == null) {
+      return undefined;
+    }
+    const lineAndColumn = agent.stateMachine.sourceMap.get(currentCmd);
+
+    return lineAndColumn?.line;
+  }, [stateName, commandIndex, operandIndex]);
+  
+  const codeBox = (
+    <pre>
+      {agent.stateMachine.program.codeLines.map((codeLine, codeLineIndex) => {
+        let style: CSSProperties = { };
+        if (currentCodeLine === codeLineIndex) {
+          style.backgroundColor = "green";
+        }
+        return (
+          <span key={codeLineIndex} style={style}>{codeLine}<br /></span>
+        );
+      })}
+    </pre>
+  );
 
   return (
     <Card>
@@ -55,6 +81,7 @@ export default function AgentCard({ agent }: { agent: Agent }) {
             </tr>
           </tbody>
         </table>
+        {codeBox}
       </Flex>
     </Card>
   );

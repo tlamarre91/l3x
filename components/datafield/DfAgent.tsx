@@ -12,7 +12,7 @@ import { useStateSubscription, useSubscription } from "@/hooks";
 import { Positioned } from "@/model/types";
 
 export default function DfAgent({ agent }: { agent: Agent }) {
-  const { network } = useContext(GameContext);
+  const { network, selectObject } = useContext(GameContext);
 
   const alive = useStateSubscription(agent.observableExecutionState.alive$, false);
 
@@ -69,7 +69,15 @@ export default function DfAgent({ agent }: { agent: Agent }) {
   const AnimatedSphere = animated(Sphere);
 
   const sphere = (
-    <AnimatedSphere position={meshSprings.position} scale={meshSprings.scale} ref={meshRef}>
+    <AnimatedSphere
+      position={meshSprings.position}
+      scale={meshSprings.scale}
+      ref={meshRef}
+      onClick={(ev) => {
+        selectObject(agent)
+        ev.stopPropagation();
+      }}
+    >
       <meshStandardMaterial opacity={1} color={alive ? "green" : "gray"} />
       <Wireframe />
     </AnimatedSphere>

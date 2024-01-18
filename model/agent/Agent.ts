@@ -24,7 +24,7 @@ export class Agent {
   readonly events$: Observable<events.SequentialAgentEvent>;
   readonly #executionState: programs.ExecutionState;
   readonly observableExecutionState: programs.ExecutionStateObservable;
-  #stateMachine: programs.AgentStateMachine;
+  stateMachine: programs.AgentStateMachine;
 
   #nextEventId: number = 0;
 
@@ -39,7 +39,7 @@ export class Agent {
     this.#eventSubject = new Subject();
     this.events$ = this.#eventSubject.asObservable();
 
-    this.#stateMachine = stateMachine ?? programs.emptyStateMachine();
+    this.stateMachine = stateMachine ?? programs.emptyStateMachine();
     this.#executionState = new programs.ExecutionState();
     this.observableExecutionState = this.#executionState.asObservables();
   }
@@ -63,13 +63,13 @@ export class Agent {
   reprogram(code: string) {
     const program = programs.parse(code);
     const stateMachine = programs.compile(program);
-    this.#stateMachine = stateMachine;
+    this.stateMachine = stateMachine;
     this.#executionState.initialize();
     console.log("reprogrammed", this);
   }
 
   setState(state: string) {
-    if (!this.#stateMachine.procedures.has(state)) {
+    if (!this.stateMachine.procedures.has(state)) {
       throw new Error(`state machine doesn't have state ${state}`);
     }
 
@@ -81,7 +81,7 @@ export class Agent {
     console.log({ commandIndex });
     const stateName = this.#executionState.stateName$.getValue();
     // console.log(this.#stateMachine.procedures);
-    const procedure = this.#stateMachine.procedures.get(stateName);
+    const procedure = this.stateMachine.procedures.get(stateName);
 
     if (procedure == null) {
       throw new Error(`ain't no procedure for state ${stateName}`);

@@ -1,6 +1,6 @@
 import { Network, NetworkNode } from "./Network";
 import { Agent } from "../agent";
-import { Positioned } from "@/components/datafield/DfNetworkNode";
+import { Positioned } from "@/model/types";
 
 export class NetworkFactory {
   static grid(

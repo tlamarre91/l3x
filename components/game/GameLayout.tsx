@@ -5,10 +5,10 @@ import { Box, Flex, IconButton, Tooltip } from "@radix-ui/themes";
 
 import Header from "@/components/Header";
 import NetworkTestControls from "@/components/network/NetworkTestControls";
-import NetworkMonitor from "@/components/network/NetworkMonitor";
 import Datafield from "@/components/datafield/Datafield";
 import GameSidebar from "./GameSidebar";
 import { GameContext, makeGameContextData } from "./GameContext";
+import SelectedObjectCard from "./SelectedObjectCard";
 
 
 const defaultUrl = process.env.VERCEL_URL
@@ -29,19 +29,15 @@ export default function GameLayout({ children }: {
 
   return (
     <GameContext.Provider value={gameContextData}>
-      <Box p="2">
-        <Header />
-        <Flex width="100%">
-          <GameSidebar />
-          <Box width="100%">
-            <Flex direction="column" p="2" m="2" gap="2" >
-              <NetworkTestControls />
-              <Datafield />
-              <NetworkMonitor />
-            </Flex>
-          </Box>
+      <Flex p="2" gap="2">
+        <GameSidebar />
+        <Flex direction="column" width="100%">
+          <Header />
+          <NetworkTestControls />
+          <Datafield />
+          <SelectedObjectCard />
         </Flex>
-      </Box>
+      </Flex>
     </GameContext.Provider>
   );
 }
