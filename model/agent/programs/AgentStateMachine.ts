@@ -53,20 +53,32 @@ export class ExecutionState {
   asObservables(): ExecutionStateObservable {
     return {
       alive$: this.alive$.asObservable(),
+      getAlive: () => this.alive$.getValue(),
       stateName$: this.stateName$.asObservable(),
+      getStateName: () => this.stateName$.getValue(),
       commandIndex$: this.commandIndex$.asObservable(),
+      getCommandIndex: () => this.commandIndex$.getValue(),
       operandIndex$: this.operandIndex$.asObservable(),
+      getOperandIndex: () => this.operandIndex$.getValue(),
       buffer$: this.buffer$.asObservable(),
-      bufferCursor$: this.bufferCursor$.asObservable()
+      getBuffer: () => this.buffer$.getValue(),
+      bufferCursor$: this.bufferCursor$.asObservable(),
+      getBufferCursor: () => this.bufferCursor$.getValue(),
     };
   }
 }
 
 export type ExecutionStateObservable = {
   readonly alive$: Observable<boolean>;
+  readonly getAlive: () => boolean;
   readonly stateName$: Observable<string>;
+  readonly getStateName: () => string;
   readonly commandIndex$: Observable<number>;
+  readonly getCommandIndex: () => number;
   readonly operandIndex$: Observable<number>;
+  readonly getOperandIndex: () => number;
   readonly buffer$: Observable<Buffer>;
+  readonly getBuffer: () => Buffer;
   readonly bufferCursor$: Observable<number>;
+  readonly getBufferCursor: () => number;
 }

@@ -5,24 +5,18 @@ import { Agent } from "@/model/agent";
 import { useStateSubscription } from "@/hooks";
 
 export default function AgentCard({ agent }: { agent: Agent }) {
-  const {
-    alive$,
-    stateName$,
-    commandIndex$,
-    operandIndex$,
-    buffer$,
-    bufferCursor$
-  } = agent.observableExecutionState;
+  const execState = agent.observableExecutionState;
 
-  const alive = useStateSubscription(alive$, true);
-  const stateName = useStateSubscription(stateName$, "start");
-  const commandIndex = useStateSubscription(commandIndex$, 0);
-  const operandIndex = useStateSubscription(operandIndex$, 0);
-  const buffer = useStateSubscription(buffer$, []);
-  const bufferCursor = useStateSubscription(bufferCursor$, 0);
+  const alive = useStateSubscription(execState.alive$, execState.getAlive);
+  const stateName = useStateSubscription(execState.stateName$, execState.getStateName);
+  const commandIndex = useStateSubscription(execState.commandIndex$, execState.getCommandIndex);
+  const operandIndex = useStateSubscription(execState.operandIndex$, execState.getOperandIndex);
+  const buffer = useStateSubscription(execState.buffer$, execState.getBuffer);
+  const bufferCursor = useStateSubscription(execState.bufferCursor$, execState.getBufferCursor);
 
   const currentCodeLine = useMemo(() => {
-    // TODO: could make this easier. have a "pending command" observable?
+    // TODO: could make this easier. have a "pending command" observable,
+    // since that would probably help in Agent anyway?
     const currentProc = agent.stateMachine.procedures.get(stateName);
     const currentCmd = currentProc?.commands[commandIndex];
     if (currentCmd == null) {
@@ -56,20 +50,8 @@ export default function AgentCard({ agent }: { agent: Agent }) {
         <table>
           <tbody>
             <tr>
-              <th>alive</th>
+              <th>status</th>
               <td>{alive ? "alive" : "dead"}</td>
-            </tr>
-            <tr>
-              <th>state</th>
-              <td>{stateName}</td>
-            </tr>
-            <tr>
-              <th>command index</th>
-              <td>{commandIndex}</td>
-            </tr>
-            <tr>
-              <th>operand index</th>
-              <td>{operandIndex}</td>
             </tr>
             <tr>
               <th>buffer</th>

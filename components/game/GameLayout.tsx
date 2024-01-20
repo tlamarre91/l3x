@@ -31,11 +31,13 @@ export default function GameLayout({ children }: {
     <GameContext.Provider value={gameContextData}>
       <Flex p="2" gap="2">
         <GameSidebar />
-        <Flex direction="column" width="100%">
+        <Flex direction="column" width="100%" gap="2">
           <Header />
           <NetworkTestControls />
           <Datafield />
-          <SelectedObjectCard />
+          <Box width="max-content">
+            <SelectedObjectCard />
+          </Box>
         </Flex>
       </Flex>
     </GameContext.Provider>
