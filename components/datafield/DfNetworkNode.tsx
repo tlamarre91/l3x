@@ -44,7 +44,7 @@ export default function DfNetworkNode({ node }: { node: NetworkNode<Positioned> 
       position={node.data.position}
       highlighted={highlighted}
       onClick={(ev) => {
-        gameContext.selectObject(node)
+        gameContext.selectObject(node);
         ev.stopPropagation();
       }}
     />

@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useMemo, useRef, useState }  from "reac
 import { filter } from "rxjs";
 import * as THREE from "three";
 import { Vector3, useFrame } from "@react-three/fiber";
-import { useSpring, animated, easings } from '@react-spring/three'
+import { useSpring, animated, easings } from "@react-spring/three";
 import { Sphere, Wireframe } from "@react-three/drei";
 
 import { GameContext } from "@/components/game/GameContext";
@@ -41,7 +41,7 @@ export default function DfAgent({ agent }: { agent: Agent }) {
   const [meshSprings, api] = useSpring(() => ({
     scale: meshScale,
     position: initialPosition,
-    color: '#ff6d6d',
+    color: "#ff6d6d",
     config: (_key) => {
       return {
         // precision: 0.0001,
@@ -74,14 +74,14 @@ export default function DfAgent({ agent }: { agent: Agent }) {
       scale={meshSprings.scale}
       ref={meshRef}
       onClick={(ev) => {
-        selectObject(agent)
+        selectObject(agent);
         ev.stopPropagation();
       }}
     >
       <meshStandardMaterial opacity={1} color={alive ? "green" : "gray"} />
       <Wireframe />
     </AnimatedSphere>
-  )
+  );
 
   return sphere;
 }

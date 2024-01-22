@@ -30,11 +30,11 @@ export default function SelectedObjectCard({ children }: {
 
   const selectedObjectComponent = useMemo(() => {
     if (selectedObject == null) {
-      return null
+      return null;
     }
 
     if (selectedObject.type === "agent") {
-      return <AgentCard agent={selectedObject} />
+      return <AgentCard agent={selectedObject} />;
     }
 
     return (

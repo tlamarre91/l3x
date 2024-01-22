@@ -34,7 +34,7 @@ export default function GameSidebar() {
   const sidebarComponent = useMemo(() => {
     switch (activeSidebar) {
       case null:
-        return null
+        return null;
 
       case "explore":
         return <ExploreSidebar />;

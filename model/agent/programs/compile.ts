@@ -15,38 +15,38 @@ export function compileStatement(statement: parse.Statement): commands.AgentComm
   };
 
   switch (instruction.symbol) {
-  case Instructions.echo:
-    command.message = operands.map((token) => token.symbol).join(" ");
-    // TODO: handle variables
-    break;
+    case Instructions.echo:
+      command.message = operands.map((token) => token.symbol).join(" ");
+      // TODO: handle variables
+      break;
 
-  case Instructions.go:
-    if (operands.length !== 1) {
-      throw new Error(`${Instructions.go} takes 1 operand`);
-    }
+    case Instructions.go:
+      if (operands.length !== 1) {
+        throw new Error(`${Instructions.go} takes 1 operand`);
+      }
 
-    command.state = operands[0].symbol;
-    break;
+      command.state = operands[0].symbol;
+      break;
 
-  case Instructions.move:
-    if (operands.length !== 1) {
-      throw new Error(`${Instructions.move} takes 1 operand`);
-    }
+    case Instructions.move:
+      if (operands.length !== 1) {
+        throw new Error(`${Instructions.move} takes 1 operand`);
+      }
 
-    command.edgeName = operands[0].symbol;
-    break;
+      command.edgeName = operands[0].symbol;
+      break;
 
-  case Instructions.test:
-    if (operands.length !== 3) {
-      throw new Error(`${Instructions.test} takes 3 operands`);
-    }
-    command.leftOperand = operands[0].symbol;
-    command.comparison = operands[1].symbol;
-    command.rightOperand = operands[2].symbol;
-    break;
+    case Instructions.test:
+      if (operands.length !== 3) {
+        throw new Error(`${Instructions.test} takes 3 operands`);
+      }
+      command.leftOperand = operands[0].symbol;
+      command.comparison = operands[1].symbol;
+      command.rightOperand = operands[2].symbol;
+      break;
 
-  default:
-    throw new Error(`i'm dumb and can't compile a ${instruction.symbol} or anything really`);
+    default:
+      throw new Error(`i'm dumb and can't compile a ${instruction.symbol} or anything really`);
   }
 
   return command;

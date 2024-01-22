@@ -29,7 +29,7 @@ export function makeGameContextData(): GameContextValue {
     }
   } satisfies GameContextValue;
 
-  return value;;
+  return value;
 }
 
 export const GameContext = createContext<GameContextValue>(makeGameContextData());

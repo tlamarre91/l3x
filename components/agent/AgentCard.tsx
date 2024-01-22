@@ -30,7 +30,7 @@ export default function AgentCard({ agent }: { agent: Agent }) {
   const codeBox = (
     <pre>
       {agent.stateMachine.program.codeLines.map((codeLine, codeLineIndex) => {
-        let style: CSSProperties = { };
+        const style: CSSProperties = { };
         if (currentCodeLine === codeLineIndex) {
           style.backgroundColor = "green";
         }

@@ -20,15 +20,15 @@ export function queryObjects<NodeData, EdgeData>(
   const [prefix, key] = query.fragmentId.split(FRAGMENT_ID_PREFIX_SEP);
 
   switch (prefix) {
-  case FragmentIdPrefixes.node:
-    return network.nodesByName.get(key);
+    case FragmentIdPrefixes.node:
+      return network.nodesByName.get(key);
 
-  case FragmentIdPrefixes.agent:
-    console.warn("TODO: make querying for agents not slow?");
-    return network.agents.find((agent) => agent.name === key);
+    case FragmentIdPrefixes.agent:
+      console.warn("TODO: make querying for agents not slow?");
+      return network.agents.find((agent) => agent.name === key);
 
-  default:
-    throw new Error(`TODO: query stuff besides nodes: ${prefix}, ${key}`);
+    default:
+      throw new Error(`TODO: query stuff besides nodes: ${prefix}, ${key}`);
   }
 }
 
