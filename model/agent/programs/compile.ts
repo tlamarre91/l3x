@@ -10,46 +10,64 @@ export function compileStatement(statement: parse.Statement): commands.AgentComm
     throw new Error(`unrecognized instruction: ${instruction.symbol}`);
   }
 
-  const command: commands.AgentCommand = {
-    instruction: instruction.symbol
-  };
-
   switch (instruction.symbol) {
     case Instructions.echo:
-      command.message = operands.map((token) => token.symbol).join(" ");
-      // TODO: handle variables
-      break;
+      return compileEcho(operands);
 
     case Instructions.go:
-      if (operands.length !== 1) {
-        throw new Error(`${Instructions.go} takes 1 operand`);
-      }
-
-      command.state = operands[0].symbol;
-      break;
+      return compileGo(operands);
 
     case Instructions.move:
-      if (operands.length !== 1) {
-        throw new Error(`${Instructions.move} takes 1 operand`);
-      }
-
-      command.edgeName = operands[0].symbol;
-      break;
+      return compileMove(operands);
 
     case Instructions.test:
-      if (operands.length !== 3) {
-        throw new Error(`${Instructions.test} takes 3 operands`);
-      }
-      command.leftOperand = operands[0].symbol;
-      command.comparison = operands[1].symbol;
-      command.rightOperand = operands[2].symbol;
-      break;
+      return compileTest(operands);
 
     default:
       throw new Error(`i'm dumb and can't compile a ${instruction.symbol} or anything really`);
   }
+}
 
-  return command;
+export function compileEcho(operands: parse.Token[]): commands.AgentEchoCommand {
+  return {
+    instruction: "echo",
+    message: operands.map((token) => token.symbol).join(" ")
+  };
+}
+
+export function compileGo(operands: parse.Token[]): commands.AgentGoCommand {
+  if (operands.length !== 1) {
+    throw new Error(`${Instructions.go} takes 1 operand`);
+  }
+
+  return {
+    instruction: "go",
+    state: operands[0].symbol
+  };
+}
+
+export function compileMove(operands: parse.Token[]): commands.AgentMoveCommand {
+  if (operands.length !== 1) {
+    throw new Error(`${Instructions.move} takes 1 operand`);
+  }
+
+  return {
+    instruction: "move",
+    edgeName: operands[0].symbol,
+  };
+}
+
+export function compileTest(operands: parse.Token[]): commands.AgentTestCommand {
+  if (operands.length !== 3) {
+    throw new Error(`${Instructions.test} takes 3 operands`);
+  }
+
+  return {
+    instruction: "test",
+    leftOperand: operands[0].symbol,
+    comparison: operands[1].symbol,
+    rightOperand: operands[2].symbol
+  };
 }
 
 export function compile(program: parse.Program): AgentStateMachine {
@@ -57,7 +75,6 @@ export function compile(program: parse.Program): AgentStateMachine {
   const sourceMap = new Map<commands.AgentCommand | commands.Procedure, parse.LineAndColumn>();
 
   let currentStateName: string | undefined = undefined;
-  // let currentlyCompilingStateCommands: commands.AgentCommand[] | undefined = undefined;
   let currentProcedure: commands.Procedure | undefined = undefined;
 
   for (const statement of program.statements) {
