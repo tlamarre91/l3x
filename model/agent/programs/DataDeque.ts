@@ -28,7 +28,7 @@ export class DataDeque {
   #array: BehaviorSubject<Array<string>>;
 
   constructor(public capacity: number) {
-    this.#array = new BehaviorSubject(new Array());
+    this.#array = new BehaviorSubject([]);
   }
 
   /** Set cursor index but keep it in bounds */
@@ -101,7 +101,7 @@ export class DataDeque {
 
     if (dataToWrite != null) {
       // TODO: probably off by 1
-      arr.splice(index, deleteCount, dataToWrite)
+      arr.splice(index, deleteCount, dataToWrite);
     } else {
       arr.splice(index, deleteCount);
     }

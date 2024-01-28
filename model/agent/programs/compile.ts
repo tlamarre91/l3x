@@ -116,7 +116,7 @@ export function compileTest(statement: parse.TestStatement, sourceMap: SourceMap
       : DEFAULT_TEST_OUTPUT;
 
     return {
-      instruction:  commands.Instructions.test,
+      instruction: commands.Instructions.test,
       leftOperand,
       comparison,
       rightOperand,
