@@ -27,19 +27,19 @@ export function isNamedRegister(s: string | undefined): s is NamedRegister {
 }
 
 export class StringDeque {
-  cursorIndex = 0;
-  frontIndex = 0;
-  backIndex = 0;
+  cursorIndex = new BehaviorSubject(0);
+  frontIndex = new BehaviorSubject(0);
+  backIndex = new BehaviorSubject(0);
 
-  #array: Array<string>;
+  #array: BehaviorSubject<Array<string>>;
 
   constructor(public capacity: number) {
-    this.#array = [];
+    this.#array = new BehaviorSubject(new Array());
   }
 
   get length() {
     let sum = 0;
-    for (const s of this.#array) {
+    for (const s of this.#array.getValue()) {
       sum += s.length + 1; // add 1 for the space between strings
     }
 
@@ -61,16 +61,41 @@ export class StringDeque {
   getBack() {
   }
 
+  pushCursorLeft() {
+  }
+
+  pushCursorRight() {
+  }
+
   pushFront() {
   }
 
   pushBack() {
   }
 
+  popCursorLeft() {
+  }
+
+  popCursorRight() {
+  }
+
   popFront() {
   }
 
   popBack() {
+  }
+
+  #cachedObservables: ExecutionStateObservable | undefined;
+
+  asObservables() { // TODO: type
+    if (this.#cachedObservables == null) {
+      this.#cachedObservables = {
+        valueUnderCursor: this.cursorIndex.asObservable()
+        // TODO: more stuff
+      };
+    }
+
+    return this.#cachedObservables;
   }
 }
 export const DEFAULT_BUFFER_SIZE = 32;
@@ -115,21 +140,27 @@ export class ExecutionState {
     this.bufferCursor$.next(0);
   }
 
+  #cachedObservables: ExecutionStateObservable | undefined;
+
   asObservables(): ExecutionStateObservable {
-    return {
-      alive$: this.alive$.asObservable(),
-      getAlive: () => this.alive$.getValue(),
-      stateName$: this.stateName$.asObservable(),
-      getStateName: () => this.stateName$.getValue(),
-      commandIndex$: this.commandIndex$.asObservable(),
-      getCommandIndex: () => this.commandIndex$.getValue(),
-      operandIndex$: this.operandIndex$.asObservable(),
-      getOperandIndex: () => this.operandIndex$.getValue(),
-      buffer$: this.buffer$.asObservable(),
-      getBuffer: () => this.buffer$.getValue(),
-      bufferCursor$: this.bufferCursor$.asObservable(),
-      getBufferCursor: () => this.bufferCursor$.getValue(),
-    };
+    if (this.#cachedObservables == null) {
+      this.#cachedObservables = {
+        alive$: this.alive$.asObservable(),
+        getAlive: () => this.alive$.getValue(),
+        stateName$: this.stateName$.asObservable(),
+        getStateName: () => this.stateName$.getValue(),
+        commandIndex$: this.commandIndex$.asObservable(),
+        getCommandIndex: () => this.commandIndex$.getValue(),
+        operandIndex$: this.operandIndex$.asObservable(),
+        getOperandIndex: () => this.operandIndex$.getValue(),
+        buffer$: this.buffer$.asObservable(),
+        getBuffer: () => this.buffer$.getValue(),
+        bufferCursor$: this.bufferCursor$.asObservable(),
+        getBufferCursor: () => this.bufferCursor$.getValue(),
+      };
+    }
+
+    return this.#cachedObservables;
   }
 }
 

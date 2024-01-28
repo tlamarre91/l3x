@@ -1,6 +1,7 @@
 import * as commands from "@/model/agent/commands";
 import * as parse from "./parse";
 import { AgentStateMachine, NamedRegisters } from "./AgentStateMachine";
+import { SourceMap } from ".";
 
 export function compileRefTerm(token: parse.RefToken, sourceMap?: SourceMap): commands.RefTerm {
   const term = { type: "ref", register: token.symbol } as const;
@@ -41,12 +42,12 @@ export function compileStatement(statement: parse.Statement, sourceMap?: SourceM
     return command;
   }
 
-  const command = compileVariadicStatement(statement);
+  const command = compileOtherStatement(statement);
   sourceMap?.set(command, statement.start);
   return command;
 }
 
-function compileVariadicStatement(statement: parse.Statement): commands.Command {
+function compileOtherStatement(statement: parse.Statement): commands.Command {
   const [instructionToken, ...operandTokens] = statement.tokens;
 
   const operands = operandTokens.map((token) => compileOperand(token));
@@ -102,8 +103,7 @@ export function compileMove(operands: commands.Term[]): commands.MoveCommand {
 const DEFAULT_TEST_OUTPUT = { type: "ref", register: NamedRegisters.cursor } as const;
 
 export function compileTest(statement: parse.TestStatement): commands.TestCommand {
-  const [_instruction, ...operands] = statement.tokens;
-  const [op1, op2, op3, op4] = operands;
+  const [_instruction, op1, op2, op3, op4] = statement.tokens;
 
   if (parse.isComparisonToken(op2)) {
     const leftOperand = compileOperand(op1);
@@ -133,37 +133,6 @@ export function compileTest(statement: parse.TestStatement): commands.TestComman
   };
 }
 
-// TODO
-//
-// if (operands.length === 1 || operands.length === 2) {
-//   // TODO: factor out compileTermTest
-//   let output = operands[1] as RefTerm; // TODO: :/
-//   if (output == null) {
-//     output = {
-//       type: "ref",
-//       register: NamedRegisters.cursor
-//     };
-//   }
-//
-//   return {
-//     instruction: "test",
-//     leftOperand: operands[0],
-//     output
-//   };
-// }
-//
-// // TODO: factor out compileConditionalTest
-// if (!isComparison(operands[1])) {
-//   throw new Error(`Unrecognized comparison: ${operands[1]}`);
-// }
-//
-// return {
-//   instruction: "test",
-//   leftOperand: operands[0],
-//   comparison: operands[1],
-//   rightOperand: operands[2],
-//   output: operands[3]
-// };
 
 // TODO: bad
 export function compileCursor(operands: commands.Term[]): commands.SetCursorCommand {
