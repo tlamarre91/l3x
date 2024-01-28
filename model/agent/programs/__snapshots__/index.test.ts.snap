@@ -106,6 +106,7 @@ exports[`parse works 1`] = `
           "symbol": "0",
         },
       ],
+      "type": "test",
     },
     {
       "start": {
@@ -295,6 +296,157 @@ exports[`parse works 1`] = `
 
 exports[`parse+compile throws 1`] = `[Error: statement is not part of a state definition]`;
 
+exports[`parse+compile with test command 1`] = `
+{
+  "procedures": Map {
+    "start" => {
+      "commands": [
+        {
+          "comparison": {
+            "comparison": "=",
+            "type": "comparison",
+          },
+          "instruction": "test",
+          "leftOperand": {
+            "register": "$pc",
+            "type": "ref",
+          },
+          "output": {
+            "register": "$c",
+            "type": "ref",
+          },
+          "rightOperand": {
+            "type": "literal",
+            "value": "0",
+          },
+        },
+      ],
+      "name": "start",
+    },
+  },
+  "program": {
+    "codeLines": [
+      "",
+      "def start",
+      "test $pc = 0",
+      "",
+    ],
+    "statements": [
+      {
+        "start": {
+          "column": 0,
+          "line": 1,
+        },
+        "tokens": [
+          {
+            "start": {
+              "column": 0,
+              "line": 1,
+            },
+            "symbol": "def",
+          },
+          {
+            "start": {
+              "column": 4,
+              "line": 1,
+            },
+            "symbol": "start",
+          },
+        ],
+      },
+      {
+        "start": {
+          "column": 0,
+          "line": 2,
+        },
+        "tokens": [
+          {
+            "start": {
+              "column": 0,
+              "line": 2,
+            },
+            "symbol": "test",
+          },
+          {
+            "start": {
+              "column": 5,
+              "line": 2,
+            },
+            "symbol": "$pc",
+          },
+          {
+            "start": {
+              "column": 9,
+              "line": 2,
+            },
+            "symbol": "=",
+          },
+          {
+            "start": {
+              "column": 11,
+              "line": 2,
+            },
+            "symbol": "0",
+          },
+        ],
+        "type": "test",
+      },
+    ],
+  },
+  "sourceMap": Map {
+    {
+      "commands": [
+        {
+          "comparison": {
+            "comparison": "=",
+            "type": "comparison",
+          },
+          "instruction": "test",
+          "leftOperand": {
+            "register": "$pc",
+            "type": "ref",
+          },
+          "output": {
+            "register": "$c",
+            "type": "ref",
+          },
+          "rightOperand": {
+            "type": "literal",
+            "value": "0",
+          },
+        },
+      ],
+      "name": "start",
+    } => {
+      "column": 0,
+      "line": 1,
+    },
+    {
+      "comparison": {
+        "comparison": "=",
+        "type": "comparison",
+      },
+      "instruction": "test",
+      "leftOperand": {
+        "register": "$pc",
+        "type": "ref",
+      },
+      "output": {
+        "register": "$c",
+        "type": "ref",
+      },
+      "rightOperand": {
+        "type": "literal",
+        "value": "0",
+      },
+    } => {
+      "column": 0,
+      "line": 2,
+    },
+  },
+}
+`;
+
 exports[`parse+compile works 1`] = `
 {
   "procedures": Map {
@@ -302,11 +454,41 @@ exports[`parse+compile works 1`] = `
       "commands": [
         {
           "instruction": "echo",
-          "message": "hey dudes",
+          "operands": [
+            {
+              "type": "literal",
+              "value": "hey",
+            },
+            {
+              "type": "literal",
+              "value": "dudes",
+            },
+          ],
         },
         {
           "instruction": "echo",
-          "message": "this is about it huh?",
+          "operands": [
+            {
+              "type": "literal",
+              "value": "this",
+            },
+            {
+              "type": "literal",
+              "value": "is",
+            },
+            {
+              "type": "literal",
+              "value": "about",
+            },
+            {
+              "type": "literal",
+              "value": "it",
+            },
+            {
+              "type": "literal",
+              "value": "huh?",
+            },
+          ],
         },
       ],
       "name": "start",
@@ -315,7 +497,16 @@ exports[`parse+compile works 1`] = `
       "commands": [
         {
           "instruction": "echo",
-          "message": "bye dudes",
+          "operands": [
+            {
+              "type": "literal",
+              "value": "bye",
+            },
+            {
+              "type": "literal",
+              "value": "dudes",
+            },
+          ],
         },
       ],
       "name": "end",
@@ -491,11 +682,41 @@ exports[`parse+compile works 1`] = `
       "commands": [
         {
           "instruction": "echo",
-          "message": "hey dudes",
+          "operands": [
+            {
+              "type": "literal",
+              "value": "hey",
+            },
+            {
+              "type": "literal",
+              "value": "dudes",
+            },
+          ],
         },
         {
           "instruction": "echo",
-          "message": "this is about it huh?",
+          "operands": [
+            {
+              "type": "literal",
+              "value": "this",
+            },
+            {
+              "type": "literal",
+              "value": "is",
+            },
+            {
+              "type": "literal",
+              "value": "about",
+            },
+            {
+              "type": "literal",
+              "value": "it",
+            },
+            {
+              "type": "literal",
+              "value": "huh?",
+            },
+          ],
         },
       ],
       "name": "start",
@@ -505,14 +726,44 @@ exports[`parse+compile works 1`] = `
     },
     {
       "instruction": "echo",
-      "message": "hey dudes",
+      "operands": [
+        {
+          "type": "literal",
+          "value": "hey",
+        },
+        {
+          "type": "literal",
+          "value": "dudes",
+        },
+      ],
     } => {
       "column": 8,
       "line": 1,
     },
     {
       "instruction": "echo",
-      "message": "this is about it huh?",
+      "operands": [
+        {
+          "type": "literal",
+          "value": "this",
+        },
+        {
+          "type": "literal",
+          "value": "is",
+        },
+        {
+          "type": "literal",
+          "value": "about",
+        },
+        {
+          "type": "literal",
+          "value": "it",
+        },
+        {
+          "type": "literal",
+          "value": "huh?",
+        },
+      ],
     } => {
       "column": 14,
       "line": 2,
@@ -521,7 +772,16 @@ exports[`parse+compile works 1`] = `
       "commands": [
         {
           "instruction": "echo",
-          "message": "bye dudes",
+          "operands": [
+            {
+              "type": "literal",
+              "value": "bye",
+            },
+            {
+              "type": "literal",
+              "value": "dudes",
+            },
+          ],
         },
       ],
       "name": "end",
@@ -531,7 +791,16 @@ exports[`parse+compile works 1`] = `
     },
     {
       "instruction": "echo",
-      "message": "bye dudes",
+      "operands": [
+        {
+          "type": "literal",
+          "value": "bye",
+        },
+        {
+          "type": "literal",
+          "value": "dudes",
+        },
+      ],
     } => {
       "column": 0,
       "line": 5,
@@ -547,15 +816,28 @@ exports[`sandbox 1`] = `
       "commands": [
         {
           "instruction": "echo",
-          "message": "hey1",
+          "operands": [
+            {
+              "type": "literal",
+              "value": "hey1",
+            },
+          ],
         },
         {
           "instruction": "echo",
-          "message": "hey2",
+          "operands": [
+            {
+              "type": "literal",
+              "value": "hey2",
+            },
+          ],
         },
         {
           "instruction": "go",
-          "state": "loop",
+          "state": {
+            "type": "literal",
+            "value": "loop",
+          },
         },
       ],
       "name": "start",
@@ -564,15 +846,28 @@ exports[`sandbox 1`] = `
       "commands": [
         {
           "instruction": "echo",
-          "message": "woo1",
+          "operands": [
+            {
+              "type": "literal",
+              "value": "woo1",
+            },
+          ],
         },
         {
           "instruction": "echo",
-          "message": "woo2",
+          "operands": [
+            {
+              "type": "literal",
+              "value": "woo2",
+            },
+          ],
         },
         {
           "instruction": "go",
-          "state": "start",
+          "state": {
+            "type": "literal",
+            "value": "start",
+          },
         },
       ],
       "name": "loop",
@@ -775,15 +1070,28 @@ exports[`sandbox 1`] = `
       "commands": [
         {
           "instruction": "echo",
-          "message": "hey1",
+          "operands": [
+            {
+              "type": "literal",
+              "value": "hey1",
+            },
+          ],
         },
         {
           "instruction": "echo",
-          "message": "hey2",
+          "operands": [
+            {
+              "type": "literal",
+              "value": "hey2",
+            },
+          ],
         },
         {
           "instruction": "go",
-          "state": "loop",
+          "state": {
+            "type": "literal",
+            "value": "loop",
+          },
         },
       ],
       "name": "start",
@@ -793,21 +1101,34 @@ exports[`sandbox 1`] = `
     },
     {
       "instruction": "echo",
-      "message": "hey1",
+      "operands": [
+        {
+          "type": "literal",
+          "value": "hey1",
+        },
+      ],
     } => {
       "column": 0,
       "line": 1,
     },
     {
       "instruction": "echo",
-      "message": "hey2",
+      "operands": [
+        {
+          "type": "literal",
+          "value": "hey2",
+        },
+      ],
     } => {
       "column": 0,
       "line": 2,
     },
     {
       "instruction": "go",
-      "state": "loop",
+      "state": {
+        "type": "literal",
+        "value": "loop",
+      },
     } => {
       "column": 0,
       "line": 3,
@@ -816,15 +1137,28 @@ exports[`sandbox 1`] = `
       "commands": [
         {
           "instruction": "echo",
-          "message": "woo1",
+          "operands": [
+            {
+              "type": "literal",
+              "value": "woo1",
+            },
+          ],
         },
         {
           "instruction": "echo",
-          "message": "woo2",
+          "operands": [
+            {
+              "type": "literal",
+              "value": "woo2",
+            },
+          ],
         },
         {
           "instruction": "go",
-          "state": "start",
+          "state": {
+            "type": "literal",
+            "value": "start",
+          },
         },
       ],
       "name": "loop",
@@ -834,21 +1168,34 @@ exports[`sandbox 1`] = `
     },
     {
       "instruction": "echo",
-      "message": "woo1",
+      "operands": [
+        {
+          "type": "literal",
+          "value": "woo1",
+        },
+      ],
     } => {
       "column": 0,
       "line": 6,
     },
     {
       "instruction": "echo",
-      "message": "woo2",
+      "operands": [
+        {
+          "type": "literal",
+          "value": "woo2",
+        },
+      ],
     } => {
       "column": 0,
       "line": 7,
     },
     {
       "instruction": "go",
-      "state": "start",
+      "state": {
+        "type": "literal",
+        "value": "start",
+      },
     } => {
       "column": 0,
       "line": 8,

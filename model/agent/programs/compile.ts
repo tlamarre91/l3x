@@ -1,78 +1,194 @@
 import * as commands from "@/model/agent/commands";
-import { Instructions } from "@/model/agent/commands";
 import * as parse from "./parse";
-import { AgentStateMachine } from "./AgentStateMachine";
+import { AgentStateMachine, NamedRegisters } from "./AgentStateMachine";
 
-export function compileStatement(statement: parse.Statement): commands.AgentCommand {
-  const [instruction, ...operands] = statement.tokens;
+export function compileRefTerm(token: parse.RefToken, sourceMap?: SourceMap): commands.RefTerm {
+  const term = { type: "ref", register: token.symbol } as const;
+  sourceMap?.set(term, token.start);
+  return term;
+}
 
-  if (!commands.isInstruction(instruction.symbol)) {
-    throw new Error(`unrecognized instruction: ${instruction.symbol}`);
+export function compileComparisonTerm(token: parse.ComparisonToken, sourceMap?: SourceMap): commands.ComparisonTerm {
+  const term = { type: "comparison", comparison: token.symbol } as const;
+  sourceMap?.set(term, token.start);
+  return term;
+}
+
+export function compileOperand(token: parse.Token, sourceMap?: SourceMap): commands.Term {
+  if (parse.isRefToken(token)) {
+    return compileRefTerm(token);
   }
 
-  switch (instruction.symbol) {
-    case Instructions.echo:
+  if (parse.isComparisonToken(token)) {
+    return compileComparisonTerm(token);
+  }
+
+  const term = { type: "literal", value: token.symbol } as const;
+  sourceMap?.set(term, token.start);
+  return term;
+}
+
+export function compileStatement(statement: parse.Statement, sourceMap?: SourceMap): commands.Command {
+  const instructionToken = statement.tokens[0];
+  if (!commands.isInstruction(instructionToken.symbol)) {
+    throw new Error(`unrecognized instruction: ${instructionToken.symbol}`);
+  }
+
+  // Handle special statements
+  if (parse.isTestStatement(statement)) {
+    const command = compileTest(statement);
+    sourceMap?.set(command, statement.start);
+    return command;
+  }
+
+  const command = compileVariadicStatement(statement);
+  sourceMap?.set(command, statement.start);
+  return command;
+}
+
+function compileVariadicStatement(statement: parse.Statement): commands.Command {
+  const [instructionToken, ...operandTokens] = statement.tokens;
+
+  const operands = operandTokens.map((token) => compileOperand(token));
+
+  switch (instructionToken.symbol) {
+    case commands.Instructions.echo:
       return compileEcho(operands);
 
-    case Instructions.go:
+    case commands.Instructions.go:
       return compileGo(operands);
 
-    case Instructions.move:
+    case commands.Instructions.move:
       return compileMove(operands);
 
-    case Instructions.test:
-      return compileTest(operands);
+    // TODO: setCursor isn't variadic
+    case commands.Instructions.setCursor:
+      return compileCursor(operands);
 
     default:
-      throw new Error(`i'm dumb and can't compile a ${instruction.symbol} or anything really`);
+      throw new Error(`i'm dumb and can't compile a ${instructionToken.symbol}`);
   }
 }
 
-export function compileEcho(operands: parse.Token[]): commands.AgentEchoCommand {
+export function compileEcho(operands: commands.Term[]): commands.EchoCommand {
   return {
-    instruction: "echo",
-    message: operands.map((token) => token.symbol).join(" ")
+    instruction: commands.Instructions.echo,
+    operands: operands
   };
 }
 
-export function compileGo(operands: parse.Token[]): commands.AgentGoCommand {
+export function compileGo(operands: commands.Term[]): commands.GoCommand {
   if (operands.length !== 1) {
-    throw new Error(`${Instructions.go} takes 1 operand`);
+    throw new Error(`${commands.Instructions.go} takes 1 operand`);
   }
 
   return {
-    instruction: "go",
-    state: operands[0].symbol
+    instruction: commands.Instructions.go,
+    state: operands[0]
   };
 }
 
-export function compileMove(operands: parse.Token[]): commands.AgentMoveCommand {
+export function compileMove(operands: commands.Term[]): commands.MoveCommand {
   if (operands.length !== 1) {
-    throw new Error(`${Instructions.move} takes 1 operand`);
+    throw new Error(`${commands.Instructions.move} takes 1 operand`);
   }
 
   return {
-    instruction: "move",
-    edgeName: operands[0].symbol,
+    instruction: commands.Instructions.move,
+    edgeName: operands[0],
   };
 }
 
-export function compileTest(operands: parse.Token[]): commands.AgentTestCommand {
-  if (operands.length !== 3) {
-    throw new Error(`${Instructions.test} takes 3 operands`);
+const DEFAULT_TEST_OUTPUT = { type: "ref", register: NamedRegisters.cursor } as const;
+
+export function compileTest(statement: parse.TestStatement): commands.TestCommand {
+  const [_instruction, ...operands] = statement.tokens;
+  const [op1, op2, op3, op4] = operands;
+
+  if (parse.isComparisonToken(op2)) {
+    const leftOperand = compileOperand(op1);
+    const comparison = compileComparisonTerm(op2);
+    const rightOperand = compileOperand(op3!);
+    const output = parse.isRefToken(op4)
+      ? compileRefTerm(op4)
+      : DEFAULT_TEST_OUTPUT;
+
+    return {
+      instruction: "test",
+      leftOperand,
+      comparison,
+      rightOperand,
+      output
+    };
   }
+
+  const output = parse.isRefToken(op2)
+    ? compileRefTerm(op2)
+    : DEFAULT_TEST_OUTPUT;
 
   return {
     instruction: "test",
-    leftOperand: operands[0].symbol,
-    comparison: operands[1].symbol,
-    rightOperand: operands[2].symbol
+    leftOperand: compileOperand(op1),
+    output
   };
 }
 
+// TODO
+//
+// if (operands.length === 1 || operands.length === 2) {
+//   // TODO: factor out compileTermTest
+//   let output = operands[1] as RefTerm; // TODO: :/
+//   if (output == null) {
+//     output = {
+//       type: "ref",
+//       register: NamedRegisters.cursor
+//     };
+//   }
+//
+//   return {
+//     instruction: "test",
+//     leftOperand: operands[0],
+//     output
+//   };
+// }
+//
+// // TODO: factor out compileConditionalTest
+// if (!isComparison(operands[1])) {
+//   throw new Error(`Unrecognized comparison: ${operands[1]}`);
+// }
+//
+// return {
+//   instruction: "test",
+//   leftOperand: operands[0],
+//   comparison: operands[1],
+//   rightOperand: operands[2],
+//   output: operands[3]
+// };
+
+// TODO: bad
+export function compileCursor(operands: commands.Term[]): commands.SetCursorCommand {
+  if (operands.length !== 1) {
+    throw new Error(`SetCursorCommand takes 1 argument, got ${operands.length}`);
+  }
+
+  const op = operands[0];
+  if (op.type !== "literal") {
+    throw new Error(`SetCursorCommand takes 1 literal argument, got argument of type ${op.type}`);
+  }
+
+  return {
+    instruction: "curs",
+    offset: parseInt(op.value!),
+    relative: true
+  };
+}
+
+/**
+ * Take a program and turn it into a set of behaviors for an `Agent`
+ */
 export function compile(program: parse.Program): AgentStateMachine {
   const procedures = new Map<string, commands.Procedure>();
-  const sourceMap = new Map<commands.AgentCommand | commands.Procedure, parse.LineAndColumn>();
+  const sourceMap = new Map<commands.Command | commands.Procedure | commands.Term, parse.LineAndColumn>();
 
   let currentStateName: string | undefined = undefined;
   let currentProcedure: commands.Procedure | undefined = undefined;
@@ -105,9 +221,8 @@ export function compile(program: parse.Program): AgentStateMachine {
       throw new Error("statement is not part of a state definition");
     }
 
-    const command = compileStatement(statement);
+    const command = compileStatement(statement, sourceMap);
     currentProcedure.commands.push(command);
-    sourceMap.set(command, statement.start);
   }
 
   return {

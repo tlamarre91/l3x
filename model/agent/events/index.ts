@@ -1,4 +1,4 @@
-import { AgentCommand } from "../commands";
+import { Command } from "../commands";
 import { Status } from "@/utils";
 
 export type AgentEventType =
@@ -17,7 +17,7 @@ export interface AgentEvent {
   errorName?: string;
   errorMessage?: string;
   message?: string;
-  command?: AgentCommand;
+  command?: Command;
   status?: Status;
 }
 
@@ -42,6 +42,6 @@ export interface AgentEchoEvent extends AgentEvent {
 
 export interface AgentProcessEvent extends AgentEvent {
   type: "process";
-  command: AgentCommand;
+  command: Command;
   status: Status;
 }

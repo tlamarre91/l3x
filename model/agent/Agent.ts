@@ -76,7 +76,7 @@ export class Agent {
     this.#executionState.stateName$.next(state);
   }
 
-  #getSelectedCommand(): commands.AgentCommand {
+  #getSelectedCommand(): commands.Command {
     const commandIndex = this.#executionState.commandIndex$.getValue();
     console.log({ commandIndex });
     const stateName = this.#executionState.stateName$.getValue();
@@ -121,7 +121,7 @@ export class Agent {
     // TODO: handle increment command index
   }
 
-  executeCommand(command: commands.AgentCommand): commands.CommandResult {
+  executeCommand(command: commands.Command): commands.CommandResult {
     try {
       const result = this.#executeCommandUnsafe(command);
       return result;
@@ -130,7 +130,7 @@ export class Agent {
     }
   }
 
-  #executeCommandUnsafe(command: commands.AgentCommand): commands.CommandResult {
+  #executeCommandUnsafe(command: commands.Command): commands.CommandResult {
     if (commands.isEcho(command)) {
       return this.#executeEcho(command);
     }
@@ -146,13 +146,13 @@ export class Agent {
     throw new Error(`${command.instruction} not implemented`);
   }
 
-  #executeEcho({ message }: commands.AgentEchoCommand): commands.CommandResult {
-    const eventsToEmit = [{ type: "echo", message } as const];
+  #executeEcho({ operands }: commands.EchoCommand): commands.CommandResult {
+    const eventsToEmit = [{ type: "echo", message: operands.join(" ") } as const];
     return { status: "ok", eventsToEmit };
   }
 
-  #executeGo({ state }: commands.AgentGoCommand): commands.CommandResult {
-    this.setState(state);
+  #executeGo({ state }: commands.GoCommand): commands.CommandResult {
+    this.setState(state.value!);
 
     return {
       status: "ok",
@@ -160,12 +160,12 @@ export class Agent {
     };
   }
 
-  #executeMove({ edgeName }: commands.AgentMoveCommand): commands.CommandResult {
+  #executeMove({ edgeName }: commands.MoveCommand): commands.CommandResult {
     if (this.networkClient == null) {
       throw new Error("can't ask to move when i don't have a network client");
     }
 
-    const req = { type: "move", edgeName } as const; 
+    const req = { type: "move", edgeName: edgeName.value } as const; 
     const { status, message } = this.networkClient.request(req);
 
     if (status !== "ok") {
@@ -174,10 +174,4 @@ export class Agent {
 
     return { status };
   }
-
-  // executeWrite(command: AgentWriteCommand) {
-  //   throw new Error("not implemented");
-  // }
-  //
-  // executeMove(
 }

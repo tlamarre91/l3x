@@ -2,17 +2,82 @@ import { BehaviorSubject, Observable } from "rxjs";
 
 import * as commands from "@/model/agent/commands";
 import * as parse from "./parse";
+import type { SourceMap } from ".";
 
-export type Buffer = Array<string | null>;
-export const DEFAULT_BUFFER_SIZE = 32;
+export const NamedRegisters = {
+  cursor: "$c",
+  /** same as cursor, but move the cursor left after reading */
+  cursorDec: "$cd",
+  /** same as cursor, but move the cursor right after reading */
+  cursorInc: "$ci",
+  front: "$f",
+  back: "$b",
+  popCursor: "$pc",
+  /** same as popCursor, but move the cursor left */
+  popCursorDec: "$pd",
+  popFront: "$pf",
+  popBack: "$pb",
+} as const;
 
-export function makeBuffer(size: number = DEFAULT_BUFFER_SIZE): Buffer {
-  return new Array<string | null>(size);
+export type NamedRegister = typeof NamedRegisters[keyof typeof NamedRegisters];
+
+export function isNamedRegister(s: string | undefined): s is NamedRegister {
+  const isNamedRegister = Object.values(NamedRegisters).includes(s as NamedRegister);
+  return isNamedRegister;
 }
+
+export class StringDeque {
+  cursorIndex = 0;
+  frontIndex = 0;
+  backIndex = 0;
+
+  #array: Array<string>;
+
+  constructor(public capacity: number) {
+    this.#array = [];
+  }
+
+  get length() {
+    let sum = 0;
+    for (const s of this.#array) {
+      sum += s.length + 1; // add 1 for the space between strings
+    }
+
+    return sum;
+  }
+
+  getCursor() {
+  }
+
+  getCursorDec() {
+  }
+
+  getCursorInc() {
+  }
+
+  getFront() {
+  }
+
+  getBack() {
+  }
+
+  pushFront() {
+  }
+
+  pushBack() {
+  }
+
+  popFront() {
+  }
+
+  popBack() {
+  }
+}
+export const DEFAULT_BUFFER_SIZE = 32;
 
 export interface AgentStateMachine {
   program: parse.Program;
-  sourceMap: Map<commands.AgentCommand | commands.Procedure, parse.LineAndColumn>;
+  sourceMap: SourceMap;
   procedures: Map<string, commands.Procedure>;
 }
 
@@ -30,7 +95,7 @@ export class ExecutionState {
   readonly stateName$: BehaviorSubject<string>;
   readonly commandIndex$: BehaviorSubject<number>;
   readonly operandIndex$: BehaviorSubject<number>;
-  readonly buffer$: BehaviorSubject<Buffer>;
+  readonly buffer$: BehaviorSubject<StringDeque>;
   readonly bufferCursor$: BehaviorSubject<number>;
 
   constructor() {
@@ -38,7 +103,7 @@ export class ExecutionState {
     this.stateName$ = new BehaviorSubject("start");
     this.commandIndex$ = new BehaviorSubject(0);
     this.operandIndex$ = new BehaviorSubject(0);
-    this.buffer$ = new BehaviorSubject(makeBuffer());
+    this.buffer$ = new BehaviorSubject(new StringDeque(64));
     this.bufferCursor$ = new BehaviorSubject(0);
   }
 
@@ -46,7 +111,7 @@ export class ExecutionState {
     this.stateName$.next("start");
     this.commandIndex$.next(0);
     this.operandIndex$.next(0);
-    this.buffer$.next(makeBuffer());
+    this.buffer$.next(new StringDeque(64));
     this.bufferCursor$.next(0);
   }
 
@@ -77,8 +142,8 @@ export type ExecutionStateObservable = {
   readonly getCommandIndex: () => number;
   readonly operandIndex$: Observable<number>;
   readonly getOperandIndex: () => number;
-  readonly buffer$: Observable<Buffer>;
-  readonly getBuffer: () => Buffer;
+  readonly buffer$: Observable<StringDeque>;
+  readonly getBuffer: () => StringDeque;
   readonly bufferCursor$: Observable<number>;
   readonly getBufferCursor: () => number;
 }

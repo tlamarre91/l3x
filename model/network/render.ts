@@ -1,11 +1,11 @@
 import { Network } from "./Network";
-import { Buffer } from "../agent/programs/AgentStateMachine";
+import { StringDeque } from "../agent/programs/AgentStateMachine";
 
 function nodeChartId(nodeId: number) {
   return `n${nodeId}`;
 }
 
-export function renderToMermaidChart(network: Network<Buffer, Buffer>) {
+export function renderToMermaidChart(network: Network<StringDeque, StringDeque>) {
   const networkState = network.dumpState();
   const mermaidChartLines = new Array<string>();
 

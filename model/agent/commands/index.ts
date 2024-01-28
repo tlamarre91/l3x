@@ -1,5 +1,6 @@
 import { Status } from "@/utils";
 import { AgentEvent } from "../events";
+import { NamedRegister } from "../programs/AgentStateMachine";
 
 export const Instructions = {
   echo: "echo",
@@ -7,79 +8,134 @@ export const Instructions = {
   links: "links",
   go: "go",
   test: "test",
-  tgo: "tgo",
-  fgo: "fgo"
+  setCursor: "curs",
+  create: "create",
+  clone: "clone",
+  goIfTrue: "tgo",
+  goIfFalse: "fgo",
+  stun: "stun",
 } as const;
 
 export type Instruction = typeof Instructions[keyof typeof Instructions];
 
-export function isInstruction(s: string): s is Instruction {
-  // TODO: eehhhh
-  const isinst = Object.hasOwn(Instructions, s);
-  return isinst;
+export function isInstruction(s: string | undefined): s is Instruction {
+  const isInstruction = Object.values(Instructions).includes(s as Instruction);
+  return isInstruction;
 }
 
-export interface AgentCommand {
+export interface Term {
+  readonly type: "literal" | "ref" | "comparison";
+  readonly value?: string;
+  readonly register?: NamedRegister;
+  readonly comparison?: Comparison;
+}
+
+export interface ComparisonTerm extends Term {
+  readonly type: "comparison";
+  readonly comparison: Comparison;
+}
+
+export interface LiteralTerm extends Term {
+  readonly type: "literal";
+  readonly value: string;
+}
+
+export interface RefTerm extends Term {
+  readonly type: "ref";
+  readonly register: NamedRegister;
+}
+
+export type Comparison =
+  | "<"
+  | "<="
+  | "="
+  | ">"
+  | ">="
+  | "!=";
+
+export function isComparison(s: string | undefined): s is Comparison {
+  return [
+    "<",
+    "<=",
+    "=",
+    ">",
+    ">=",
+    "!=",
+  ].includes(s as Comparison);
+}
+
+export interface Command {
   instruction: Instruction;
-  output?: "prepend" | "append" | "insert" | "ignore";
-  edgeName?: string;
-  nodeName?: string;
-  message?: string;
-  state?: string;
-  leftOperand?: string;
-  rightOperand?: string;
-  comparison?: string;
+  output?: RefTerm | undefined;
+  edgeName?: Term;
+  nodeName?: Term;
+  operands?: Term[];
+  state?: Term;
+  leftOperand?: Term;
+  rightOperand?: Term;
+  comparison?: ComparisonTerm;
 }
 
 export interface Procedure {
   name: string;
-  commands: AgentCommand[];
+  commands: Command[];
 }
 
-export interface AgentEchoCommand extends AgentCommand {
+export interface EchoCommand extends Command {
   instruction: typeof Instructions.echo;
-  message: string;
+  operands: Term[];
 }
 
-export function isEcho(command: AgentCommand): command is AgentEchoCommand {
+export function isEcho(command: Command): command is EchoCommand {
   return command.instruction === Instructions.echo;
 }
 
-export interface AgentGoCommand extends AgentCommand {
+export interface GoCommand extends Command {
   instruction: typeof Instructions.go;
-  state: string;
+  state: Term;
 }
 
-export function isGo(command: AgentCommand): command is AgentGoCommand {
+export function isGo(command: Command): command is GoCommand {
   return command.instruction === Instructions.go;
 }
 
-export interface AgentMoveCommand extends AgentCommand {
+export interface MoveCommand extends Command {
   instruction: typeof Instructions.move;
-  edgeName: string;
+  edgeName: Term;
 }
 
-export function isMove(command: AgentCommand): command is AgentMoveCommand {
+export function isMove(command: Command): command is MoveCommand {
   return command.instruction === Instructions.move;
 }
 
-export interface AgentLinksCommand extends AgentCommand {
+export interface AgentLinksCommand extends Command {
   instruction: typeof Instructions.links;
-  edgeName: string;
+  edgeName: Term;
 }
 
-export function isLinks(command: AgentCommand): command is AgentLinksCommand {
+export function isLinks(command: Command): command is AgentLinksCommand {
   return command.instruction === Instructions.links;
 }
 
-export interface AgentTestCommand extends AgentCommand {
+export interface TestCommand extends Command {
   instruction: typeof Instructions.test;
-  leftOperand?: string;
-  rightOperand?: string;
-  comparison?: string;
+  leftOperand?: Term;
+  rightOperand?: Term;
+  comparison?: ComparisonTerm;
+  output: RefTerm;
 }
 
-export function isTest(command: AgentCommand): command is AgentTestCommand {
+export function isTest(command: Command): command is TestCommand {
+  return command.instruction === Instructions.test;
+}
+
+export interface SetCursorCommand extends Command {
+  instruction: typeof Instructions.setCursor;
+  offset: number;
+  relative: boolean;
+}
+
+export function isSetCursor(command: Command): command is SetCursorCommand {
   return command.instruction === Instructions.test;
 }
 

@@ -25,12 +25,23 @@ it("parse+compile throws", () => {
   expect(tryCompile).toThrowErrorMatchingSnapshot();
 });
 
+it("parse+compile with test command", () => {
+  const program = `
+def start
+test $pc = 0
+`;
+  const compiled = programs.parseAndCompile(program);
+  expect(compiled).toMatchSnapshot();
+});
+
 it("sandbox", () => {
+  // const program = programs.parse(TEST_PROGRAM_WITH_REGISTERS);
   const program = programs.parse(TEST_PROGRAM);
   const stateMachine = programs.compile(program);
   expect(stateMachine).toMatchSnapshot();
 });
 
+// TODO: delete. expect this not to compile because of bad namedregister
 const PARSEABLE_PROGRAM = `def start
 echo hello world
 test $peeklast > 0
@@ -87,3 +98,7 @@ echo woo2
 go start
 `;
 
+const TEST_PROGRAM_WITH_REGISTERS = `def start
+echo hello to the back of the deque $b
+echo hello to the front of the deque $f
+`;
