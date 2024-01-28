@@ -163,6 +163,10 @@ export class Agent {
       return this.#executeTest(command);
     }
 
+    if (commands.isWrite(command)) {
+      return this.#executeWrite(command);
+    }
+
     throw new Error(`${command.instruction} not implemented`);
   }
 
@@ -195,7 +199,12 @@ export class Agent {
     return { status };
   }
 
-  #executeTest({ leftOperand, rightOperand, comparison, output }: commands.TestCommand): commands.CommandResult {
+  #executeTest({
+    leftOperand,
+    rightOperand,
+    comparison,
+    output
+  }: commands.TestCommand): commands.CommandResult {
     const leftValue = this.#evaluateTerm(leftOperand);
 
     if (comparison == null) {
@@ -235,6 +244,15 @@ export class Agent {
     }
 
     const outputValue = result ? "1" : "0";
+    this.#evaluateTerm(output, outputValue);
+    return commands.OK_RESULT;
+  }
+
+  #executeWrite({
+    data,
+    output
+  }: commands.WriteCommand): commands.CommandResult {
+    const outputValue = this.#evaluateTerm(data);
     this.#evaluateTerm(output, outputValue);
     return commands.OK_RESULT;
   }

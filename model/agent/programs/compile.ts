@@ -44,6 +44,12 @@ export function compileStatement(statement: parse.Statement, sourceMap: SourceMa
     return command;
   }
 
+  if (parse.isWriteStatement(statement)) {
+    const command = compileWrite(statement, sourceMap);
+    sourceMap?.set(command, statement.start);
+    return command;
+  }
+
   const command = compileOtherStatement(statement, sourceMap);
   sourceMap?.set(command, statement.start);
   return command;
@@ -102,7 +108,7 @@ export function compileMove(operands: commands.Term[]): commands.MoveCommand {
   };
 }
 
-const DEFAULT_TEST_OUTPUT = { type: "ref", register: NamedRegisters.cursor } as const;
+const DEFAULT_OUTPUT = { type: "ref", register: NamedRegisters.cursor } as const;
 
 export function compileTest(statement: parse.TestStatement, sourceMap: SourceMap | null): commands.TestCommand {
   const [_instruction, op1, op2, op3, op4] = statement.tokens;
@@ -111,9 +117,9 @@ export function compileTest(statement: parse.TestStatement, sourceMap: SourceMap
     const leftOperand = compileOperand(op1, sourceMap);
     const comparison = compileComparisonTerm(op2, sourceMap);
     const rightOperand = compileOperand(op3!, sourceMap);
-    const output = parse.isRefToken(op4)
+    const output = op4 != null
       ? compileRefTerm(op4, sourceMap)
-      : DEFAULT_TEST_OUTPUT;
+      : DEFAULT_OUTPUT;
 
     return {
       instruction: commands.Instructions.test,
@@ -126,7 +132,7 @@ export function compileTest(statement: parse.TestStatement, sourceMap: SourceMap
 
   const output = parse.isRefToken(op2)
     ? compileRefTerm(op2, sourceMap)
-    : DEFAULT_TEST_OUTPUT;
+    : DEFAULT_OUTPUT;
 
   return {
     instruction: commands.Instructions.test,
@@ -136,7 +142,8 @@ export function compileTest(statement: parse.TestStatement, sourceMap: SourceMap
 }
 
 
-// TODO: bad
+// TODO: bad. don't use before rewriting.
+// do validation in parse, like with parse.TestStatement and parse.WriteStatement
 export function compileCursor(operands: commands.Term[]): commands.SetCursorCommand {
   if (operands.length !== 1) {
     throw new Error(`SetCursorCommand takes 1 argument, got ${operands.length}`);
@@ -152,6 +159,23 @@ export function compileCursor(operands: commands.Term[]): commands.SetCursorComm
     offset: parseInt(op.value!),
     relative: true
   };
+}
+
+export function compileWrite(statement: parse.WriteStatement, sourceMap: SourceMap | null): commands.WriteCommand {
+  const [_instruction, dataToken, outputToken] = statement.tokens;
+
+  const data = compileOperand(dataToken, sourceMap);
+  const output = outputToken != null
+    ? compileRefTerm(outputToken, sourceMap)
+    : DEFAULT_OUTPUT;
+
+  const command = {
+    instruction: "write" ,
+    data,
+    output
+  } as const;
+
+  return command
 }
 
 /**

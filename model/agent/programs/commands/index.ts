@@ -14,6 +14,7 @@ export const Instructions = {
   goIfTrue: "tgo",
   goIfFalse: "fgo",
   stun: "stun",
+  write: "write"
 } as const;
 
 export type Instruction = typeof Instructions[keyof typeof Instructions];
@@ -139,6 +140,16 @@ export interface SetCursorCommand extends Command {
 
 export function isSetCursor(command: Command): command is SetCursorCommand {
   return command.instruction === Instructions.test;
+}
+
+export interface WriteCommand extends Command {
+  instruction: typeof Instructions.write;
+  data: Term;
+  output: RefTerm;
+}
+
+export function isWrite(command: Command): command is WriteCommand {
+  return command.instruction === Instructions.write;
 }
 
 export interface CommandResult {

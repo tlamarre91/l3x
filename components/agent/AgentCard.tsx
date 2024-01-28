@@ -56,7 +56,7 @@ export default function AgentCard({ agent }: { agent: Agent }) {
             </tr>
             <tr>
               <th>buffer</th>
-              <td>{bufferData.length > 0 ? bufferData : "<nothin>"}</td>
+              <td>{bufferData.length > 0 ? bufferData.join(", ") : "<nothin>"}</td>
             </tr>
             <tr>
               <th>buffer cursor</th>

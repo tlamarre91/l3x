@@ -63,10 +63,10 @@ export class DataDeque {
   accessNamedRegister(register: NamedRegister, dataToWrite?: string): string {
     switch (register) {
       case NamedRegisters.cursor:
-        return this.accessCursor(false, dataToWrite);
+        return this.accessCursor(false, dataToWrite, 1);
 
       case NamedRegisters.cursorDec:
-        return this.accessCursor(false, dataToWrite, -1);
+        return this.accessCursor(false, dataToWrite, 0);
 
       case NamedRegisters.cursorInc:
         return this.accessCursor(false, dataToWrite, 1);

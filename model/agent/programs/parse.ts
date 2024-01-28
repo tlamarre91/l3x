@@ -40,18 +40,28 @@ export function isComparisonToken(token: Token | undefined): token is Comparison
   return isComparison(token?.symbol);
 }
 
+export type StatementType = "test" | "write";
+
 export interface Statement {
-  type?: "test" | undefined; // TODO: more types
+  type?: StatementType | undefined; // TODO: more types
   start: LineAndColumn;
   tokens: Token[];
 }
 
 export interface TestStatement extends Statement {
+  type: "test";
   tokens:
     | [InstructionToken, Token]
     | [InstructionToken, Token, RefToken]
     | [InstructionToken, Token, ComparisonToken, Token]
     | [InstructionToken, Token, ComparisonToken, Token, RefToken];
+}
+
+export interface WriteStatement extends Statement {
+  type: "write";
+  tokens:
+    | [InstructionToken, Token]
+    | [InstructionToken, Token, RefToken];
 }
 
 /**
@@ -98,6 +108,30 @@ export function validateTestStatement(statement: Statement): statement is TestSt
   }
 
   throw new Error(`Expected 1, 2, 3, or 4 arguments, got ${statement.tokens.length - 1}`);
+}
+
+/**
+ * Don't use this if you haven't already parsed the statement; it doesn't validate
+ */
+export function isWriteStatement(statement: Statement): statement is WriteStatement {
+  return statement.type === "write";
+}
+
+export function validateWriteStatement(statement: Statement): statement is WriteStatement {
+  if (statement.tokens.length === 2) {
+    return true;
+  }
+
+  if (statement.tokens.length !== 2) {
+    throw new Error(`Expected 1 or 2 arguments, got ${statement.tokens.length - 1}`);
+  }
+
+  const outputToken = statement.tokens[2];
+  if (!isRefToken(outputToken)) {
+    throw new Error(`Expected named register or nothing at column ${outputToken.start.column}, got ${outputToken.symbol}`);
+  }
+
+  return true;
 }
 
 export interface Program {
@@ -156,7 +190,11 @@ export function parseStatement(line: string, lineNumber: number): Statement | un
   if (statement.tokens[0].symbol === "test") {
     validateTestStatement(statement);
     statement.type = "test";
-    return statement;
+  }
+
+  if (statement.tokens[0].symbol === "write") {
+    validateWriteStatement(statement);
+    statement.type = "write";
   }
 
   return statement;
