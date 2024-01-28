@@ -70,7 +70,8 @@ export class NetworkFactory {
 
 
     const ZIGZAG_PROGRAM = `def start
-move right
+write right $f
+move $pf
 write hey
 test here = $pf
 write i'm

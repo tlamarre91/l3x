@@ -122,7 +122,7 @@ export function validateWriteStatement(statement: Statement): statement is Write
     return true;
   }
 
-  if (statement.tokens.length !== 2) {
+  if (statement.tokens.length !== 3) {
     throw new Error(`Expected 1 or 2 arguments, got ${statement.tokens.length - 1}`);
   }
 

@@ -189,7 +189,7 @@ export class Agent {
       throw new Error("can't ask to move when i don't have a network client");
     }
 
-    const req = { type: "move", edgeName: edgeName.value } as const; 
+    const req = { type: "move", edgeName: this.#evaluateTerm(edgeName) } as const; 
     const { status, message } = this.networkClient.request(req);
 
     if (status !== "ok") {
