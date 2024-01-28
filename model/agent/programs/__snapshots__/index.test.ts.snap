@@ -422,6 +422,27 @@ exports[`parse+compile with test command 1`] = `
       "line": 1,
     },
     {
+      "register": "$pc",
+      "type": "ref",
+    } => {
+      "column": 5,
+      "line": 2,
+    },
+    {
+      "comparison": "=",
+      "type": "comparison",
+    } => {
+      "column": 9,
+      "line": 2,
+    },
+    {
+      "type": "literal",
+      "value": "0",
+    } => {
+      "column": 11,
+      "line": 2,
+    },
+    {
       "comparison": {
         "comparison": "=",
         "type": "comparison",
@@ -725,6 +746,20 @@ exports[`parse+compile works 1`] = `
       "line": 0,
     },
     {
+      "type": "literal",
+      "value": "hey",
+    } => {
+      "column": 13,
+      "line": 1,
+    },
+    {
+      "type": "literal",
+      "value": "dudes",
+    } => {
+      "column": 17,
+      "line": 1,
+    },
+    {
       "instruction": "echo",
       "operands": [
         {
@@ -739,6 +774,41 @@ exports[`parse+compile works 1`] = `
     } => {
       "column": 8,
       "line": 1,
+    },
+    {
+      "type": "literal",
+      "value": "this",
+    } => {
+      "column": 19,
+      "line": 2,
+    },
+    {
+      "type": "literal",
+      "value": "is",
+    } => {
+      "column": 24,
+      "line": 2,
+    },
+    {
+      "type": "literal",
+      "value": "about",
+    } => {
+      "column": 27,
+      "line": 2,
+    },
+    {
+      "type": "literal",
+      "value": "it",
+    } => {
+      "column": 33,
+      "line": 2,
+    },
+    {
+      "type": "literal",
+      "value": "huh?",
+    } => {
+      "column": 36,
+      "line": 2,
     },
     {
       "instruction": "echo",
@@ -788,6 +858,20 @@ exports[`parse+compile works 1`] = `
     } => {
       "column": 0,
       "line": 4,
+    },
+    {
+      "type": "literal",
+      "value": "bye",
+    } => {
+      "column": 5,
+      "line": 5,
+    },
+    {
+      "type": "literal",
+      "value": "dudes",
+    } => {
+      "column": 9,
+      "line": 5,
     },
     {
       "instruction": "echo",
@@ -1100,6 +1184,13 @@ exports[`sandbox 1`] = `
       "line": 0,
     },
     {
+      "type": "literal",
+      "value": "hey1",
+    } => {
+      "column": 5,
+      "line": 1,
+    },
+    {
       "instruction": "echo",
       "operands": [
         {
@@ -1112,6 +1203,13 @@ exports[`sandbox 1`] = `
       "line": 1,
     },
     {
+      "type": "literal",
+      "value": "hey2",
+    } => {
+      "column": 5,
+      "line": 2,
+    },
+    {
       "instruction": "echo",
       "operands": [
         {
@@ -1122,6 +1220,13 @@ exports[`sandbox 1`] = `
     } => {
       "column": 0,
       "line": 2,
+    },
+    {
+      "type": "literal",
+      "value": "loop",
+    } => {
+      "column": 3,
+      "line": 3,
     },
     {
       "instruction": "go",
@@ -1167,6 +1272,13 @@ exports[`sandbox 1`] = `
       "line": 5,
     },
     {
+      "type": "literal",
+      "value": "woo1",
+    } => {
+      "column": 5,
+      "line": 6,
+    },
+    {
       "instruction": "echo",
       "operands": [
         {
@@ -1179,6 +1291,13 @@ exports[`sandbox 1`] = `
       "line": 6,
     },
     {
+      "type": "literal",
+      "value": "woo2",
+    } => {
+      "column": 5,
+      "line": 7,
+    },
+    {
       "instruction": "echo",
       "operands": [
         {
@@ -1189,6 +1308,13 @@ exports[`sandbox 1`] = `
     } => {
       "column": 0,
       "line": 7,
+    },
+    {
+      "type": "literal",
+      "value": "start",
+    } => {
+      "column": 3,
+      "line": 8,
     },
     {
       "instruction": "go",

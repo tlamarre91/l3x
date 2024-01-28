@@ -5,14 +5,15 @@ import { Agent } from "@/model/agent";
 import { useStateSubscription } from "@/hooks";
 
 export default function AgentCard({ agent }: { agent: Agent }) {
-  const execState = agent.observableExecutionState;
+  const execState = agent.executionStateObservables;
+  const buffer = agent.bufferObservables;
 
   const alive = useStateSubscription(execState.alive$, execState.getAlive);
   const stateName = useStateSubscription(execState.stateName$, execState.getStateName);
   const commandIndex = useStateSubscription(execState.commandIndex$, execState.getCommandIndex);
   const operandIndex = useStateSubscription(execState.operandIndex$, execState.getOperandIndex);
-  const buffer = useStateSubscription(execState.buffer$, execState.getBuffer);
-  const bufferCursor = useStateSubscription(execState.bufferCursor$, execState.getBufferCursor);
+  const bufferData = useStateSubscription(buffer.data$, buffer.getData);
+  const bufferCursor = useStateSubscription(buffer.cursorIndex$, buffer.getCursorIndex);
 
   const currentCodeLine = useMemo(() => {
     // TODO: could make this easier. have a "pending command" observable,
@@ -55,7 +56,7 @@ export default function AgentCard({ agent }: { agent: Agent }) {
             </tr>
             <tr>
               <th>buffer</th>
-              <td>{buffer}</td>
+              <td>{bufferData.length > 0 ? bufferData : "<nothin>"}</td>
             </tr>
             <tr>
               <th>buffer cursor</th>

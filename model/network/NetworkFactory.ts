@@ -71,6 +71,7 @@ export class NetworkFactory {
 
     const ZIGZAG_PROGRAM = `def start
 move right
+test 1 > $c
 go l1
 
 def l1

@@ -1,5 +1,5 @@
-import { Comparison, Instruction, Instructions, isComparison } from "@/model/agent/commands";
-import { NamedRegister, NamedRegisters, isNamedRegister } from "./AgentStateMachine";
+import { Comparison, Instruction, Instructions, isComparison } from "./commands";
+import { NamedRegister, NamedRegisters, isNamedRegister } from "./DataDeque";
 
 export const Keywords = {
   def: "def",

@@ -1,27 +1,29 @@
-import * as commands from "@/model/agent/commands";
+import * as commands from "./commands";
 import * as parse from "./parse";
-import { AgentStateMachine, NamedRegisters } from "./AgentStateMachine";
+import { AgentStateMachine } from "./AgentStateMachine";
 import { SourceMap } from ".";
+import { NamedRegisters } from "./DataDeque";
 
-export function compileRefTerm(token: parse.RefToken, sourceMap?: SourceMap): commands.RefTerm {
+export function compileRefTerm(token: parse.RefToken, sourceMap: SourceMap | null): commands.RefTerm {
   const term = { type: "ref", register: token.symbol } as const;
   sourceMap?.set(term, token.start);
   return term;
 }
 
-export function compileComparisonTerm(token: parse.ComparisonToken, sourceMap?: SourceMap): commands.ComparisonTerm {
+export function compileComparisonTerm(token: parse.ComparisonToken, sourceMap: SourceMap | null): commands.ComparisonTerm {
   const term = { type: "comparison", comparison: token.symbol } as const;
   sourceMap?.set(term, token.start);
   return term;
 }
 
-export function compileOperand(token: parse.Token, sourceMap?: SourceMap): commands.Term {
+// TODO: clean up
+export function compileOperand(token: parse.Token, sourceMap: SourceMap | null): commands.Term {
   if (parse.isRefToken(token)) {
-    return compileRefTerm(token);
+    return compileRefTerm(token, sourceMap);
   }
 
   if (parse.isComparisonToken(token)) {
-    return compileComparisonTerm(token);
+    return compileComparisonTerm(token, sourceMap);
   }
 
   const term = { type: "literal", value: token.symbol } as const;
@@ -29,7 +31,7 @@ export function compileOperand(token: parse.Token, sourceMap?: SourceMap): comma
   return term;
 }
 
-export function compileStatement(statement: parse.Statement, sourceMap?: SourceMap): commands.Command {
+export function compileStatement(statement: parse.Statement, sourceMap: SourceMap | null): commands.Command {
   const instructionToken = statement.tokens[0];
   if (!commands.isInstruction(instructionToken.symbol)) {
     throw new Error(`unrecognized instruction: ${instructionToken.symbol}`);
@@ -37,20 +39,21 @@ export function compileStatement(statement: parse.Statement, sourceMap?: SourceM
 
   // Handle special statements
   if (parse.isTestStatement(statement)) {
-    const command = compileTest(statement);
+    const command = compileTest(statement, sourceMap);
     sourceMap?.set(command, statement.start);
     return command;
   }
 
-  const command = compileOtherStatement(statement);
+  const command = compileOtherStatement(statement, sourceMap);
   sourceMap?.set(command, statement.start);
   return command;
 }
 
-function compileOtherStatement(statement: parse.Statement): commands.Command {
+// TODO: ew lol
+function compileOtherStatement(statement: parse.Statement, sourceMap: SourceMap | null): commands.Command {
   const [instructionToken, ...operandTokens] = statement.tokens;
 
-  const operands = operandTokens.map((token) => compileOperand(token));
+  const operands = operandTokens.map((token) => compileOperand(token, sourceMap));
 
   switch (instructionToken.symbol) {
     case commands.Instructions.echo:
@@ -62,7 +65,6 @@ function compileOtherStatement(statement: parse.Statement): commands.Command {
     case commands.Instructions.move:
       return compileMove(operands);
 
-    // TODO: setCursor isn't variadic
     case commands.Instructions.setCursor:
       return compileCursor(operands);
 
@@ -74,7 +76,7 @@ function compileOtherStatement(statement: parse.Statement): commands.Command {
 export function compileEcho(operands: commands.Term[]): commands.EchoCommand {
   return {
     instruction: commands.Instructions.echo,
-    operands: operands
+    operands
   };
 }
 
@@ -102,19 +104,19 @@ export function compileMove(operands: commands.Term[]): commands.MoveCommand {
 
 const DEFAULT_TEST_OUTPUT = { type: "ref", register: NamedRegisters.cursor } as const;
 
-export function compileTest(statement: parse.TestStatement): commands.TestCommand {
+export function compileTest(statement: parse.TestStatement, sourceMap: SourceMap | null): commands.TestCommand {
   const [_instruction, op1, op2, op3, op4] = statement.tokens;
 
   if (parse.isComparisonToken(op2)) {
-    const leftOperand = compileOperand(op1);
-    const comparison = compileComparisonTerm(op2);
-    const rightOperand = compileOperand(op3!);
+    const leftOperand = compileOperand(op1, sourceMap);
+    const comparison = compileComparisonTerm(op2, sourceMap);
+    const rightOperand = compileOperand(op3!, sourceMap);
     const output = parse.isRefToken(op4)
-      ? compileRefTerm(op4)
+      ? compileRefTerm(op4, sourceMap)
       : DEFAULT_TEST_OUTPUT;
 
     return {
-      instruction: "test",
+      instruction:  commands.Instructions.test,
       leftOperand,
       comparison,
       rightOperand,
@@ -123,12 +125,12 @@ export function compileTest(statement: parse.TestStatement): commands.TestComman
   }
 
   const output = parse.isRefToken(op2)
-    ? compileRefTerm(op2)
+    ? compileRefTerm(op2, sourceMap)
     : DEFAULT_TEST_OUTPUT;
 
   return {
-    instruction: "test",
-    leftOperand: compileOperand(op1),
+    instruction: commands.Instructions.test,
+    leftOperand: compileOperand(op1, sourceMap),
     output
   };
 }
@@ -157,7 +159,7 @@ export function compileCursor(operands: commands.Term[]): commands.SetCursorComm
  */
 export function compile(program: parse.Program): AgentStateMachine {
   const procedures = new Map<string, commands.Procedure>();
-  const sourceMap = new Map<commands.Command | commands.Procedure | commands.Term, parse.LineAndColumn>();
+  const sourceMap: SourceMap = new Map();
 
   let currentStateName: string | undefined = undefined;
   let currentProcedure: commands.Procedure | undefined = undefined;

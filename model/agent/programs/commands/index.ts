@@ -1,6 +1,6 @@
 import { Status } from "@/utils";
-import { AgentEvent } from "../events";
-import { NamedRegister } from "../programs/AgentStateMachine";
+import { AgentEvent } from "../../events";
+import { NamedRegister } from "../../programs/DataDeque";
 
 export const Instructions = {
   echo: "echo",
@@ -23,8 +23,10 @@ export function isInstruction(s: string | undefined): s is Instruction {
   return isInstruction;
 }
 
+export type TermType = "literal" | "ref" | "comparison";
+
 export interface Term {
-  readonly type: "literal" | "ref" | "comparison";
+  readonly type: TermType;
   readonly value?: string;
   readonly register?: NamedRegister;
   readonly comparison?: Comparison;
@@ -119,7 +121,7 @@ export function isLinks(command: Command): command is AgentLinksCommand {
 
 export interface TestCommand extends Command {
   instruction: typeof Instructions.test;
-  leftOperand?: Term;
+  leftOperand: Term;
   rightOperand?: Term;
   comparison?: ComparisonTerm;
   output: RefTerm;
@@ -147,6 +149,8 @@ export interface CommandResult {
   setCommandIndex?: number;
   incrementCommandIndex?: number;
 }
+
+export const OK_RESULT: CommandResult = { status: "ok" };
 
 export interface ErrorResult extends CommandResult {
   status: "fu";

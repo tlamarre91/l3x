@@ -1,10 +1,11 @@
-import { Command, Procedure, Term } from "../commands";
+import { Command, Procedure, Term } from "./commands";
 import { compile } from "./compile";
 import { parse, LineAndColumn } from "./parse";
+
 export {
   type AgentStateMachine,
   ExecutionState,
-  type ExecutionStateObservable,
+  type ExecutionStateObservables,
   emptyStateMachine,
 } from "./AgentStateMachine";
 

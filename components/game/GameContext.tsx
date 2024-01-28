@@ -15,7 +15,7 @@ export interface GameContextValue {
 }
 
 export function makeGameContextData(): GameContextValue {
-  const network = NetworkFactory.grid(5, 6);
+  const network = NetworkFactory.grid(5, 5);
   const selectedObject$ = new BehaviorSubject<SelectableObject | null>(null);
 
   const value = {

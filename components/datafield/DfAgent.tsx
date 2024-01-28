@@ -1,12 +1,10 @@
-import React, { useCallback, useContext, useMemo, useRef, useState }  from "react";
+import React, { useContext, useMemo, useRef }  from "react";
 import { filter } from "rxjs";
 import * as THREE from "three";
-import { Vector3, useFrame } from "@react-three/fiber";
 import { useSpring, animated, easings } from "@react-spring/three";
 import { Sphere, Wireframe } from "@react-three/drei";
 
 import { GameContext } from "@/components/game/GameContext";
-import { NetworkNode } from "@/model/network";
 import { Agent } from "@/model/agent";
 import { useStateSubscription, useSubscription } from "@/hooks";
 import { Positioned } from "@/model/types";
@@ -14,7 +12,7 @@ import { Positioned } from "@/model/types";
 export default function DfAgent({ agent }: { agent: Agent }) {
   const { network, selectObject } = useContext(GameContext);
 
-  const alive = useStateSubscription(agent.observableExecutionState.alive$, false);
+  const alive = useStateSubscription(agent.executionStateObservables.alive$, false);
 
   const agentCrossEvents$ = useMemo(() => network.getAgentEvents(agent).pipe(
     filter(

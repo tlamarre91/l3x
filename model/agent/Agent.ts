@@ -1,8 +1,10 @@
 import { Observable, Subject } from "rxjs";
 import { NetworkClient } from "@/model/network/NetworkClient";
 import * as events from "./events";
-import * as commands from "./commands";
 import * as programs from "./programs";
+import * as commands from "./programs/commands";
+import { Program } from "./programs/parse";
+import { DataDeque, DataDequeObservables } from "./programs/DataDeque";
 
 const newAgentId = (() => {
   let agentId = 0;
@@ -23,12 +25,19 @@ export class Agent {
   readonly #eventSubject: Subject<events.SequentialAgentEvent>;
   readonly events$: Observable<events.SequentialAgentEvent>;
   readonly #executionState: programs.ExecutionState;
-  readonly observableExecutionState: programs.ExecutionStateObservable;
+  readonly executionStateObservables: programs.ExecutionStateObservables;
+  readonly #buffer: DataDeque;
+  readonly bufferObservables: DataDequeObservables;
   stateMachine: programs.AgentStateMachine;
 
   #nextEventId: number = 0;
 
-  constructor(name?: string, stateMachine?: programs.AgentStateMachine) {
+  constructor(
+    name?: string,
+    stateMachine?: programs.AgentStateMachine,
+    initialExecutionState?: programs.ExecutionState,
+    initialBuffer?: DataDeque
+  ) {
     this.id = newAgentId();
 
     if (name == null) {
@@ -40,12 +49,19 @@ export class Agent {
     this.events$ = this.#eventSubject.asObservable();
 
     this.stateMachine = stateMachine ?? programs.emptyStateMachine();
-    this.#executionState = new programs.ExecutionState();
-    this.observableExecutionState = this.#executionState.asObservables();
+    this.#executionState = initialExecutionState ?? new programs.ExecutionState();
+    this.executionStateObservables = this.#executionState.asObservables();
+
+    this.#buffer = initialBuffer ?? new DataDeque(128); // TODO: parametrize size
+    this.bufferObservables = this.#buffer.asObservables();
   }
 
-  static fromCode(name: string, code: string) {
-    const program = programs.parse(code);
+  static fromCode(name: string, code: string): Agent {
+    const stateMachine = programs.parseAndCompile(code);
+    return new Agent(name, stateMachine);
+  }
+
+  static fromProgram(name: string, program: Program): Agent {
     const stateMachine = programs.compile(program);
     return new Agent(name, stateMachine);
   }
@@ -143,6 +159,10 @@ export class Agent {
       return this.#executeMove(command);
     }
 
+    if (commands.isTest(command)) {
+      return this.#executeTest(command);
+    }
+
     throw new Error(`${command.instruction} not implemented`);
   }
 
@@ -173,5 +193,66 @@ export class Agent {
     }
 
     return { status };
+  }
+
+  #executeTest({ leftOperand, rightOperand, comparison, output }: commands.TestCommand): commands.CommandResult {
+    const leftValue = this.#evaluateTerm(leftOperand);
+
+    if (comparison == null) {
+      // TODO: special values for true/false?
+      const outputValue = leftValue === "0" ? "0" : "1";
+      this.#evaluateTerm(output, outputValue);
+      return commands.OK_RESULT;
+    }
+
+    const rightValue = this.#evaluateTerm(rightOperand!);
+
+    let result: boolean;
+    switch (comparison.comparison) {
+      case "<":
+        result = leftValue < rightValue;
+        break;
+
+      case "<=":
+        result = leftValue <= rightValue;
+        break;
+
+      case "=":
+        result = leftValue === rightValue;
+        break;
+
+      case ">":
+        result = leftValue > rightValue;
+        break;
+
+      case ">=":
+        result = leftValue >= rightValue;
+        break;
+
+      case "!=":
+        result = leftValue !== rightValue;
+        break;
+    }
+
+    const outputValue = result ? "1" : "0";
+    this.#evaluateTerm(output, outputValue);
+    return commands.OK_RESULT;
+  }
+
+  #evaluateTerm(term: commands.Term, dataToWrite?: string): string {
+    console.log("evaluating term", term, "writing", dataToWrite);
+    if (term.value != null) {
+      console.log("literal", term.value);
+      return term.value;
+    }
+
+    if (term.register != null) {
+      const value = this.#buffer.accessNamedRegister(term.register, dataToWrite);
+      console.log("ref", term.register, value);
+      return value;
+    }
+
+    console.error("Bad term:", term);
+    throw new Error("Can't evaluate term without value or register");
   }
 }
