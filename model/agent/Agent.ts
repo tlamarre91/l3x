@@ -142,7 +142,9 @@ export class Agent {
       const result = this.#executeCommandUnsafe(command);
       return result;
     } catch (error) {
-      return commands.resultFromError(error);
+      const result = commands.resultFromError(error);
+      console.log({ result });
+      return result;
     }
   }
 
@@ -189,14 +191,18 @@ export class Agent {
       throw new Error("can't ask to move when i don't have a network client");
     }
 
-    const req = { type: "move", edgeName: this.#evaluateTerm(edgeName) } as const; 
-    const { status, message } = this.networkClient.request(req);
+    const req = {
+      type: "move",
+      edgeName: this.#evaluateTerm(edgeName)
+    } as const; 
 
-    if (status !== "ok") {
-      throw new Error(`got a bad response from the network: ${message}`);
+    const response = this.networkClient.request(req);
+
+    if (response.status !== "ok") {
+      throw new Error(`got a bad response from the network: ${response.errorMessage}`);
     }
 
-    return { status };
+    return { status: response.status };
   }
 
   #executeTest({

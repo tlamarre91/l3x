@@ -68,45 +68,6 @@ export class NetworkFactory {
       }
     }
 
-
-    const ZIGZAG_PROGRAM = `def start
-write right $f
-move $pf
-write hey
-test here = $pf
-write i'm
-test here = $pf
-write writin
-test here = $pf
-write here
-test here = $pf
-go l1
-
-def l1
-move down
-go start
-`;
-    const agent1 = Agent.fromCode("zigzaggy", ZIGZAG_PROGRAM);
-    network.addAgent(agent1, nodes[0]);
-
-    const CIRCLE_PROGRAM = `def start
-move right
-move right
-move right
-move down
-move down
-move down
-move left
-move left
-move left
-move up
-move up
-move up
-go start
-`;
-    const agent2 = Agent.fromCode("circleguy", CIRCLE_PROGRAM);
-    network.addAgent(agent2, nodes[1]);
-
     return network;
   }
 }

@@ -283,7 +283,6 @@ export class Network<NodeData, EdgeData> {
       const subject = controller.edgesSubject;
       const edges = subject.getValue();
       const newEdges = edges.filter((_edge) => _edge !== edge);
-      console.log(edge, newEdges);
 
       subject.next(newEdges);
     }
@@ -304,7 +303,6 @@ export class Network<NodeData, EdgeData> {
   #removeAllEdgesTo(toNode: NetworkNode) {
     [... this.#edges.values()].forEach(
       (toEdgeMap) => {
-        console.log("unreg!", toNode);
         this.#removeEdgeTo(toEdgeMap, toNode, false);
       }
     );
@@ -337,7 +335,6 @@ export class Network<NodeData, EdgeData> {
   }
 
   addAgent(agent: Agent, node: NetworkNode<NodeData, EdgeData>) {
-    console.log(this, agent, node);
     if (this.#agentPositions.get(agent) != null) {
       throw new Error(`Agent ${agent.name} is already in the network`);
     }
@@ -386,7 +383,6 @@ export class Network<NodeData, EdgeData> {
 
       throw new Error(`can't handle ${request.type} request`);
     } catch (error) {
-      console.error(error);
       return responseFromError(error);
     }
   }
