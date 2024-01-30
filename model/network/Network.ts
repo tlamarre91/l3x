@@ -2,6 +2,7 @@ import { BehaviorSubject, Observable, Subject, filter } from "rxjs";
 import { Agent } from "@/model/agent";
 import * as events from "./events";
 import { NetworkClient, NetworkRequest, NetworkResponse, isMove, responseFromError } from "./NetworkClient";
+import { NetworkCondition, NetworkConditionTypes } from "./NetworkCondition";
 
 export interface NetworkNode<NodeData = unknown, EdgeData = unknown> {
   type: "node";
@@ -32,6 +33,7 @@ export interface NetworkEdge<EdgeData = unknown, FromData = unknown, ToData = Fr
 
 type EdgeToMap = Map<NetworkNode, NetworkEdge>;
 type EdgeFromMap = Map<NetworkNode, EdgeToMap>;
+type NetworkConditionsList = Array<[NetworkCondition, boolean]>;
 
 export class Network<NodeData, EdgeData> {
   name: string;
@@ -48,7 +50,8 @@ export class Network<NodeData, EdgeData> {
    * The "observer" side of the subject is private so that only this network can send events through it
    */
   readonly #eventSubject: Subject<events.SequentialNetworkEvent>;
-  readonly #nodeSubject: BehaviorSubject<NetworkNode<NodeData, EdgeData>[]>;
+  readonly #nodeSubject: BehaviorSubject<NetworkNode<NodeData, EdgeData>[]> = new BehaviorSubject(new Array());;
+  readonly #watchedConditionsSubject: BehaviorSubject<NetworkConditionsList> = new BehaviorSubject(new Array());
 
   /** Public `Observable` for all network events */
   readonly events$: Observable<events.SequentialNetworkEvent>;
@@ -58,6 +61,7 @@ export class Network<NodeData, EdgeData> {
   readonly edgeEvents$: Observable<events.NetworkEdgeEvent>;
   /** Public `Observable` for network events related to agents */
   readonly agentEvents$: Observable<events.NetworkAgentEvent>;
+  readonly watchedConditions$: Observable<NetworkConditionsList>;
 
   /** Map to `Observable` for network events related to each particular agent */
   #agentEventsMap: Map<Agent, Observable<events.NetworkAgentEvent>>;
@@ -75,12 +79,12 @@ export class Network<NodeData, EdgeData> {
     this.#agentEventsMap = new Map();
     this.#agentPositions = new Map();
     this.#eventSubject = new Subject();
-    this.#nodeSubject = new BehaviorSubject(new Array<NetworkNode<NodeData, EdgeData>>());
     this.events$ = this.#eventSubject.asObservable();
     this.nodes$ = this.#nodeSubject.asObservable();
     this.nodeEvents$ = this.events$.pipe(filter(events.isAboutNode));
     this.edgeEvents$ = this.events$.pipe(filter(events.isAboutEdge));
     this.agentEvents$ = this.events$.pipe(filter(events.isAboutAgent));
+    this.watchedConditions$ = this.#watchedConditionsSubject.asObservable();
   }
 
   /**
@@ -101,7 +105,48 @@ export class Network<NodeData, EdgeData> {
       // TODO: process by popping off priority queue
     }
 
+    this.updateWatchedConditions();
+
     this.#pendingRequestCallbacks = [];
+  }
+
+  addWatchedCondition(condition: NetworkCondition) {
+    // TODO: clean up after extracting method for evaluating a single condition at a time
+    const newConditions = [...this.#watchedConditionsSubject.getValue(), [condition, false] satisfies [NetworkCondition, boolean]];
+    this.#watchedConditionsSubject.next(newConditions);
+  }
+
+  // TODO: whew
+  updateWatchedConditions() {
+    let changed = false;
+    const currentConditions = this.#watchedConditionsSubject.getValue();
+    const newConditions: NetworkConditionsList = currentConditions.map(([condition, state]) => {
+      if (condition.type === NetworkConditionTypes.playerHasAgentInNode) {
+        const agentsSubject = this.getAgentsSubject(condition.node!);
+
+        if (agentsSubject == null) {
+          const newState = false;
+          if (state !== newState) {
+            changed = true;
+          }
+          return [condition, newState];
+        }
+
+        const newState = agentsSubject.getValue().length !== 0;
+        if (state !== newState) {
+          changed = true;
+        }
+        return [condition, newState];
+
+        // TODO: check agent team
+      }
+
+      throw new Error(`Can't handle condition type ${condition.type}`);
+    });
+
+    if (changed) {
+      this.#watchedConditionsSubject.next(newConditions);
+    }
   }
 
   dumpState() {
