@@ -10,6 +10,7 @@ export interface NetworkNode<NodeData = unknown, EdgeData = unknown> {
   name: string;
   data: NodeData;
   agents$: Observable<Agent[]>;
+  getAgents: () => Agent[];
   events$: Observable<events.NetworkNodeEvent>;
   edges$: Observable<NetworkEdge<EdgeData, NodeData>[]>;
 }
@@ -51,7 +52,6 @@ export class Network<NodeData, EdgeData> {
    */
   readonly #eventSubject: Subject<events.SequentialNetworkEvent>;
   readonly #nodeSubject: BehaviorSubject<NetworkNode<NodeData, EdgeData>[]> = new BehaviorSubject(new Array());;
-  readonly #watchedConditionsSubject: BehaviorSubject<NetworkConditionsList> = new BehaviorSubject(new Array());
 
   /** Public `Observable` for all network events */
   readonly events$: Observable<events.SequentialNetworkEvent>;
@@ -61,7 +61,6 @@ export class Network<NodeData, EdgeData> {
   readonly edgeEvents$: Observable<events.NetworkEdgeEvent>;
   /** Public `Observable` for network events related to agents */
   readonly agentEvents$: Observable<events.NetworkAgentEvent>;
-  readonly watchedConditions$: Observable<NetworkConditionsList>;
 
   /** Map to `Observable` for network events related to each particular agent */
   #agentEventsMap: Map<Agent, Observable<events.NetworkAgentEvent>>;
@@ -70,6 +69,8 @@ export class Network<NodeData, EdgeData> {
   #nextEventId: number = 0;
   #nextNodeId: number = 0;
   #nextEdgeId: number = 0;
+
+  clockCount: number = 0;
 
   constructor(name: string) {
     this.name = name;
@@ -84,7 +85,6 @@ export class Network<NodeData, EdgeData> {
     this.nodeEvents$ = this.events$.pipe(filter(events.isAboutNode));
     this.edgeEvents$ = this.events$.pipe(filter(events.isAboutEdge));
     this.agentEvents$ = this.events$.pipe(filter(events.isAboutAgent));
-    this.watchedConditions$ = this.#watchedConditionsSubject.asObservable();
   }
 
   /**
@@ -108,6 +108,8 @@ export class Network<NodeData, EdgeData> {
     this.updateWatchedConditions();
 
     this.#pendingRequestCallbacks = [];
+
+    this.clockCount += 1;
   }
 
   addWatchedCondition(condition: NetworkCondition) {
@@ -187,6 +189,7 @@ export class Network<NodeData, EdgeData> {
       name,
       data,
       agents$: agentsSubject.asObservable(),
+      getAgents: agentsSubject.getValue,
       edges$: edgesSubject.asObservable(),
       events$
     };
