@@ -2,8 +2,6 @@ import { BehaviorSubject, Observable, Subject, filter } from "rxjs";
 import { Agent } from "@/model/agent";
 import * as events from "./events";
 import { NetworkClient, NetworkRequest, NetworkResponse, isMove, responseFromError } from "./NetworkClient";
-import { NetworkCondition, NetworkConditionTypes } from "./NetworkCondition";
-
 export interface NetworkNode<NodeData = unknown, EdgeData = unknown> {
   type: "node";
   id: number;
@@ -34,7 +32,6 @@ export interface NetworkEdge<EdgeData = unknown, FromData = unknown, ToData = Fr
 
 type EdgeToMap = Map<NetworkNode, NetworkEdge>;
 type EdgeFromMap = Map<NetworkNode, EdgeToMap>;
-type NetworkConditionsList = Array<[NetworkCondition, boolean]>;
 
 export class Network<NodeData, EdgeData> {
   name: string;
@@ -101,54 +98,18 @@ export class Network<NodeData, EdgeData> {
     }
 
     for (const callback of this.#pendingRequestCallbacks) {
-      callback();
+      try {
+        callback();
+      } catch (err) {
+        console.error("Unable to process request callback:", callback.name || "(anonymous)");
+        console.error(err);
+      }
       // TODO: process by popping off priority queue
     }
-
-    this.updateWatchedConditions();
 
     this.#pendingRequestCallbacks = [];
 
     this.clockCount += 1;
-  }
-
-  addWatchedCondition(condition: NetworkCondition) {
-    // TODO: clean up after extracting method for evaluating a single condition at a time
-    const newConditions = [...this.#watchedConditionsSubject.getValue(), [condition, false] satisfies [NetworkCondition, boolean]];
-    this.#watchedConditionsSubject.next(newConditions);
-  }
-
-  // TODO: whew
-  updateWatchedConditions() {
-    let changed = false;
-    const currentConditions = this.#watchedConditionsSubject.getValue();
-    const newConditions: NetworkConditionsList = currentConditions.map(([condition, state]) => {
-      if (condition.type === NetworkConditionTypes.playerHasAgentInNode) {
-        const agentsSubject = this.getAgentsSubject(condition.node!);
-
-        if (agentsSubject == null) {
-          const newState = false;
-          if (state !== newState) {
-            changed = true;
-          }
-          return [condition, newState];
-        }
-
-        const newState = agentsSubject.getValue().length !== 0;
-        if (state !== newState) {
-          changed = true;
-        }
-        return [condition, newState];
-
-        // TODO: check agent team
-      }
-
-      throw new Error(`Can't handle condition type ${condition.type}`);
-    });
-
-    if (changed) {
-      this.#watchedConditionsSubject.next(newConditions);
-    }
   }
 
   dumpState() {

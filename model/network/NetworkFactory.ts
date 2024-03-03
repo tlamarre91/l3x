@@ -43,13 +43,6 @@ go start
     const agent2 = Agent.fromCode("circleguy", CIRCLE_PROGRAM);
     network.addAgent(agent2, nodes[1]);
 
-    network.watchedConditions$.subscribe((conditions) => {
-      console.log("CONDITIONS HAVE CHANGED!!!1")
-      console.log(conditions)
-    });
-
-    network.addWatchedCondition({ type: NetworkConditionTypes.playerHasAgentInNode, node: nodes[9] });
-
     return network;
   }
 
