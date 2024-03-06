@@ -2,42 +2,44 @@ import { BehaviorSubject, Observable, Subject, filter } from "rxjs";
 import { Agent } from "@/model/agent";
 import * as events from "./events";
 import { NetworkClient, NetworkRequest, NetworkResponse, isMove, responseFromError } from "./NetworkClient";
-export interface NetworkNode<NodeData = unknown, EdgeData = unknown> {
-  type: "node";
-  id: number;
-  name: string;
-  data: NodeData;
+import { BufferStore } from "@/model/data/BufferStore";
+
+export interface NetworkNode {
+  readonly type: "node";
+  readonly id: number;
+  readonly name: string;
+  store: BufferStore;
   agents$: Observable<Agent[]>;
   getAgents: () => Agent[];
   events$: Observable<events.NetworkNodeEvent>;
-  edges$: Observable<NetworkEdge<EdgeData, NodeData>[]>;
+  edges$: Observable<NetworkEdge[]>;
 }
 
-export interface NetworkNodeController<NodeData = unknown, EdgeData = unknown> {
-  node: NetworkNode<NodeData, EdgeData>;
+export interface NetworkNodeController {
+  node: NetworkNode;
   agentsSubject: BehaviorSubject<Agent[]>;
-  edgesSubject: BehaviorSubject<NetworkEdge<EdgeData, NodeData>[]>;
-  edgesOutByName: Map<string, NetworkEdge<EdgeData, NodeData>>;
+  edgesSubject: BehaviorSubject<NetworkEdge[]>;
+  edgesOutByName: Map<string, NetworkEdge>;
 }
 
-export interface NetworkEdge<EdgeData = unknown, FromData = unknown, ToData = FromData> {
+export interface NetworkEdge {
   type: "edge";
   id: number;
   name: string;
-  data?: EdgeData;
-  from: NetworkNode<FromData, EdgeData>;
-  to: NetworkNode<ToData, EdgeData>;
+  store: BufferStore;
+  from: NetworkNode;
+  to: NetworkNode;
   events$: Observable<events.NetworkEdgeEvent>;
 }
 
 type EdgeToMap = Map<NetworkNode, NetworkEdge>;
 type EdgeFromMap = Map<NetworkNode, EdgeToMap>;
 
-export class Network<NodeData, EdgeData> {
+export class Network {
   name: string;
-  nodesByName: Map<string, NetworkNode<NodeData, EdgeData>>;
-  nodeControllers: Map<NetworkNode, NetworkNodeController<NodeData, EdgeData>>;
-  nodes$: Observable<NetworkNode<NodeData, EdgeData>[]>;
+  nodesByName: Map<string, NetworkNode>;
+  nodeControllers: Map<NetworkNode, NetworkNodeController>;
+  nodes$: Observable<NetworkNode[]>;
 
   /** Nested map where first key maps to collection of edges out of a node, second maps to specific edges */
   #edges: EdgeFromMap;
@@ -48,7 +50,7 @@ export class Network<NodeData, EdgeData> {
    * The "observer" side of the subject is private so that only this network can send events through it
    */
   readonly #eventSubject: Subject<events.SequentialNetworkEvent>;
-  readonly #nodeSubject: BehaviorSubject<NetworkNode<NodeData, EdgeData>[]> = new BehaviorSubject(new Array());;
+  readonly #nodeSubject: BehaviorSubject<NetworkNode[]> = new BehaviorSubject(new Array());;
 
   /** Public `Observable` for all network events */
   readonly events$: Observable<events.SequentialNetworkEvent>;
@@ -61,7 +63,7 @@ export class Network<NodeData, EdgeData> {
 
   /** Map to `Observable` for network events related to each particular agent */
   #agentEventsMap: Map<Agent, Observable<events.NetworkAgentEvent>>;
-  #agentPositions: Map<Agent, NetworkNode<NodeData, EdgeData>>;
+  #agentPositions: Map<Agent, NetworkNode>;
   #pendingRequestCallbacks: (() => void)[] = [];
   #nextEventId: number = 0;
   #nextNodeId: number = 0;
@@ -128,7 +130,7 @@ export class Network<NodeData, EdgeData> {
     return state;
   }
 
-  addNode(data: NodeData, name?: string): NetworkNode<NodeData, EdgeData> {
+  addNode(store: BufferStore, name?: string): NetworkNode {
     const id = this.#nextNodeId++;
     if (name == null) {
       name = `@n${id}`;
@@ -141,14 +143,14 @@ export class Network<NodeData, EdgeData> {
     }
 
     const agentsSubject = new BehaviorSubject<Agent[]>([]);
-    const edgesSubject = new BehaviorSubject<NetworkEdge<EdgeData, NodeData>[]>([]);
+    const edgesSubject = new BehaviorSubject<NetworkEdge[]>([]);
     const events$ = this.nodeEvents$.pipe(filter((ev) => ev.node === node));
 
-    const node: NetworkNode<NodeData, EdgeData> = {
+    const node: NetworkNode = {
       type: "node",
       id,
       name,
-      data,
+      store,
       agents$: agentsSubject.asObservable(),
       getAgents: agentsSubject.getValue,
       edges$: edgesSubject.asObservable(),
@@ -162,7 +164,7 @@ export class Network<NodeData, EdgeData> {
       agentsSubject,
       edgesSubject,
       edgesOutByName: new Map()
-    } satisfies NetworkNodeController<NodeData, EdgeData>;
+    } satisfies NetworkNodeController;
     this.nodeControllers.set(node, controller);
 
     this.#registerNode(node);
@@ -187,7 +189,7 @@ export class Network<NodeData, EdgeData> {
     this.nodeControllers.delete(node);
   }
 
-  #registerNode(node: NetworkNode<NodeData, EdgeData>) {
+  #registerNode(node: NetworkNode) {
     const nodes = this.#nodeSubject.getValue();
     this.#nodeSubject.next([...nodes, node]);
     this.#emit({ type: "addnode", node });
@@ -204,9 +206,9 @@ export class Network<NodeData, EdgeData> {
   }
 
   addEdge(
-    data: EdgeData,
-    from: NetworkNode<NodeData, EdgeData>,
-    to: NetworkNode<NodeData, EdgeData>,
+    store: BufferStore,
+    from: NetworkNode,
+    to: NetworkNode,
     name?: string
   ) {
     const id = this.#nextEdgeId++;
@@ -244,11 +246,11 @@ export class Network<NodeData, EdgeData> {
       throw new Error(`edge with name ${name} already exists out of ${from.name}`);
     }
 
-    const edge: NetworkEdge<EdgeData, NodeData> = {
+    const edge: NetworkEdge = {
       type: "edge",
       id,
       name,
-      data,
+      store,
       from,
       to,
       events$
@@ -264,7 +266,7 @@ export class Network<NodeData, EdgeData> {
     this.#emit({ type: "addedge", edge });
   }
 
-  removeEdge(from: NetworkNode<NodeData, EdgeData>, to: NetworkNode<NodeData, EdgeData>) {
+  removeEdge(from: NetworkNode, to: NetworkNode) {
     const toEdgeMap = this.#edges.get(from);
     if (toEdgeMap == null) {
       throw new Error("edge out don't exist");
@@ -276,7 +278,7 @@ export class Network<NodeData, EdgeData> {
     }
   }
 
-  #registerEdge(controller: NetworkNodeController<NodeData, EdgeData>, edge: NetworkEdge<EdgeData, NodeData>) {
+  #registerEdge(controller: NetworkNodeController, edge: NetworkEdge) {
     const subject = controller.edgesSubject;
     const edges = subject.getValue();
     subject.next([...edges, edge]);
@@ -343,7 +345,7 @@ export class Network<NodeData, EdgeData> {
     return [...this.#agentPositions.keys()];
   }
 
-  addAgent(agent: Agent, node: NetworkNode<NodeData, EdgeData>) {
+  addAgent(agent: Agent, node: NetworkNode) {
     if (this.#agentPositions.get(agent) != null) {
       throw new Error(`Agent ${agent.name} is already in the network`);
     }
@@ -407,7 +409,7 @@ export class Network<NodeData, EdgeData> {
     return events$;
   }
 
-  getAgentNode(agent: Agent): NetworkNode<NodeData, EdgeData> | undefined {
+  getAgentNode(agent: Agent): NetworkNode | undefined {
     return this.#agentPositions.get(agent);
   }
 
@@ -433,7 +435,7 @@ export class Network<NodeData, EdgeData> {
     }
   }
 
-  moveAgent(agent: Agent, edge: NetworkEdge<EdgeData, NodeData>) {
+  moveAgent(agent: Agent, edge: NetworkEdge) {
     this.validateMoveAgent(agent, edge);
 
     const { from, to } = edge;
@@ -464,8 +466,8 @@ export class Network<NodeData, EdgeData> {
    */
   #reassignAgentNode(
     agent: Agent,
-    removeFromNode: NetworkNode<NodeData, EdgeData> | null,
-    addToNode: NetworkNode<NodeData, EdgeData> | null
+    removeFromNode: NetworkNode | null,
+    addToNode: NetworkNode | null
   ) {
     if (removeFromNode != null) {
       const agentsSubject = this.getAgentsSubject(removeFromNode);

@@ -13,9 +13,9 @@ export interface NetworkObjectQuery {
   fragmentId: string;
 }
 
-export function queryObjects<NodeData, EdgeData>(
+export function queryObjects(
   query: NetworkObjectQuery,
-  network: Network<NodeData, EdgeData>
+  network: Network
 ) {
   const [prefix, key] = query.fragmentId.split(FRAGMENT_ID_PREFIX_SEP);
 

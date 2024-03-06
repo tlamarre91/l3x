@@ -8,7 +8,7 @@ export interface ObjectiveState {
   updatedAt: number;
 }
 
-type MaybeNetwork = Network<unknown, unknown> | undefined;
+type MaybeNetwork = Network | undefined;
 type WatchableObject = MaybeNetwork;
 export type WatchableObjectWatcher = (object: WatchableObject) => ObservableAndGetter<ObjectiveState>;
 
@@ -21,8 +21,18 @@ export interface Objective {
   getState?(): ObjectiveState;
 }
 
+export interface TrackedObjective extends Objective {
+  state$: Observable<ObjectiveState>;
+  getState(): ObjectiveState;
+}
+
+export function isTrackedObjective(objective: Objective): objective is TrackedObjective {
+  return objective.state$ != null || objective.getState != null;
+}
+
 export function testWatcherThatChecksIfNodeHasAnyAgents(nodeName: string): WatchableObjectWatcher {
   let nodeAgentsSubscription: Subscription | undefined;
+
   function watcher(network: MaybeNetwork) {
     if (network == null) {
       nodeAgentsSubscription = undefined;
@@ -56,13 +66,13 @@ export function testWatcherThatChecksIfNodeHasAnyAgents(nodeName: string): Watch
 }
 
 export class ObjectiveTracker {
-  state$: Observable<Objective[]>;
-  #stateSubject = new BehaviorSubject<Objective[]>([]);
+  #trackedObjectiveSubject = new BehaviorSubject<TrackedObjective[]>([]);
+  trackedObjectives$: Observable<TrackedObjective[]> = this.#trackedObjectiveSubject.asObservable();
   #watchedNetworkSubject = new BehaviorSubject<MaybeNetwork>(undefined);
 
   constructor(
     initialObjectives: Objective[] = [],
-    watchedNetwork?: Network<unknown, unknown>
+    watchedNetwork?: Network
   ) {
     if (watchedNetwork != null) {
       this.#watchedNetworkSubject.next(watchedNetwork);
@@ -72,26 +82,44 @@ export class ObjectiveTracker {
       this.trackObjective(objective);
     }
 
-    const statefulObjectives = initialObjectives.map((obj) => this.trackObjective(obj));
-
-    this.#stateSubject = new BehaviorSubject(statefulObjectives);
-    this.state$ = this.#stateSubject.asObservable();
+    this.#watchedNetworkSubject.subscribe((network) => this.handleNetworkChange(network));
   }
 
-  trackObjective(objective: Objective): Objective {
+  trackObjective(objective: Objective): TrackedObjective {
     if (objective.watchedObject !== "network") {
       throw new Error("can only watch network!");
     }
 
-    // TODO
+    if (this.#trackedObjectiveSubject.getValue().includes(objective as TrackedObjective)) {
+      throw new Error("objective is already being tracked");
+    }
 
-    // const stateSubject = objective.watch(this.#watchedNetworkSubject);
-    //
-    // const statefulObjective = {
-    //   ...objective,
-    //   state$: stateSubject.asObservable(),
-    //   getState: stateSubject.getValue
-    // };
-    // return statefulObjective;
+    if (isTrackedObjective(objective)) {
+      throw new Error("objective is already being tracked somewhere else??");
+    }
+
+    const [state$, getState] = objective.watch(this.#watchedNetworkSubject.getValue());
+
+    const trackedObjective = {
+      ...objective,
+      state$,
+      getState
+    };
+
+    return trackedObjective;
+  }
+
+  handleNetworkChange(network: MaybeNetwork) {
+    for (const trackedObjective of this.#trackedObjectiveSubject.getValue()) {
+      const [state$, getState] = trackedObjective.watch(network);
+      trackedObjective.state$ = state$;
+      trackedObjective.getState = getState;
+      // TODO: can i get away with this or is it a memory leak?
+      // i think this is fine because watch() only returns an observable, doesn't subscribe
+    }
+  }
+
+  watchNetwork(network: Network) {
+    this.#watchedNetworkSubject.next(network);
   }
 }
