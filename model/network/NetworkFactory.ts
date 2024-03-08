@@ -76,6 +76,7 @@ go start
 
     const separationScale = 3;
 
+    // TODO: just map nodes to positions and have some sort of network metadata collection thing
     const network = new Network<Positioned, Positioned>("gridnet");
 
     const nodes = new Array<NetworkNode<Positioned, Positioned>>();
