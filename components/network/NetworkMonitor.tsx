@@ -1,10 +1,10 @@
-import React, { useContext, useMemo } from "react";
-
-import NetworkObjectTree from "./NetworkObjectTree";
-import { useFragmentId } from "@/hooks";
-import { queryObjects } from "@/model/network/queryObjects";
-import { GameContext } from "../game/GameContext";
-
+// import React, { useContext, useMemo } from "react";
+//
+// import NetworkObjectTree from "./NetworkObjectTree";
+// import { useFragmentId } from "@/hooks";
+// import { queryObjects } from "@/model/network/queryObjects";
+// import { GameContext } from "../game/GameContext";
+//
 // export default function NetworkMonitor() {
 //   const { network, selectedObject$ } = useContext(GameContext);
 //   const fragmentId = useFragmentId();

@@ -3,11 +3,12 @@ import { ObjectiveTracker } from "./ObjectiveTracker";
 import { Network } from "../network";
 
 export class Game {
-  #networkSubject = new BehaviorSubject<L3xNetwork | null>(null);
+  #networkSubject = new BehaviorSubject<Network | null>(null);
   network$ = this.#networkSubject.asObservable();
 
-  constructor() {
-    const objectiveTracker = new ObjectiveTracker();
+  constructor(
+    public objectiveTracker: ObjectiveTracker = new ObjectiveTracker()
+  ) {
   }
 
   getNetwork() {

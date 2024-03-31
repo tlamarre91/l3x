@@ -1,29 +1,11 @@
 import React, { useContext, useMemo } from "react";
-import { Box, Card, Flex, IconButton, Tooltip } from "@radix-ui/themes";
+import { Card } from "@radix-ui/themes";
 
-import Header from "@/components/Header";
-import NetworkTestControls from "@/components/network/NetworkTestControls";
-import Datafield from "@/components/datafield/Datafield";
-import GameSidebar from "./GameSidebar";
-import { GameContext, makeGameContextData } from "./GameContext";
+import { GameContext } from "./GameContext";
 import { useStateSubscription } from "@/hooks";
 import AgentCard from "../agent/AgentCard";
 
-
-const defaultUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
-
-export const metadata = {
-  metadataBase: new URL(defaultUrl),
-  title: "l3x",
-  description: "",
-};
-
-export default function SelectedObjectCard({ children }: {
-  children?: React.ReactNode
-}) {
-  // const gameContextData = makeGameContextData();
+export default function SelectedObjectCard() {
   const gameContext = useContext(GameContext);
 
   const selectedObject = useStateSubscription(gameContext.selectedObject$, gameContext.getSelectedObject());

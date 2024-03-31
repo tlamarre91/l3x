@@ -73,7 +73,9 @@ export function isTestStatement(statement: Statement): statement is TestStatemen
 
 export function validateTestStatement(statement: Statement): statement is TestStatement {
   if (statement.tokens[0].symbol !== "test") {
-    throw new Error(`Expected instruction "test" at column ${statement.tokens[0].start.column}, got ${statement.tokens[0].symbol}`);
+    throw new Error(
+      `Expected instruction "test" at column ${statement.tokens[0].start.column}, got ${statement.tokens[0].symbol}`
+    );
   }
 
   if (statement.tokens.length === 2) {
@@ -101,7 +103,11 @@ export function validateTestStatement(statement: Statement): statement is TestSt
 
     const outputValid = statement.tokens.length === 4 || isRefToken(statement.tokens[4]);
     if (!outputValid) {
-      throw new Error(`Expected named register or nothing at column ${statement.tokens[5].start.column}, got ${statement.tokens[5].symbol}`);
+      throw new Error(
+        `Expected named register or nothing at column ${
+          statement.tokens[5].start.column }, got ${
+          statement.tokens[5].symbol }`
+      );
     }
 
     return true;
@@ -128,7 +134,9 @@ export function validateWriteStatement(statement: Statement): statement is Write
 
   const outputToken = statement.tokens[2];
   if (!isRefToken(outputToken)) {
-    throw new Error(`Expected named register or nothing at column ${outputToken.start.column}, got ${outputToken.symbol}`);
+    throw new Error(`Expected named register or nothing at column ${
+      outputToken.start.column}, got ${
+      outputToken.symbol}`);
   }
 
   return true;

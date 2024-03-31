@@ -39,6 +39,7 @@ export function isAboutAgent(event: NetworkEvent): event is NetworkAgentEvent {
 
 export interface AddAgentEvent extends NetworkAgentEvent {
   type: "addagent";
+  node: NetworkNode;
 }
 
 export function isAddAgent(event: NetworkEvent): event is AddAgentEvent {
@@ -77,6 +78,9 @@ export function isRemoveEdge(event: NetworkEvent): event is NetworkEdgeEvent {
   return isAboutEdge(event) && event.type === "removeedge";
 }
 
+// TODO: i think actually specific subtypes should not be named.
+// as is, not all events with nodes are NetworkNodeEvents even though
+// i would like to treat them as such.
 export interface NetworkNodeEvent extends NetworkEvent {
   node: NetworkNode;
 }

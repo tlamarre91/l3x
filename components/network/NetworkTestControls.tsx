@@ -4,8 +4,8 @@ import { useStateSubscription } from "@/hooks";
 import { Agent } from "@/model/agent";
 import { Card, Flex, Heading } from "@radix-ui/themes";
 import Button from "@/components/ui/Button";
-import { NetworkContext } from "./NetworkContext";
 import { GameContext } from "../game/GameContext";
+import { AgentFactory } from "@/model/agent/AgentFactory";
 
 const TEST_PROGRAM = `def start
 echo hey1
@@ -22,12 +22,11 @@ export default function NetworkTestControls() {
   const { network } = useContext(GameContext);
   const nodes = useStateSubscription(network.nodes$, []);
   const [mostRecentAgent, setMostRecentAgent] = useState<Agent>();
-  const mostRecentNode = nodes.at(-1);
 
   const testAddNode = useCallback(() => {
     const node = network.addNode([]);
 
-    const others = nodes.filter((_node) => _node !== node);
+    const others = nodes.filter((otherNode) => otherNode !== node);
     const p = 1 / others.length;
     for (const otherNode of others) {
       if (Math.random() < p) {
@@ -43,16 +42,16 @@ export default function NetworkTestControls() {
   const testAddAgent = useCallback(() => {
     console.log("trying add agent", network);
 
-    if (mostRecentNode == null) {
-      console.log("nowhere to add");
-      return;
-    }
+    const rand1 = Math.random();
+    const agent = rand1 > 0.5 ? AgentFactory.circle(`c-${rand1}`) : AgentFactory.zigzag(`z-${rand1}`);
 
-    const agent = new Agent();
-    agent.events$.subscribe((event) => console.log(`agent event in node ${mostRecentNode.name}`, event));
-    network.addAgent(agent, mostRecentNode);
-    setMostRecentAgent(() => agent);
-  }, [mostRecentNode]);
+    const rand2 = Math.random();
+    const nodes = [...network.nodesByName.values()];
+    const node = nodes[Math.floor(rand2 * nodes.length)];
+
+    network.addAgent(agent, node);
+    setMostRecentAgent(agent);
+  }, [network]);
 
   const testProcess = () => {
     network.process();

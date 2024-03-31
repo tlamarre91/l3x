@@ -10,7 +10,10 @@ export function compileRefTerm(token: parse.RefToken, sourceMap: SourceMap | nul
   return term;
 }
 
-export function compileComparisonTerm(token: parse.ComparisonToken, sourceMap: SourceMap | null): commands.ComparisonTerm {
+export function compileComparisonTerm(
+  token: parse.ComparisonToken,
+  sourceMap: SourceMap | null
+): commands.ComparisonTerm {
   const term = { type: "comparison", comparison: token.symbol } as const;
   sourceMap?.set(term, token.start);
   return term;
@@ -170,12 +173,12 @@ export function compileWrite(statement: parse.WriteStatement, sourceMap: SourceM
     : DEFAULT_OUTPUT;
 
   const command = {
-    instruction: "write" ,
+    instruction: "write",
     data,
     output
   } as const;
 
-  return command
+  return command;
 }
 
 /**

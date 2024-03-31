@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useContext } from "react";
-import { Box, Flex, IconButton, Tooltip } from "@radix-ui/themes";
+import { Box, Flex } from "@radix-ui/themes";
 
 import Header from "@/components/Header";
 import NetworkTestControls from "@/components/network/NetworkTestControls";
 import Datafield from "@/components/datafield/Datafield";
 import GameSidebar from "./GameSidebar";
-import { GameContext, makeGameContextData } from "./GameContext";
+import { GameContext } from "./GameContext";
 import SelectedObjectCard from "./SelectedObjectCard";
 
 
@@ -17,14 +17,11 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "l3x",
+  title: "l3xnm",
   description: "",
 };
 
-export default function GameLayout({ children }: {
-  children?: React.ReactNode
-}) {
-  // const gameContextData = makeGameContextData();
+export default function GameLayout() {
   const gameContextData = useContext(GameContext);
 
   return (

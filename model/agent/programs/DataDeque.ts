@@ -28,7 +28,7 @@ export class DataDeque {
   #array: BehaviorSubject<Array<string>>;
 
   constructor(public capacity: number) {
-    this.#array = new BehaviorSubject([]);
+    this.#array = new BehaviorSubject(new Array<string>());
   }
 
   /** Set cursor index but keep it in bounds */
@@ -96,8 +96,8 @@ export class DataDeque {
     const val = arr[index];
     const deleteCount = pop ? 1 : 0;
 
-    console.log("accessIndex", index, pop, dataToWrite);
-    console.log("before", this.#array.getValue());
+    // console.log("accessIndex", index, pop, dataToWrite);
+    // console.log("before", this.#array.getValue());
 
     if (dataToWrite != null) {
       // TODO: probably off by 1
@@ -108,7 +108,7 @@ export class DataDeque {
 
     this.#array.next(arr);
 
-    console.log("after", this.#array.getValue());
+    // console.log("after", this.#array.getValue());
 
     return val;
   }

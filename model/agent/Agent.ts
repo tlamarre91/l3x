@@ -94,9 +94,7 @@ export class Agent {
 
   #getSelectedCommand(): commands.Command {
     const commandIndex = this.#executionState.commandIndex$.getValue();
-    console.log({ commandIndex });
     const stateName = this.#executionState.stateName$.getValue();
-    // console.log(this.#stateMachine.procedures);
     const procedure = this.stateMachine.procedures.get(stateName);
 
     if (procedure == null) {
@@ -109,7 +107,7 @@ export class Agent {
 
   process() {
     if (!this.#executionState.alive$.getValue()) {
-      console.log(`can't process; agent ${this.name} is dead`);
+      // console.log(`can't process; agent ${this.name} is dead`);
       return;
     }
     const command = this.#getSelectedCommand();
@@ -143,7 +141,6 @@ export class Agent {
       return result;
     } catch (error) {
       const result = commands.resultFromError(error);
-      console.log({ result });
       return result;
     }
   }
@@ -264,15 +261,12 @@ export class Agent {
   }
 
   #evaluateTerm(term: commands.Term, dataToWrite?: string): string {
-    console.log("evaluating term", term, "writing", dataToWrite);
     if (term.value != null) {
-      console.log("literal", term.value);
       return term.value;
     }
 
     if (term.register != null) {
       const value = this.#buffer.accessNamedRegister(term.register, dataToWrite);
-      console.log("ref", term.register, value);
       return value;
     }
 
