@@ -1,10 +1,9 @@
 import { expect, it } from "vitest";
 import { NetworkFactory } from "./network/NetworkFactory";
-import { NetworkEvent } from "./network/events";
 import { Agent } from "./agent";
 
 it("grid network with 2 simple agents", () => {
-  const network = NetworkFactory.grid(5, 5);
+  const [network, _networkView] = NetworkFactory.grid(5, 5);
   const events: unknown[] = [];
 
   // TODO: extract method for mapping network events to snapshot-friendly format
@@ -18,7 +17,7 @@ it("grid network with 2 simple agents", () => {
       edgeFrom: ev.edge?.from.name,
       edgeTo: ev.edge?.to.name,
     };
-    events.push(snapshot)
+    events.push(snapshot);
   });
 
   const nodes = [...network.nodesByName.values()];

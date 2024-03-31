@@ -1,11 +1,10 @@
-import React, { CSSProperties, useCallback, useMemo, useState }  from "react";
+import React, { useCallback, useMemo, useState }  from "react";
 
 import NextLink from "next/link";
-import { ClockIcon, CubeIcon, MagicWandIcon, ReloadIcon } from "@radix-ui/react-icons";
-import { Box, Flex, IconButton, Tooltip } from "@radix-ui/themes";
+import { ClockIcon, CubeIcon, MagicWandIcon } from "@radix-ui/react-icons";
+import { Box, IconButton, Tooltip } from "@radix-ui/themes";
 
 import NavSidebar from "@/components/ui/NavSidebar";
-import NetworkNodeList from "../network/NetworkNodeList";
 import NetworkObjectTree from "../network/NetworkObjectTree";
 
 export type SidebarName = "explore" | "test" | "help";

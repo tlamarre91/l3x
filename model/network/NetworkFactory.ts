@@ -1,90 +1,74 @@
 import { Network, NetworkNode } from "./Network";
-import { Agent } from "../agent";
-import { Positioned } from "@/model/types";
-import { NetworkConditionTypes } from "./NetworkCondition";
+import { NetworkNodeView, NetworkView } from "./NetworkView";
+import { Color } from "three";
+import { BufferStore } from "../data/BufferStore";
+import { AgentFactory } from "../agent/AgentFactory";
 
 export class NetworkFactory {
   static demo() {
-    const network = NetworkFactory.grid(5, 5);
+    const [network, networkView] = NetworkFactory.grid(50, 50);
 
     const nodes = [...network.nodesByName.values()];
 
-    const ZIGZAG_PROGRAM = `def start
-write right $f
-move $pf
-write i'm
-test here = $pf
-write here
-test here = $pf
-go l1
+    for (const node of nodes) {
+      const rand = Math.random();
 
-def l1
-move down
-go start
-`;
-    const agent1 = Agent.fromCode("zigzaggy", ZIGZAG_PROGRAM);
-    network.addAgent(agent1, nodes[0]);
+      if (rand < 0.05) {
+        const agent = AgentFactory.zigzag(`zigzag-${rand}`);
+        network.addAgent(agent, node);
+      }
 
-    const CIRCLE_PROGRAM = `def start
-move right
-move right
-move right
-move down
-move down
-move down
-move left
-move left
-move left
-move up
-move up
-move up
-go start
-`;
-    const agent2 = Agent.fromCode("circleguy", CIRCLE_PROGRAM);
-    network.addAgent(agent2, nodes[1]);
+      if (rand > 0.95) {
+        const agent = AgentFactory.circle(`circle-${rand}`);
+        network.addAgent(agent, node);
+      }
+    }
 
-    return network;
+    return [network, networkView] as const;
   }
 
   static grid(
     height: number,
     width: number,
-  ) {
-    function _addUpEdge(index: number, data: Positioned) {
+  ): [Network, NetworkView] {
+    // TODO: why are non-square grids broken
+    function _addUpEdge(index: number, data: BufferStore) { // TODO
       network.addEdge(data, nodes[index], nodes[index - width], "up");
     }
-    function _addRightEdge(index: number, data: Positioned) {
+    function _addRightEdge(index: number, data: BufferStore) { // TODO
       network.addEdge(data, nodes[index], nodes[index + 1], "right");
     }
-    function _addDownEdge(index: number, data: Positioned) {
+    function _addDownEdge(index: number, data: BufferStore) { // TODO
       network.addEdge(data, nodes[index], nodes[index + width], "down");
     }
-    function _addLeftEdge(index: number, data: Positioned) {
+    function _addLeftEdge(index: number, data: BufferStore) { // TODO
       network.addEdge(data, nodes[index], nodes[index - 1], "left");
     }
 
     function computePosition(x: number, y: number) {
       const offset = -separationScale * height / 2;
-      return {
-        position: [
-          x * separationScale + offset,
-          y * separationScale + offset,
-          0
-        ]
-      } as const;
+      return [
+        x * separationScale + offset,
+        y * separationScale + offset,
+        0
+      ] as const;
     }
 
     const separationScale = 3;
 
-    // TODO: just map nodes to positions and have some sort of network metadata collection thing
-    const network = new Network<Positioned, Positioned>("gridnet");
+    const network = new Network("gridnet");
+    const networkView = new NetworkView(network);
 
-    const nodes = new Array<NetworkNode<Positioned, Positioned>>();
+    const nodes = new Array<NetworkNode>();
 
     for (let x = 0; x < width; x++) {
       for (let y = 0; y < height; y++) {
-        const data = computePosition(x, y);
-        const node = network.addNode(data);
+        const position = computePosition(x, y);
+        const node = network.addNode(position);
+        console.log(`position of ${node.name}: ${position}`);
+        const view = new NetworkNodeView(node, position, new Color(Color.NAMES.red));
+
+        networkView.addNetworkNodeView(node, view);
         nodes.push(node);
       }
     }
@@ -112,6 +96,10 @@ go start
       }
     }
 
-    return network;
+    return [network, networkView];
+  }
+
+  static ring(_count: number): [Network, NetworkView] {
+    throw new Error("not implemented");
   }
 }

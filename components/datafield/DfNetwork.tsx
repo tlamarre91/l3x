@@ -1,26 +1,28 @@
-import React, { useContext, useState }  from "react";
+import React, { useContext }  from "react";
 
 import { useStateSubscription } from "@/hooks";
 import DfNetworkNode from "./DfNetworkNode";
 import DfAgent from "./DfAgent";
 import { GameContext } from "../game/GameContext";
 
-
 export default function DfNetwork() {
-  const { network } = useContext(GameContext);
-  const nodes = useStateSubscription(network.nodes$, []);
-  const [agents, setAgents] = useState(network.agents);
+  const { networkView } = useContext(GameContext);
+  const agentViews = useStateSubscription(networkView.agentViews$, networkView.getAgentViews());
+  const nodeViews = useStateSubscription(networkView.nodeViews$, networkView.getNodeViews());
+
+  console.log(`rendering ${agentViews.length} agents`);
+  console.log(`rendering ${nodeViews.length} nodes`);
 
   return (
     <>
       {
-        nodes.map((node) => {
-          return <DfNetworkNode key={node.id} node={node} />;
+        nodeViews.map((nodeView) => {
+          return <DfNetworkNode key={nodeView.node.id} nodeView={nodeView} />;
         })
       }
       {
-        agents.map((agent) => {
-          return <DfAgent key={agent.id} agent={agent} />;
+        agentViews.map((agentView) => {
+          return <DfAgent key={agentView.agent.id} agentView={agentView} />;
         })
       }
     </>

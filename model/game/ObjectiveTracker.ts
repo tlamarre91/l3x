@@ -1,5 +1,4 @@
-import { BehaviorSubject, Observable, Subscription, map, of } from "rxjs";
-import { NetworkEvent } from "../network/events";
+import { BehaviorSubject, Observable, map, of } from "rxjs";
 import { Network } from "../network";
 import { ObservableAndGetter } from "../types";
 
@@ -31,11 +30,11 @@ export function isTrackedObjective(objective: Objective): objective is TrackedOb
 }
 
 export function testWatcherThatChecksIfNodeHasAnyAgents(nodeName: string): WatchableObjectWatcher {
-  let nodeAgentsSubscription: Subscription | undefined;
+  // let nodeAgentsSubscription: Subscription | undefined;
 
   function watcher(network: MaybeNetwork) {
     if (network == null) {
-      nodeAgentsSubscription = undefined;
+      // nodeAgentsSubscription = undefined;
       const falseValue = { value: false, updatedAt: -1 };
       return [of(falseValue), () => falseValue] as const;
     }
@@ -49,7 +48,7 @@ export function testWatcherThatChecksIfNodeHasAnyAgents(nodeName: string): Watch
       return {
         value: agents.length !== 0,
         updatedAt: network.clockCount
-      }
+      };
     }));
 
     const getState = () => {
@@ -57,7 +56,7 @@ export function testWatcherThatChecksIfNodeHasAnyAgents(nodeName: string): Watch
         value: nodeToWatch.getAgents().length !== 0,
         updatedAt: network.clockCount
       };
-    }
+    };
 
     return [state$, getState] as const;
   }

@@ -1,87 +1,57 @@
-import React, { useContext, useMemo, useRef }  from "react";
-import { filter } from "rxjs";
+import React, { useContext, useRef }  from "react";
 import * as THREE from "three";
-import { useSpring, animated, easings } from "@react-spring/three";
+import { config, useSpring, animated } from "@react-spring/three";
 import { Sphere, Wireframe } from "@react-three/drei";
 
 import { GameContext } from "@/components/game/GameContext";
-import { Agent } from "@/model/agent";
-import { useStateSubscription, useSubscription } from "@/hooks";
-import { Positioned } from "@/model/types";
+import { AgentView } from "@/model/network/NetworkView";
+import { useSubscription } from "@/hooks";
 
-export default function DfAgent({ agent }: { agent: Agent }) {
-  const { network, selectObject } = useContext(GameContext);
+export interface DfAgentProps {
+  agentView: AgentView;
+}
 
-  const alive = useStateSubscription(agent.executionStateObservables.alive$, false);
+export default function DfAgent({ agentView }: DfAgentProps) {
+  const { selectObject } = useContext(GameContext);
 
-  const agentCrossEvents$ = useMemo(() => network.getAgentEvents(agent).pipe(
-    filter(
-      (ev) => ev.agent === agent && ev.type === "agentcross" && ev.edge != null
-    )
-  ), [network, agent]);
+  const meshRef = useRef<THREE.Mesh>(null!);
 
-  const meshRef = useRef<THREE.Mesh<any>>(null!);
+  const [meshSpring, meshSpringApi] = useSpring(() => ({
+    scale: 1.2,
+    position: agentView.getPositionAnimation().target,
+    // TODO: duration control
+    config: config.slow
+  }), [agentView]);
 
-  const initialPosition = useMemo(() => {
-    const agentNode = network.getAgentNode(agent);
-    if (agentNode == null) {
-      console.error("couldn't find agent position", agent);
-      // return [0, 0, 0]; // TODO
-      throw new Error("couldn't find agent position");
-    }
-
-    console.log("found", agent, agentNode.data.position);
-    return agentNode.data.position;
-  }, [network, agent]);
-
-  const meshScale = 1.2;
-
-  const [meshSprings, api] = useSpring(() => ({
-    scale: meshScale,
-    position: initialPosition,
-    color: "#ff6d6d",
-    config: (_key) => {
-      return {
-        // precision: 0.0001,
-        clamp: true,
-        easing: easings.easeInOutQuart,
-        duration: 200
-      };
-    }
-  }), [initialPosition]);
-
-  useSubscription(agentCrossEvents$, (ev) => {
-    const data = ev.edge?.to.data as Positioned; // TODO: ♂️
-    console.log("goin");
-
-    api.start({
+  useSubscription(agentView.positionAnimation$, (positionAnimation) => {
+    meshSpringApi.start({
       from: {
-        position: meshSprings.position
+        position: meshSpring.position,
       },
       to: {
-        position: data.position
+        position: positionAnimation.target
       },
     });
-  });
+  }, [meshSpring, meshSpringApi]);
 
   const AnimatedSphere = animated(Sphere);
 
-  const sphere = (
+  const animatedSphere = (
     <AnimatedSphere
-      position={meshSprings.position}
-      scale={meshSprings.scale}
+      position={meshSpring.position}
+      scale={meshSpring.scale}
       ref={meshRef}
       onClick={(ev) => {
-        selectObject(agent);
+        selectObject(agentView.agent);
         ev.stopPropagation();
       }}
     >
-      <meshStandardMaterial opacity={1} color={alive ? "green" : "gray"} />
+      <meshStandardMaterial opacity={1} color="white" />
       <Wireframe />
     </AnimatedSphere>
   );
 
-  return sphere;
+  return animatedSphere;
 }
 
 

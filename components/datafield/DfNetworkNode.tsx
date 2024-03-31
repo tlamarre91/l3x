@@ -1,22 +1,24 @@
 import React, { useContext, useRef, useState }  from "react";
 
-import { ThreeEvent, Vector3 } from "@react-three/fiber";
-import { NetworkNode } from "@/model/network";
+import { ThreeEvent } from "@react-three/fiber";
 import { useSubscription } from "@/hooks";
-import { Positioned } from "@/model/types";
 import { GameContext } from "../game/GameContext";
+import { NetworkNodeView } from "@/model/network/NetworkView";
+import { Mesh } from "three";
 
-function NodeMesh({ position, highlighted, onClick }: {
-  position: Vector3,
-  highlighted: boolean,
-  onClick: (event: ThreeEvent<MouseEvent>) => void
-}) {
-  const meshRef = useRef<any>();
+type NodeMeshProps = {
+  position: readonly [number, number, number]; // TODO: ArrayVector3
+  highlighted: boolean;
+  onClick: (event: ThreeEvent<MouseEvent>) => void;
+}
+
+function NodeMesh({ position, highlighted, onClick }: NodeMeshProps) {
+  const meshRef = useRef<Mesh>(null!);
 
   return (
     <mesh
-      position={position}
       ref={meshRef}
+      position={position}
       scale={1}
       onClick={onClick}
     >
@@ -26,9 +28,15 @@ function NodeMesh({ position, highlighted, onClick }: {
   );
 }
 
-export default function DfNetworkNode({ node }: { node: NetworkNode<Positioned> }) {
-  const gameContext = useContext(GameContext);
+export type DfNetworkNodeProps = {
+  nodeView: NetworkNodeView;
+}
 
+export default function DfNetworkNode({ nodeView }: DfNetworkNodeProps) {
+  const gameContext = useContext(GameContext);
+  const node = nodeView.node;
+
+  // TODO: handle changes in the view model
   const [highlighted, setHighlighted] = useState(false);
   useSubscription(node.agents$, (agents) => {
     if (agents.length !== 0) {
@@ -39,9 +47,11 @@ export default function DfNetworkNode({ node }: { node: NetworkNode<Positioned> 
     setHighlighted(false);
   });
 
+  const nodePosition = nodeView.getPositionAnimation();
+
   return (
     <NodeMesh
-      position={node.data.position}
+      position={nodePosition.target}
       highlighted={highlighted}
       onClick={(ev) => {
         gameContext.selectObject(node);

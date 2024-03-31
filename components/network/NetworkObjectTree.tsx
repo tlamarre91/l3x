@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 
-import { Box, Card, Flex } from "@radix-ui/themes";
+import { Box, Flex } from "@radix-ui/themes";
 
 import { useStateSubscription } from "@/hooks";
 import { NetworkNode } from "@/model/network";

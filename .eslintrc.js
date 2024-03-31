@@ -101,6 +101,7 @@ module.exports = {
         modifiers: ["unused"],
       },
     ],
+    "react/no-unknown-property": "off"
   },
   "settings": {
     "react": {

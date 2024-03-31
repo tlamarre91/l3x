@@ -14,7 +14,7 @@ export function DfCamera() {
 }
 
 export function DfSkybox() {
-  const scale = 80;
+  const scale = 800;
   
   return (
     <Sphere scale={[scale, scale, scale]}>
