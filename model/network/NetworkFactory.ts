@@ -6,7 +6,7 @@ import { AgentFactory } from "../agent/AgentFactory";
 
 export class NetworkFactory {
   static demo() {
-    const [network, networkView] = NetworkFactory.grid(50, 50);
+    const [network, networkView] = NetworkFactory.grid(20, 20);
 
     const nodes = [...network.nodesByName.values()];
 

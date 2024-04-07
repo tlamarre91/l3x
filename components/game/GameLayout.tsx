@@ -28,10 +28,10 @@ export default function GameLayout() {
     <GameContext.Provider value={gameContextData}>
       <Flex p="2" gap="2">
         <GameSidebar />
+        <Datafield />
         <Flex direction="column" width="100%" gap="2">
           <Header />
           <NetworkTestControls />
-          <Datafield />
           <Box width="max-content">
             <SelectedObjectCard />
           </Box>

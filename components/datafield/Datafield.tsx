@@ -41,7 +41,6 @@ export default function Datafield() {
     left: "0px",
     height: "100vh",
     width: "100vw",
-    zIndex: -99
   } satisfies CSSProperties;
 
   return (
