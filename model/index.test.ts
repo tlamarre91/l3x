@@ -1,23 +1,28 @@
 import { expect, it } from "vitest";
 import { NetworkFactory } from "./network/NetworkFactory";
 import { Agent } from "./agent";
+import { NetworkEvent } from "./network/events";
+
+function eventSnapshot(ev: NetworkEvent): unknown {
+  const snapshot = {
+    type: ev.type,
+    id: ev.id, 
+    node: ev.node?.name,
+    agent: ev.agent?.name,
+    edge: ev.edge?.name,
+    edgeFrom: ev.edge?.from.name,
+    edgeTo: ev.edge?.to.name,
+  };
+
+  return snapshot;
+}
 
 it("grid network with 2 simple agents", () => {
-  const [network, _networkView] = NetworkFactory.grid(5, 5);
+  const [network, _networkView] = NetworkFactory.grid(5, 5, { logEvents: true });
   const events: unknown[] = [];
 
-  // TODO: extract method for mapping network events to snapshot-friendly format
   network.events$.subscribe((ev) => {
-    const snapshot = {
-      type: ev.type,
-      id: ev.id, 
-      node: ev.node?.name,
-      agent: ev.agent?.name,
-      edge: ev.edge?.name,
-      edgeFrom: ev.edge?.from.name,
-      edgeTo: ev.edge?.to.name,
-    };
-    events.push(snapshot);
+    events.push(eventSnapshot(ev));
   });
 
   const nodes = [...network.nodesByName.values()];
@@ -63,4 +68,5 @@ go start
   console.log("events:", events.length);
 
   expect(events).toMatchSnapshot();
+  expect(network.eventLog.map((ev) => eventSnapshot(ev))).toMatchSnapshot();
 });
