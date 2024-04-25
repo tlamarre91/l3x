@@ -9,6 +9,7 @@ write i'm
 test here = $pf
 write here
 test here = $pf
+echo $f
 go l1
 
 def l1

@@ -4,24 +4,24 @@ import { BehaviorSubject, Observable } from "rxjs";
 import { NetworkFactory } from "@/model/network/NetworkFactory";
 import { Network, queryObjects } from "@/model/network";
 import { NetworkView } from "@/model/network/NetworkView";
+import { Game } from "@/model/game/Game";
 
 export type SelectableObject = ReturnType<typeof queryObjects>; // TODO: better type
 
 export interface GameContextValue {
-  network: Network;
-  networkView: NetworkView;
+  game: Game;
   selectedObject$: Observable<SelectableObject | null>;
   selectObject: (obj: SelectableObject | null) => void;
-  getSelectedObject: () => SelectableObject | null
+  getSelectedObject: () => SelectableObject | null;
 }
 
 export function makeGameContextData(): GameContextValue {
   const [network, networkView] = NetworkFactory.demo();
+  const game = new Game(network, networkView);
   const selectedObject$ = new BehaviorSubject<SelectableObject | null>(null);
 
   const value = {
-    network,
-    networkView,
+    game,
     selectedObject$: selectedObject$.asObservable(),
     selectObject(obj: SelectableObject | null) {
       selectedObject$.next(obj);

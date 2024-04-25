@@ -8,10 +8,10 @@ export default function AgentCard({ agent }: { agent: Agent }) {
   const execState = agent.executionStateObservables;
   const buffer = agent.bufferObservables;
 
-  const alive = useStateSubscription(execState.alive$, execState.getAlive);
-  const stateName = useStateSubscription(execState.stateName$, execState.getStateName);
-  const commandIndex = useStateSubscription(execState.commandIndex$, execState.getCommandIndex);
-  const operandIndex = useStateSubscription(execState.operandIndex$, execState.getOperandIndex);
+  const alive = useStateSubscription(execState.alive$, () => execState.getAlive());
+  const stateName = useStateSubscription(execState.stateName$, () => execState.getStateName());
+  const commandIndex = useStateSubscription(execState.commandIndex$, () => execState.getCommandIndex());
+  const operandIndex = useStateSubscription(execState.operandIndex$, () => execState.getOperandIndex());
   const bufferData = useStateSubscription(buffer.data$, buffer.getData);
   const bufferCursor = useStateSubscription(buffer.cursorIndex$, buffer.getCursorIndex);
 

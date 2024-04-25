@@ -154,19 +154,26 @@ export function isWrite(command: Command): command is WriteCommand {
 
 export interface CommandResult {
   status: Status;
-  errorName?: string;
-  errorMessage?: string;
-  eventsToEmit?: AgentEvent[];
   setCommandIndex?: number;
   incrementCommandIndex?: number;
 }
 
-export const OK_RESULT: CommandResult = { status: "ok" };
+export interface SuccessResult extends CommandResult {
+  status: "ok";
+}
+
+export function isSuccessResponse(result: CommandResult): result is SuccessResult {
+  return result.status === "ok";
+}
 
 export interface ErrorResult extends CommandResult {
   status: "fu";
   errorName: string;
   errorMessage: string;
+}
+
+export function isErrorResult(result: CommandResult): result is ErrorResult {
+  return result.status === "fu";
 }
 
 export function resultFromError(error: unknown): ErrorResult {
@@ -180,3 +187,5 @@ export function resultFromError(error: unknown): ErrorResult {
 
   return { status, errorName: "Unexpected error", errorMessage: String(error) };
 }
+
+export const OK_RESULT: CommandResult = { status: "ok" };

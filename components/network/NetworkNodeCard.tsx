@@ -15,7 +15,7 @@ export type NetworkNodeCardProps = {
 };
 
 export default function NetworkNodeCard({ node }: NetworkNodeCardProps) {
-  const { network } = useContext(GameContext);
+  const network = useContext(GameContext).game.network!; // TODO: remove non null assert
   const agents = useStateSubscription(node.agents$, []);
   const edges = useStateSubscription(node.edges$, []);
 

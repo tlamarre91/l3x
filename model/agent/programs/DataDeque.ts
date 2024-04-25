@@ -22,6 +22,9 @@ export function isNamedRegister(s: string | undefined): s is NamedRegister {
   return isNamedRegister;
 }
 
+/**
+ * Collection of strings supporting read, push, pop, etc.
+ */
 export class DataDeque {
   #cursorIndex = new BehaviorSubject(0);
 
@@ -96,19 +99,13 @@ export class DataDeque {
     const val = arr[index];
     const deleteCount = pop ? 1 : 0;
 
-    // console.log("accessIndex", index, pop, dataToWrite);
-    // console.log("before", this.#array.getValue());
-
     if (dataToWrite != null) {
-      // TODO: probably off by 1
       arr.splice(index, deleteCount, dataToWrite);
     } else {
       arr.splice(index, deleteCount);
     }
 
     this.#array.next(arr);
-
-    // console.log("after", this.#array.getValue());
 
     return val;
   }
@@ -117,12 +114,14 @@ export class DataDeque {
     const cursorIndex = this.#cursorIndex.getValue();
     const val = this.accessIndex(cursorIndex, pop, dataToWrite);
     this.#incrementCursorIndex(inc);
+
     return val;
   }
 
   accessBoundary(pop: boolean, dataToWrite?: string, back: boolean = true) {
     const arr = this.#array.getValue();
     const index = back ? arr.length - 1 : 0;
+
     return this.accessIndex(index, pop, dataToWrite);
   }
 

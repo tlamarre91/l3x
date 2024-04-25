@@ -22,13 +22,15 @@ export class ExecutionState {
   readonly alive$: BehaviorSubject<boolean>;
   readonly stateName$: BehaviorSubject<string>;
   readonly commandIndex$: BehaviorSubject<number>;
+  // TODO: do something with this
   readonly operandIndex$: BehaviorSubject<number>;
 
-  constructor() {
-    this.alive$ = new BehaviorSubject(true);
-    this.stateName$ = new BehaviorSubject("start");
-    this.commandIndex$ = new BehaviorSubject(0);
-    this.operandIndex$ = new BehaviorSubject(0);
+  constructor(alive = true, state = "start", commandIndex = 0, operandIndex = 0) {
+    this.alive$ = new BehaviorSubject(alive);
+    // TODO: extract "start" to a constant
+    this.stateName$ = new BehaviorSubject(state);
+    this.commandIndex$ = new BehaviorSubject(commandIndex);
+    this.operandIndex$ = new BehaviorSubject(operandIndex);
   }
 
   initialize() {

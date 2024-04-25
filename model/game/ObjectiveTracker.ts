@@ -1,14 +1,13 @@
 import { BehaviorSubject, Observable, map, of } from "rxjs";
 import { Network } from "../network";
-import { ObservableAndGetter } from "../types";
+import { NotImplementedError, ObservableAndGetter } from "../types";
 
 export interface ObjectiveState {
   value: boolean;
   updatedAt: number;
 }
 
-type MaybeNetwork = Network | undefined;
-type WatchableObject = MaybeNetwork;
+type WatchableObject = Network;
 export type WatchableObjectWatcher = (object: WatchableObject) => ObservableAndGetter<ObjectiveState>;
 
 export interface Objective {
@@ -29,67 +28,31 @@ export function isTrackedObjective(objective: Objective): objective is TrackedOb
   return objective.state$ != null || objective.getState != null;
 }
 
-export function testWatcherThatChecksIfNodeHasAnyAgents(nodeName: string): WatchableObjectWatcher {
-  // let nodeAgentsSubscription: Subscription | undefined;
-
-  function watcher(network: MaybeNetwork) {
-    if (network == null) {
-      // nodeAgentsSubscription = undefined;
-      const falseValue = { value: false, updatedAt: -1 };
-      return [of(falseValue), () => falseValue] as const;
-    }
-
-    const nodeToWatch = network?.nodesByName.get(nodeName);
-    if (nodeToWatch == null) {
-      throw new Error(`Couldn't find node ${nodeName} in network ${network.name}`);
-    }
-
-    const state$ = nodeToWatch.agents$.pipe(map((agents) => {
-      return {
-        value: agents.length !== 0,
-        updatedAt: network.clockCount
-      };
-    }));
-
-    const getState = () => {
-      return {
-        value: nodeToWatch.getAgents().length !== 0,
-        updatedAt: network.clockCount
-      };
-    };
-
-    return [state$, getState] as const;
-  }
-
-  return watcher;
-}
-
 export class ObjectiveTracker {
   #trackedObjectiveSubject = new BehaviorSubject<TrackedObjective[]>([]);
   trackedObjectives$: Observable<TrackedObjective[]> = this.#trackedObjectiveSubject.asObservable();
-  #watchedNetworkSubject = new BehaviorSubject<MaybeNetwork>(undefined);
 
   constructor(
+    public watchedNetwork: Network,
     initialObjectives: Objective[] = [],
-    watchedNetwork?: Network
   ) {
-    if (watchedNetwork != null) {
-      this.#watchedNetworkSubject.next(watchedNetwork);
-    }
-
     for (const objective of initialObjectives) {
       this.trackObjective(objective);
     }
+  }
 
-    this.#watchedNetworkSubject.subscribe((network) => this.handleNetworkChange(network));
+  getTrackedObjectives(): TrackedObjective[] {
+    return this.#trackedObjectiveSubject.getValue();
   }
 
   trackObjective(objective: Objective): TrackedObjective {
     if (objective.watchedObject !== "network") {
-      throw new Error("can only watch network!");
+      throw new NotImplementedError("can only watch network for now");
     }
 
-    if (this.#trackedObjectiveSubject.getValue().includes(objective as TrackedObjective)) {
+    const currentlyTrackedObjectives = this.#trackedObjectiveSubject.getValue();
+
+    if (currentlyTrackedObjectives.includes(objective as TrackedObjective)) {
       throw new Error("objective is already being tracked");
     }
 
@@ -97,7 +60,7 @@ export class ObjectiveTracker {
       throw new Error("objective is already being tracked somewhere else??");
     }
 
-    const [state$, getState] = objective.watch(this.#watchedNetworkSubject.getValue());
+    const [state$, getState] = objective.watch(this.watchedNetwork);
 
     const trackedObjective = {
       ...objective,
@@ -105,20 +68,8 @@ export class ObjectiveTracker {
       getState
     };
 
+    this.#trackedObjectiveSubject.next([...currentlyTrackedObjectives, trackedObjective]);
+
     return trackedObjective;
-  }
-
-  handleNetworkChange(network: MaybeNetwork) {
-    for (const trackedObjective of this.#trackedObjectiveSubject.getValue()) {
-      const [state$, getState] = trackedObjective.watch(network);
-      trackedObjective.state$ = state$;
-      trackedObjective.getState = getState;
-      // TODO: can i get away with this or is it a memory leak?
-      // i think this is fine because watch() only returns an observable, doesn't subscribe
-    }
-  }
-
-  watchNetwork(network: Network) {
-    this.#watchedNetworkSubject.next(network);
   }
 }

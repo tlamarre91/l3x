@@ -1,4 +1,4 @@
-import { Network, NetworkNode } from "./Network";
+import { Network, NetworkConfig, NetworkNode } from "./Network";
 import { NetworkNodeView, NetworkView } from "./NetworkView";
 import { Color } from "three";
 import { BufferStore } from "../data/BufferStore";
@@ -6,9 +6,9 @@ import { AgentFactory } from "../agent/AgentFactory";
 
 export class NetworkFactory {
   static demo() {
-    const [network, networkView] = NetworkFactory.grid(20, 20);
+    const [network, networkView] = NetworkFactory.grid(4, 4);
 
-    const nodes = [...network.nodesByName.values()];
+    const nodes = [...network.getNodes()];
 
     for (const node of nodes) {
       const rand = Math.random();
@@ -18,7 +18,7 @@ export class NetworkFactory {
         network.addAgent(agent, node);
       }
 
-      if (rand > 0.95) {
+      if (rand > 0.90) {
         const agent = AgentFactory.circle(`circle-${rand}`);
         network.addAgent(agent, node);
       }
@@ -30,6 +30,7 @@ export class NetworkFactory {
   static grid(
     height: number,
     width: number,
+    config?: Partial<NetworkConfig>,
   ): [Network, NetworkView] {
     // TODO: why are non-square grids broken
     function _addUpEdge(index: number, data: BufferStore) { // TODO
@@ -56,7 +57,7 @@ export class NetworkFactory {
 
     const separationScale = 3;
 
-    const network = new Network("gridnet");
+    const network = new Network("gridnet", config);
     const networkView = new NetworkView(network);
 
     const nodes = new Array<NetworkNode>();

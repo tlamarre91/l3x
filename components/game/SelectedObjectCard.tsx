@@ -8,7 +8,7 @@ import AgentCard from "../agent/AgentCard";
 export default function SelectedObjectCard() {
   const gameContext = useContext(GameContext);
 
-  const selectedObject = useStateSubscription(gameContext.selectedObject$, gameContext.getSelectedObject());
+  const selectedObject = useStateSubscription(gameContext.selectedObject$, () => gameContext.getSelectedObject());
 
   const selectedObjectComponent = useMemo(() => {
     if (selectedObject == null) {

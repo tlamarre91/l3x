@@ -11,8 +11,9 @@ export interface NetworkNode {
   store: BufferStore;
   agents$: Observable<Agent[]>;
   getAgents: () => Agent[];
-  events$: Observable<events.NetworkNodeEvent>;
   edges$: Observable<NetworkEdge[]>;
+  getEdges: () => NetworkEdge[];
+  events$: Observable<events.NetworkNodeEvent>;
 }
 
 export interface NetworkNodeController {
@@ -20,6 +21,7 @@ export interface NetworkNodeController {
   agentsSubject: BehaviorSubject<Agent[]>;
   edgesSubject: BehaviorSubject<NetworkEdge[]>;
   edgesOutByName: Map<string, NetworkEdge>;
+  emit: (event: events.NetworkEvent) => void;
 }
 
 export interface NetworkEdge {
@@ -32,22 +34,45 @@ export interface NetworkEdge {
   events$: Observable<events.NetworkEdgeEvent>;
 }
 
+export interface NetworkEdgeController {
+  edge: NetworkEdge;
+  fromController: NetworkNodeController;
+  toController: NetworkNodeController;
+  emit: (event: events.NetworkEvent) => void;
+}
+
 type EdgeToMap = Map<NetworkNode, NetworkEdge>;
 type EdgeFromMap = Map<NetworkNode, EdgeToMap>;
 
+export interface NetworkConfig {
+  killOnBadRequest: boolean;
+  logEvents: boolean;
+}
+
+const DEFAULT_NETWORK_CONFIG: NetworkConfig = {
+  killOnBadRequest: true,
+  logEvents: false,
+}
+
 export class Network {
-  // TODO: add observable nodes$
+  readonly config: NetworkConfig;
+  readonly eventLog = new Array<events.SequentialNetworkEvent>();
   readonly nodesByName = new Map<string, NetworkNode>();
+
+  // TODO: this "controller" stuff is getting silly isn't it
   readonly #nodeControllers = new Map<NetworkNode, NetworkNodeController>();
+  readonly #edgeControllers = new Map<NetworkEdge, NetworkEdgeController>();
 
   /**
    * `Subject` for all network events
    * 
-   * The "observer" side of the subject is private so that only this network can send events through it
+   * The "observer" side of the subject is private so that only this network can send events through it.
+   *
+   * Serves as an event bus for event sources inside the network (nodes, agents, edges).
    */
   readonly #eventSubject = new Subject<events.SequentialNetworkEvent>;
-  readonly #nodesSubject: BehaviorSubject<NetworkNode[]> = new BehaviorSubject([]);
-  readonly #agentsSubject: BehaviorSubject<Agent[]> = new BehaviorSubject([]);
+  readonly #nodesSubject = new BehaviorSubject(new Array<NetworkNode>());
+  readonly #agentsSubject = new BehaviorSubject(new Array<Agent>());
 
   /** Public `Observable` for all network events */
   readonly events$: Observable<events.SequentialNetworkEvent> = this.#eventSubject.asObservable();
@@ -74,7 +99,16 @@ export class Network {
 
   clockCount: number = 0;
 
-  constructor(public name: string) {
+  constructor(public name: string, config: Partial<NetworkConfig> = {}) {
+    console.log(`creating network ${name}`);
+    const fullConfig: NetworkConfig = { ...DEFAULT_NETWORK_CONFIG, ...config };
+    this.config = fullConfig;
+    
+    // this.events$.subscribe((ev) => console.log(ev));
+  }
+
+  getNodes(): NetworkNode[]{
+    return this.#nodesSubject.getValue();
   }
 
   /**
@@ -83,6 +117,10 @@ export class Network {
   #emit(event: events.NetworkEvent) {
     const seqEvent = { id: this.#nextEventId++, ...event } satisfies events.SequentialNetworkEvent;
     this.#eventSubject.next(seqEvent);
+
+    if (this.config.logEvents) {
+      this.eventLog.push(seqEvent);
+    }
   }
 
   process() {
@@ -135,7 +173,8 @@ export class Network {
 
     const agentsSubject = new BehaviorSubject<Agent[]>([]);
     const edgesSubject = new BehaviorSubject<NetworkEdge[]>([]);
-    const events$ = this.nodeEvents$.pipe(filter((ev) => ev.node === node));
+    const eventSubject = new Subject<events.NetworkNodeEvent>();
+    const events$ = eventSubject.asObservable();
 
     const node: NetworkNode = {
       type: "node",
@@ -143,30 +182,36 @@ export class Network {
       name,
       store,
       agents$: agentsSubject.asObservable(),
-      getAgents: agentsSubject.getValue,
+      getAgents: agentsSubject.getValue, // TODO: do these need to be () => agentsSubject.getValue(), etc?
       edges$: edgesSubject.asObservable(),
-      events$
+      getEdges: edgesSubject.getValue,
+      events$,
     };
 
     this.nodesByName.set(name, node);
 
-    const controller = {
+    const controller: NetworkNodeController = {
       node,
       agentsSubject,
       edgesSubject,
-      edgesOutByName: new Map()
-    } satisfies NetworkNodeController;
-    this.#nodeControllers.set(node, controller);
+      edgesOutByName: new Map(),
+      emit: (ev: events.NetworkEvent) => {
+        eventSubject.next({ ...ev, node });
+      },
+    };
 
-    this.#registerNode(node);
+    this.#nodeControllers.set(node, controller);
+    this.#registerNode(controller);
+
     return node;
   }
 
   removeNode(node: NetworkNode) {
-    const agentsSubject = this.#nodeControllers.get(node)?.agentsSubject;
-    if (agentsSubject == null) {
-      throw new Error(`Network ${this.name} doesn't contain node ${node.name}`);
+    const controller = this.#nodeControllers.get(node);
+    if (controller == null) {
+      throw new Error(`Network ${this.name} doesn't have controller for node ${node.name}`);
     }
+    const agentsSubject = controller.agentsSubject;
 
     agentsSubject.getValue().forEach((agent) => {
       this.removeAgent(agent);
@@ -175,24 +220,34 @@ export class Network {
     this.#removeAllEdgesFrom(node);
     this.#removeAllEdgesTo(node);
 
-    this.#unregisterNode(node);
+    this.#unregisterNode(controller);
 
     this.#nodeControllers.delete(node);
   }
 
-  #registerNode(node: NetworkNode) {
+  // #emitFromNode(node: NetworkNode, event: events.NetworkEvent) {
+  //   this.#nodeControllers.get(node)?.emit(event);
+  // }
+
+  #registerNode(controller: NetworkNodeController) {
+    const node = controller.node;
     const nodes = this.#nodesSubject.getValue();
     this.#nodesSubject.next([...nodes, node]);
-    this.#emit({ type: "addnode", node });
+
+    node.events$.subscribe((ev) => this.#emit(ev));  // forward all events up to the network
+
+    controller.emit({ type: "addnode" });
   }
 
-  #unregisterNode(node: NetworkNode) {
+  #unregisterNode(controller: NetworkNodeController) {
+    const node = controller.node;
     const nodes = this.#nodesSubject.getValue();
     this.#nodesSubject.next(nodes.filter((_node) => _node !== node));
-    this.#emit({ type: "removenode", node });
+
+    controller.emit({ type: "removenode" });
   }
 
-  getAgentsSubject(node: NetworkNode): BehaviorSubject<Agent[]> | undefined {
+  #getAgentsSubject(node: NetworkNode): BehaviorSubject<Agent[]> | undefined {
     return this.#nodeControllers.get(node)?.agentsSubject;
   }
 
@@ -227,7 +282,8 @@ export class Network {
       this.#edges.set(from, edgesOut);
     }
 
-    const events$ = this.edgeEvents$.pipe(filter((ev) => ev.edge === edge));
+    const eventSubject = new Subject<events.NetworkEdgeEvent>();
+    const events$ = eventSubject.asObservable();
 
     if (edgesOut.has(to)) {
       throw new Error(`can't overwrite existing edge from ${from.name} to ${to.name}`);
@@ -247,14 +303,17 @@ export class Network {
       events$
     };
 
+    const edgeController: NetworkEdgeController = {
+      edge,
+      fromController,
+      toController,
+      emit: (ev: events.NetworkEvent) => eventSubject.next({ ...ev, edge })
+    };
+
     edgesOut.set(to, edge);
-    fromController.edgesOutByName.set(name, edge);
+    this.#edgeControllers.set(edge, edgeController);
 
-    for (const controller of [fromController, toController]) {
-      this.#registerEdge(controller, edge);
-    }
-
-    this.#emit({ type: "addedge", edge });
+    this.#registerEdge(edgeController);
   }
 
   removeEdge(from: NetworkNode, to: NetworkNode) {
@@ -267,36 +326,57 @@ export class Network {
     if (edge == null) {
       throw new Error("failed to remove edge?");
     }
+
+    const fromController = this.#nodeControllers.get(from);
+    if (fromController == null) {
+      throw new Error(`how is there not a controller for node ${from.name}`);
+    }
   }
 
-  #registerEdge(controller: NetworkNodeController, edge: NetworkEdge) {
-    const subject = controller.edgesSubject;
-    const edges = subject.getValue();
-    subject.next([...edges, edge]);
+  #registerEdge(edgeController: NetworkEdgeController) {
+    const edge = edgeController.edge;
+
+    const fromController = edgeController.fromController;
+    fromController.edgesOutByName.set(edge.name, edge);
+
+    for (const nodeController of [fromController, edgeController.toController]) {
+      const edgesSubject = nodeController.edgesSubject;
+      const edges = edgesSubject.getValue();
+      // TODO: should probably just say `.next([...fromController.edgesOutByName.values()])`
+      edgesSubject.next([...edges, edge]);
+    }
+
+    edge.events$.subscribe((ev) => this.#emit(ev));
+
+    edgeController.emit({ type: "addedge" });
   }
 
-  #unregisterEdge(edge: NetworkEdge) {
-    for (const node of [edge.from, edge.to]) {
-      const controller = this.#nodeControllers.get(node);
-      if (controller == null) {
-        throw new Error(`couldn't get controller to unregister node ${node.name}`);
-      }
+  #unregisterEdge(edgeController: NetworkEdgeController) {
+    const edge = edgeController.edge;
 
-      const subject = controller.edgesSubject;
+    const fromController = edgeController.fromController;
+    fromController.edgesOutByName.delete(edge.name);
+
+    for (const nodeController of [fromController, edgeController.toController]) {
+      const subject = nodeController.edgesSubject;
       const edges = subject.getValue();
       const newEdges = edges.filter((_edge) => _edge !== edge);
 
       subject.next(newEdges);
     }
 
-    this.#emit({ type: "removeedge", edge });
+    edgeController.emit({ type: "removeedge" });
   }
 
   #removeAllEdgesFrom(fromNode: NetworkNode) {
     const edgesFrom = this.#edges.get(fromNode) ?? [];
 
     for (const [_toNode, edge] of edgesFrom) {
-      this.#unregisterEdge(edge);
+      const edgeController = this.#edgeControllers.get(edge);
+    if (edgeController == null) {
+      throw new Error(`how is there not a controller for edge ${edge.name}`);
+    }
+      this.#unregisterEdge(edgeController);
     }
 
     this.#edges.delete(fromNode);
@@ -321,7 +401,13 @@ export class Network {
     }
 
     toEdgeMap.delete(toNode);
-    this.#unregisterEdge(edge);
+
+    const edgeController = this.#edgeControllers.get(edge);
+    if (edgeController == null) {
+      throw new Error(`how is there not a controller for edge ${edge.name}`);
+    }
+
+    this.#unregisterEdge(edgeController);
 
     return edge;
   }
@@ -390,16 +476,17 @@ export class Network {
     }
   }
 
-  #moveAgent(agent: Agent, edge: NetworkEdge) {
+  #moveAgent(agent: Agent, edgeController: NetworkEdgeController) {
+    const edge = edgeController.edge;
     this.validateMoveAgent(agent, edge);
 
     const { from, to } = edge;
 
     this.#reassignAgentNode(agent, from, to);
 
-    this.#emit({ type: "agentexit", node: from, agent });
-    this.#emit({ type: "agentcross", edge, agent });
-    this.#emit({ type: "agententer", node: to, agent });
+    edgeController.fromController.emit({ type: "agentexit", agent });
+    edgeController.emit({ type: "agentcross", agent });
+    edgeController.toController.emit({ type: "agententer", agent });
   }
 
   removeAgent(agent: Agent) {
@@ -426,10 +513,12 @@ export class Network {
     addToNode: NetworkNode | null
   ) {
     if (removeFromNode != null) {
-      const agentsSubject = this.getAgentsSubject(removeFromNode);
+      const agentsSubject = this.#getAgentsSubject(removeFromNode);
+
       if (agentsSubject == null) {
         throw new Error("where's the agents");
       }
+
       agentsSubject.next(
         agentsSubject.getValue()
           .filter((nodeAgent) => nodeAgent !== agent)
@@ -437,21 +526,20 @@ export class Network {
     }
 
     if (addToNode != null) {
+      const agentsSubject = this.#getAgentsSubject(addToNode);
 
-      const agentsSubject = this.getAgentsSubject(addToNode);
       if (agentsSubject == null) {
         throw new Error("where's the agents");
       }
 
       agentsSubject.next([...agentsSubject.getValue(), agent]);
+
       this.#agentPositions.set(agent, addToNode);
-
-    } else if (removeFromNode == null) {
-
+    }
+    else if (removeFromNode == null) {
       throw new Error("why reassign to and from null???");
-
-    } else {
-
+    }
+    else {
       this.#agentPositions.delete(agent);
 
     }
@@ -473,18 +561,31 @@ export class Network {
   #handleAgentRequest(agent: Agent, request: NetworkRequest): NetworkResponse {
     try {
       if (isMove(request)) {
-        const agentPosition = this.#agentPositions.get(agent);
-        if (agentPosition == null) {
+        const agentPositionNode = this.#agentPositions.get(agent);
+        if (agentPositionNode == null) {
           throw new Error(`couldn't find agent ${agent.name}`);
         }
 
-        const edge = this.#nodeControllers.get(agentPosition)?.edgesOutByName.get(request.edgeName);
+        const nodeController = this.#nodeControllers.get(agentPositionNode);
+        if (nodeController == null) {
+          throw new Error(`couldn't find controller for node ${agentPositionNode.name}`);
+        }
+
+        const edge = nodeController.edgesOutByName.get(request.edgeName);
+
         if (edge == null) {
-          throw new Error(`no edge out of ${agentPosition.name} with name ${request.edgeName}`);
+          // maybe don't throw; return a "fu" response instead.
+          // then add a callback to kill the agent if config.kill is true
+          throw new Error(`no edge out of ${agentPositionNode.name} with name ${request.edgeName}`);
+        }
+
+        const edgeController = this.#edgeControllers.get(edge);
+        if (edgeController == null) {
+          throw new Error(`how is there not a controller for edge ${edge.name}`);
         }
 
         const callback = () => {
-          this.#moveAgent(agent, edge);
+          this.#moveAgent(agent, edgeController);
         };
         this.#pendingRequestCallbacks.push(callback);
         return { status: "ok" };

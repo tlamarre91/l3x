@@ -43,7 +43,7 @@ export default function NetworkEventLog({
 }: NetworkEventLogProps) {
   show = { ...DEFAULT_SHOW, ...show };
 
-  const { network } = useContext(GameContext);
+  const network = useContext(GameContext).game.network!; // TODO: remove non null assert
   const [eventLog, eventLogDispatch] = useReducer(eventLogReducer, []);
 
   useSubscription(network.events$, eventLogDispatch);

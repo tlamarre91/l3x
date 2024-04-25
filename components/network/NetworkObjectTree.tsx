@@ -48,7 +48,7 @@ export function NetworkNodeTree({ node }: NetworkNodeTreeProps) {
 }
 
 export default function NetworkObjectTree() {
-  const { network } = useContext(GameContext);
+  const network = useContext(GameContext).game.network!; // TODO: remove non null assert
   const nodes = useStateSubscription(network.nodes$, []);
 
   return (

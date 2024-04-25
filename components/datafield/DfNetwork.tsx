@@ -6,9 +6,9 @@ import DfAgent from "./DfAgent";
 import { GameContext } from "../game/GameContext";
 
 export default function DfNetwork() {
-  const { networkView } = useContext(GameContext);
-  const agentViews = useStateSubscription(networkView.agentViews$, networkView.getAgentViews());
-  const nodeViews = useStateSubscription(networkView.nodeViews$, networkView.getNodeViews());
+  const networkView = useContext(GameContext).game.networkView!; // TODO: remove non null assert
+  const agentViews = useStateSubscription(networkView.agentViews$, () => networkView.getAgentViews());
+  const nodeViews = useStateSubscription(networkView.nodeViews$, () => networkView.getNodeViews());
 
   console.log(`rendering ${agentViews.length} agents`);
   console.log(`rendering ${nodeViews.length} nodes`);

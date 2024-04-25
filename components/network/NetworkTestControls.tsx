@@ -19,7 +19,7 @@ go start
 `;
 
 export default function NetworkTestControls() {
-  const { network } = useContext(GameContext);
+  const network = useContext(GameContext).game.network!; // TODO: remove non null assert
   const nodes = useStateSubscription(network.nodes$, []);
   const [mostRecentAgent, setMostRecentAgent] = useState<Agent>();
 

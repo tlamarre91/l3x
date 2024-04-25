@@ -7,7 +7,7 @@ import NetworkNodeCard from "./NetworkNodeCard";
 import { GameContext } from "../game/GameContext";
 
 export default function NetworkNodeList() {
-  const { network } = useContext(GameContext);
+  const network = useContext(GameContext).game.network!; // TODO: remove non null assert
   const nodes = useStateSubscription(network.nodes$, []);
 
   return (

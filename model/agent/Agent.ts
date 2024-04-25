@@ -73,7 +73,6 @@ export class Agent {
 
   die() {
     this.#executionState.alive$.next(false);
-    // TODO: emit death knell
   }
 
   reprogram(code: string) {
@@ -93,8 +92,8 @@ export class Agent {
   }
 
   #getSelectedCommand(): commands.Command {
-    const commandIndex = this.#executionState.commandIndex$.getValue();
-    const stateName = this.#executionState.stateName$.getValue();
+    const commandIndex = this.executionStateObservables.getCommandIndex();
+    const stateName = this.executionStateObservables.getStateName();
     const procedure = this.stateMachine.procedures.get(stateName);
 
     if (procedure == null) {
@@ -105,17 +104,19 @@ export class Agent {
     return command;
   }
 
+  /** Execute the next command and other stuff that happens every timestep  */
   process() {
-    if (!this.#executionState.alive$.getValue()) {
+    if (!this.executionStateObservables.getAlive()) {
       // console.log(`can't process; agent ${this.name} is dead`);
       return;
     }
+
     const command = this.#getSelectedCommand();
 
     const result = this.executeCommand(command);
 
-    if (result.status !== "ok") {
-      this.#emit({ type: "error", errorName: result.errorName, errorMessage: result.errorMessage });
+    if (commands.isErrorResult(result)) {
+      // this.#emit({ type: "error", errorName: result.errorName, errorMessage: result.errorMessage });
       this.die();
     }
 
@@ -125,14 +126,6 @@ export class Agent {
     } else {
       index$.next(index$.getValue() + 1);
     }
-
-    if (result.eventsToEmit != null) {
-      for (const event of result.eventsToEmit) {
-        this.#emit(event);
-      }
-    }
-
-    // TODO: handle increment command index
   }
 
   executeCommand(command: commands.Command): commands.CommandResult {
@@ -146,6 +139,7 @@ export class Agent {
   }
 
   #executeCommandUnsafe(command: commands.Command): commands.CommandResult {
+    // pretty sure i should just switch on command.instruction......
     if (commands.isEcho(command)) {
       return this.#executeEcho(command);
     }
@@ -170,8 +164,10 @@ export class Agent {
   }
 
   #executeEcho({ operands }: commands.EchoCommand): commands.CommandResult {
-    const eventsToEmit = [{ type: "echo", message: operands.join(" ") } as const];
-    return { status: "ok", eventsToEmit };
+    // const eventsToEmit = [{ type: "echo", message: operands.join(" ") } as const];
+    // return { status: "ok", eventsToEmit };
+    console.log(`agent ${this.name}: ${operands.map((op) => this.#evaluateTerm(op)).join(" ")}`);
+    return { status: "ok" };
   }
 
   #executeGo({ state }: commands.GoCommand): commands.CommandResult {
