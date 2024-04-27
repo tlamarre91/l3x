@@ -27,11 +27,10 @@ export function isNamedRegister(s: string | undefined): s is NamedRegister {
  */
 export class DataDeque {
   #cursorIndex = new BehaviorSubject(0);
-
-  #array: BehaviorSubject<Array<string>>;
+  #cachedObservables: DataDequeObservables | undefined;
+  #array = new BehaviorSubject(new Array<string>());
 
   constructor(public capacity: number) {
-    this.#array = new BehaviorSubject(new Array<string>());
   }
 
   /** Set cursor index but keep it in bounds */
@@ -124,8 +123,6 @@ export class DataDeque {
 
     return this.accessIndex(index, pop, dataToWrite);
   }
-
-  #cachedObservables: DataDequeObservables | undefined;
 
   // TODO: just make a getter for cached collection of observables
   asObservables(): DataDequeObservables {

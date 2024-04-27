@@ -116,14 +116,22 @@ export class Agent {
     const result = this.executeCommand(command);
 
     if (commands.isErrorResult(result)) {
-      // this.#emit({ type: "error", errorName: result.errorName, errorMessage: result.errorMessage });
-      this.die();
+      const { errorName, errorMessage } = result;
+      this.#emit({ type: "error", errorName, errorMessage });
+      // this.die();
+      // TODO: should we continue or return?
     }
 
-    const index$ = this.#executionState.commandIndex$;
+    if (result.eventsToEmit != null) {
+      result.eventsToEmit.forEach((ev) => {
+        this.#emit(ev);
+      });
+    }
+
     if (result.setCommandIndex != null) {
-      index$.next(result.setCommandIndex);
+      this.#executionState.commandIndex$.next(result.setCommandIndex);
     } else {
+      const index$ = this.#executionState.commandIndex$;
       index$.next(index$.getValue() + 1);
     }
   }
@@ -164,10 +172,11 @@ export class Agent {
   }
 
   #executeEcho({ operands }: commands.EchoCommand): commands.CommandResult {
-    // const eventsToEmit = [{ type: "echo", message: operands.join(" ") } as const];
-    // return { status: "ok", eventsToEmit };
-    console.log(`agent ${this.name}: ${operands.map((op) => this.#evaluateTerm(op)).join(" ")}`);
-    return { status: "ok" };
+    const message = operands.map((op) => this.#evaluateTerm(op)).join(" ");
+    const eventsToEmit = [{ type: "echo", message } as const];
+    return { status: "ok", eventsToEmit };
+    // console.log(`agent ${this.name}: ${operands.map((op) => this.#evaluateTerm(op)).join(" ")}`);
+    // return { status: "ok" };
   }
 
   #executeGo({ state }: commands.GoCommand): commands.CommandResult {
@@ -256,6 +265,11 @@ export class Agent {
     return commands.OK_RESULT;
   }
 
+  /**
+   * Evaluate a `Term`. For literal terms, return their value.
+   * For reference terms, access the agent's buffer.
+   * This may involve deleting from the buffer.
+   */
   #evaluateTerm(term: commands.Term, dataToWrite?: string): string {
     if (term.value != null) {
       return term.value;

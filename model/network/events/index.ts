@@ -1,6 +1,7 @@
 import { Agent } from "@/model/agent";
 import { NetworkEdge, NetworkNode } from "../Network";
 import { Sequential } from "@/model/types";
+import { AgentEvent, SequentialAgentEvent } from "@/model/agent/events";
 
 type NetworkEventType =
   | "addagent"
@@ -11,7 +12,9 @@ type NetworkEventType =
   | "removeedge"
   | "agententer"
   | "agentexit"
-  | "agentcross";
+  | "agentcross"
+  | "agentmove"
+  | "agentemit";
 
 export interface NetworkEvent {
   id?: number;
@@ -52,6 +55,11 @@ export interface RemoveAgentEvent extends NetworkAgentEvent {
 
 export function isRemoveAgent(event: NetworkEvent): event is RemoveAgentEvent {
   return isAboutAgent(event) && event.type === "removeagent";
+}
+
+export interface AgentEmittedEvent extends NetworkAgentEvent {
+  type: "agentemit";
+  emitted: SequentialAgentEvent;
 }
 
 export interface NetworkEdgeEvent extends NetworkEvent {
@@ -107,6 +115,7 @@ export function isRemoveNode(event: NetworkEvent): event is NetworkAddNodeEvent 
 
 export interface NetworkAgentEvent extends NetworkEvent {
   agent: Agent;
+  emitted?: AgentEvent;
 }
 
 export interface AgentEnterEvent extends NetworkAgentEvent {

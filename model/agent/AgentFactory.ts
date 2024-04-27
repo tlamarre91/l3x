@@ -4,12 +4,12 @@ export class AgentFactory {
   static zigzag(name: string) {
     const ZIGZAG_PROGRAM = `def start
 write right $f
+echo front is $f
 move $pf
 write i'm
 test here = $pf
 write here
 test here = $pf
-echo $f
 go l1
 
 def l1

@@ -1,2 +1,1 @@
-export class BufferStore {
-}
+export type BufferStore = unknown; // TODO: ???

@@ -9,6 +9,3 @@ export interface Positioned {
 }
 
 export type ObservableAndGetter<T> = readonly [Observable<T>, () => T];
-
-export class NotImplementedError extends Error {
-}

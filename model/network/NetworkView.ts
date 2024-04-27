@@ -8,6 +8,7 @@ import { Color } from "three";
 type ArrayVector3 = readonly [number, number, number];
 // TODO: probably need one of these for Color too; i think spring expects strings
 
+// TODO: can i constrain T to be something springable?
 interface Animation<T> {
   target: T;
   start: number;
@@ -149,8 +150,10 @@ export class NetworkView {
     this.setAgentView(agent, agentView);
 
     // TODO: pass in some event handlers for the agent view instead of hardcoding
-    const subscription = this.network.getAgentEvents(agent).subscribe((ev) => {
-      if (ev.type === "agentcross") {
+    const agentEvents$ = this.network.getAgentEvents(agent);
+    const subscription = agentEvents$.subscribe((ev) => {
+      console.log({ ev });
+      if (ev.type === "agentmove") {
         this.handleAgentMove(agent, ev.edge!.to);
         return;
       }

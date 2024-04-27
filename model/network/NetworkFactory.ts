@@ -34,16 +34,32 @@ export class NetworkFactory {
   ): [Network, NetworkView] {
     // TODO: why are non-square grids broken
     function _addUpEdge(index: number, data: BufferStore) { // TODO
-      network.addEdge(data, nodes[index], nodes[index - width], "up");
+      const edgeProps = {
+        name: "up",
+        store: data
+      };
+      network.addEdge(nodes[index], nodes[index - width], edgeProps, );
     }
     function _addRightEdge(index: number, data: BufferStore) { // TODO
-      network.addEdge(data, nodes[index], nodes[index + 1], "right");
+      const edgeProps = {
+        name: "right",
+        store: data
+      };
+      network.addEdge(nodes[index], nodes[index + 1], edgeProps, );
     }
     function _addDownEdge(index: number, data: BufferStore) { // TODO
-      network.addEdge(data, nodes[index], nodes[index + width], "down");
+      const edgeProps = {
+        name: "down",
+        store: data
+      };
+      network.addEdge(nodes[index], nodes[index + width], edgeProps, );
     }
     function _addLeftEdge(index: number, data: BufferStore) { // TODO
-      network.addEdge(data, nodes[index], nodes[index - 1], "left");
+      const edgeProps = {
+        name: "left",
+        store: data
+      };
+      network.addEdge(nodes[index], nodes[index - 1], edgeProps, );
     }
 
     function computePosition(x: number, y: number) {
@@ -65,9 +81,9 @@ export class NetworkFactory {
     for (let x = 0; x < width; x++) {
       for (let y = 0; y < height; y++) {
         const position = computePosition(x, y);
-        const node = network.addNode(position);
-        console.log(`position of ${node.name}: ${position}`);
+        const node = network.addNode();
         const view = new NetworkNodeView(node, position, new Color(Color.NAMES.red));
+        console.log(`position of ${node.name}: ${position}`);
 
         networkView.addNetworkNodeView(node, view);
         nodes.push(node);

@@ -1,6 +1,7 @@
-import { BehaviorSubject, Observable, map, of } from "rxjs";
+import { BehaviorSubject, Observable } from "rxjs";
 import { Network } from "../network";
-import { NotImplementedError, ObservableAndGetter } from "../types";
+import { ObservableAndGetter } from "../types";
+import { NotImplementedError } from "../errors";
 
 export interface ObjectiveState {
   value: boolean;

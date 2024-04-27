@@ -55,7 +55,7 @@ export class Game {
       throw new Error("TODO");
     }
 
-    const name = "@n15"
+    const name = "@n15";
     const testObjective: Objective = {
       name: "Test Objective",
       description: `Get an agent to node ${name}`,

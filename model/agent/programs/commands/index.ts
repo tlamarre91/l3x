@@ -154,6 +154,7 @@ export function isWrite(command: Command): command is WriteCommand {
 
 export interface CommandResult {
   status: Status;
+  eventsToEmit?: AgentEvent[];
   setCommandIndex?: number;
   incrementCommandIndex?: number;
 }
