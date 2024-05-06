@@ -1,8 +1,9 @@
-import { Network, NetworkConfig, NetworkNode } from "./Network";
+import { Network, NetworkConfig } from "./Network";
 import { NetworkNodeView, NetworkView } from "./NetworkView";
 import { Color } from "three";
 import { BufferStore } from "../data/BufferStore";
 import { AgentFactory } from "../agent/AgentFactory";
+import { NetworkNode } from "./NetworkNode";
 
 export class NetworkFactory {
   static demo() {
@@ -15,12 +16,12 @@ export class NetworkFactory {
 
       if (rand < 0.05) {
         const agent = AgentFactory.zigzag(`zigzag-${rand}`);
-        network.addAgent(agent, node);
+        network.joinAgent(agent, node);
       }
 
       if (rand > 0.90) {
         const agent = AgentFactory.circle(`circle-${rand}`);
-        network.addAgent(agent, node);
+        network.joinAgent(agent, node);
       }
     }
 
@@ -35,31 +36,32 @@ export class NetworkFactory {
     // TODO: why are non-square grids broken
     function _addUpEdge(index: number, data: BufferStore) { // TODO
       const edgeProps = {
-        name: "up",
+        key: "up",
         store: data
       };
-      network.addEdge(nodes[index], nodes[index - width], edgeProps, );
+      // network.addEdge(nodes[index], nodes[index - width], edgeProps, );
+      network.addEdge({ from: nodes[index], to: nodes[index - width], ...edgeProps });
     }
     function _addRightEdge(index: number, data: BufferStore) { // TODO
       const edgeProps = {
-        name: "right",
+        key: "right",
         store: data
       };
-      network.addEdge(nodes[index], nodes[index + 1], edgeProps, );
+      network.addEdge({ from: nodes[index], to: nodes[index + 1], ...edgeProps });
     }
     function _addDownEdge(index: number, data: BufferStore) { // TODO
       const edgeProps = {
-        name: "down",
+        key: "down",
         store: data
       };
-      network.addEdge(nodes[index], nodes[index + width], edgeProps, );
+      network.addEdge({ from: nodes[index], to: nodes[index + width], ...edgeProps });
     }
     function _addLeftEdge(index: number, data: BufferStore) { // TODO
       const edgeProps = {
-        name: "left",
+        key: "left",
         store: data
       };
-      network.addEdge(nodes[index], nodes[index - 1], edgeProps, );
+      network.addEdge({ from: nodes[index], to: nodes[index - 1], ...edgeProps });
     }
 
     function computePosition(x: number, y: number) {

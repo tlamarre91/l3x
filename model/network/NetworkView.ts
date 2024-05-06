@@ -152,7 +152,7 @@ export class NetworkView {
     // TODO: pass in some event handlers for the agent view instead of hardcoding
     const agentEvents$ = this.network.getAgentEvents(agent);
     const subscription = agentEvents$.subscribe((ev) => {
-      console.log({ ev });
+      // console.log({ ev });
       if (ev.type === "agentmove") {
         this.handleAgentMove(agent, ev.edge!.to);
         return;

@@ -70,7 +70,7 @@ export function isComparison(s: string | undefined): s is Comparison {
 export interface Command {
   instruction: Instruction;
   output?: RefTerm | undefined;
-  edgeName?: Term;
+  edgeKey?: Term;
   nodeName?: Term;
   operands?: Term[];
   state?: Term;
@@ -104,7 +104,7 @@ export function isGo(command: Command): command is GoCommand {
 
 export interface MoveCommand extends Command {
   instruction: typeof Instructions.move;
-  edgeName: Term;
+  edgeKey: Term;
 }
 
 export function isMove(command: Command): command is MoveCommand {
@@ -113,7 +113,7 @@ export function isMove(command: Command): command is MoveCommand {
 
 export interface AgentLinksCommand extends Command {
   instruction: typeof Instructions.links;
-  edgeName: Term;
+  edgeKey: Term;
 }
 
 export function isLinks(command: Command): command is AgentLinksCommand {

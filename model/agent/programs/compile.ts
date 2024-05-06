@@ -107,7 +107,7 @@ export function compileMove(operands: commands.Term[]): commands.MoveCommand {
 
   return {
     instruction: commands.Instructions.move,
-    edgeName: operands[0],
+    edgeKey: operands[0],
   };
 }
 

@@ -20,35 +20,33 @@ it("can't have nodes with same name", () => {
   expect(toTry).toThrowErrorMatchingInlineSnapshot("[InvalidOperationError: Network testnet already has node testnode]");
 });
 
-it("can't have edges with same name out of same node", () => {
+it("can't have edges with same key out of same node", () => {
   const netName = "testnet";
   const network = new Network(netName);
 
   const toTry = () => {
-    const edgeName = "testedge";
+    const edgeKey = "testedge";
 
     const node1 = network.addNode();
     const node2 = network.addNode();
     const node3 = network.addNode();
 
-    network.addEdge(node1, node2, { name: edgeName });
-    network.addEdge(node1, node3, { name: edgeName });
+    network.addEdge({ from: node1, to: node2, key: edgeKey });
+    network.addEdge({ from: node1, to: node3, key: edgeKey });
   };
 
-  expect(toTry).toThrowErrorMatchingInlineSnapshot("[InvalidOperationError: edge with name testedge already exists out of @n0]");
+  expect(toTry).toThrowErrorMatchingInlineSnapshot("[InvalidOperationError: Edge already exists with key testedge from @n0 to @n2]");
 });
 
-it("can't have multiple edges between the same nodes", () => {
+it("can have multiple edges between the same nodes if they have different keys", () => {
   const netName = "testnet";
   const network = new Network(netName);
 
-  const toTry = () => {
-    const node1 = network.addNode();
-    const node2 = network.addNode();
+  const node1 = network.addNode();
+  const node2 = network.addNode();
 
-    network.addEdge(node1, node2, { name: "edge1" });
-    network.addEdge(node1, node2, { name: "edge2" });
-  };
-  
-  expect(toTry).toThrowErrorMatchingInlineSnapshot("[InvalidOperationError: can't overwrite existing edge from @n0 to @n1]");
+  const edge1 = network.addEdge({ from: node1, to: node2, key: "edge1" });
+  const edge2 = network.addEdge({ from: node1, to: node2, key: "edge2" });
+
+  expect(edge1).not.toEqual(edge2);
 });

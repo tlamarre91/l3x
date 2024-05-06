@@ -25,7 +25,7 @@ export default function NetworkNodeCard({ node }: NetworkNodeCardProps) {
 
   const handleClickAddAgent = () => {
     const agent = new Agent("node-agent-" + Date.now());
-    network.addAgent(agent, node);
+    network.joinAgent(agent, node);
   };
 
   const handleClickClearAgents = () => {

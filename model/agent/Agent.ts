@@ -188,14 +188,14 @@ export class Agent {
     };
   }
 
-  #executeMove({ edgeName }: commands.MoveCommand): commands.CommandResult {
+  #executeMove({ edgeKey }: commands.MoveCommand): commands.CommandResult {
     if (this.networkClient == null) {
       throw new Error("can't ask to move when i don't have a network client");
     }
 
     const req = {
       type: "move",
-      edgeName: this.#evaluateTerm(edgeName)
+      edgeKey: this.#evaluateTerm(edgeKey)
     } as const; 
 
     const response = this.networkClient.request(req);

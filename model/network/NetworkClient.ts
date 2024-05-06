@@ -11,12 +11,12 @@ export interface NetworkClient<ClientType> {
 export interface NetworkRequest {
   type: "move" | "route";
   nodeName?: string;
-  edgeName?: string;
+  edgeKey?: string;
 }
 
 export interface MoveRequest {
   type: "move";
-  edgeName: string;
+  edgeKey: string;
 }
 
 export function isMove(request: NetworkRequest): request is MoveRequest {

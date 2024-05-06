@@ -24,17 +24,17 @@ export default function NetworkTestControls() {
   const [mostRecentAgent, setMostRecentAgent] = useState<Agent>();
 
   const testAddNode = useCallback(() => {
-    const node = network.addNode([]);
+    const node = network.addNode();
 
     const others = nodes.filter((otherNode) => otherNode !== node);
     const p = 1 / others.length;
     for (const otherNode of others) {
       if (Math.random() < p) {
-        network.addEdge([], node, otherNode);
+        network.addEdge({ from: node, to: otherNode, key: String(p) });
       }
 
       if (Math.random() < p) {
-        network.addEdge([], otherNode, node);
+        network.addEdge({ from: otherNode, to: node, key: String(p) });
       }
     }
   }, [nodes]);
@@ -49,7 +49,7 @@ export default function NetworkTestControls() {
     const nodes = [...network.nodesByName.values()];
     const node = nodes[Math.floor(rand2 * nodes.length)];
 
-    network.addAgent(agent, node);
+    network.joinAgent(agent, node);
     setMostRecentAgent(agent);
   }, [network]);
 
