@@ -7,7 +7,7 @@ import { NetworkNode } from "./NetworkNode";
 
 export class NetworkFactory {
   static demo() {
-    const [network, networkView] = NetworkFactory.grid(4, 4);
+    const [network, networkView] = NetworkFactory.grid(25, 25);
 
     const nodes = [...network.getNodes()];
 

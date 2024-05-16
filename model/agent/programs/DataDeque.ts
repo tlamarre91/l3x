@@ -124,7 +124,6 @@ export class DataDeque {
     return this.accessIndex(index, pop, dataToWrite);
   }
 
-  // TODO: just make a getter for cached collection of observables
   asObservables(): DataDequeObservables {
     if (this.#cachedObservables == null) {
       const cursorIndex$ = this.#cursorIndex.asObservable();

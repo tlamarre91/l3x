@@ -1,17 +1,29 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parse throws on bad syntax 1`] = `[Error: first token must be keyword; got scan]`;
+exports[`different parse error can be printed with context 1`] = `
+"test $pc _ 0
+         ^
+Parse error at line 3, column 10: Expected comparison, got _"
+`;
+
+exports[`parse error can be printed with context 1`] = `
+"test $peek > 0
+     ^
+Parse error at line 2, column 6: Expected named register, got $peek"
+`;
+
+exports[`parse throws on bad syntax 1`] = `[ParseError: Parse error at line 3, column 1: First token must be keyword; got scan]`;
 
 exports[`parse works 1`] = `
 {
   "codeLines": [
     "def start",
     "echo hello world",
-    "test $peeklast > 0",
+    "test $pd > 0",
     "",
     "def loopdeloop",
-    "echo again 1 $loop",
-    "echo again 2 $loop",
+    "echo again 1",
+    "echo again 2",
     "go loopdeloop",
     "",
     "def moveover",
@@ -89,18 +101,18 @@ exports[`parse works 1`] = `
             "column": 5,
             "line": 2,
           },
-          "symbol": "$peeklast",
+          "symbol": "$pd",
         },
         {
           "start": {
-            "column": 15,
+            "column": 9,
             "line": 2,
           },
           "symbol": ">",
         },
         {
           "start": {
-            "column": 17,
+            "column": 11,
             "line": 2,
           },
           "symbol": "0",
@@ -157,13 +169,6 @@ exports[`parse works 1`] = `
           },
           "symbol": "1",
         },
-        {
-          "start": {
-            "column": 13,
-            "line": 5,
-          },
-          "symbol": "$loop",
-        },
       ],
     },
     {
@@ -192,13 +197,6 @@ exports[`parse works 1`] = `
             "line": 6,
           },
           "symbol": "2",
-        },
-        {
-          "start": {
-            "column": 13,
-            "line": 6,
-          },
-          "symbol": "$loop",
         },
       ],
     },

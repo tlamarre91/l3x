@@ -37,21 +37,21 @@ export class NetworkNode {
   }
 
   addAgent(agent: Agent): void {
-    this.#agentsSubject.next([...this.#agentsSubject.getValue(), agent]);
+    this.#agentsSubject.next([...this.getAgents(), agent]);
     this.#emit({ type: "agententer", agent });
   }
 
   removeAgent(agent: Agent): void {
-    this.#agentsSubject.next(this.#agentsSubject.getValue().filter((_agent) => _agent !== agent));
+    this.#agentsSubject.next(this.getAgents().filter((_agent) => _agent !== agent));
     this.#emit({ type: "agentexit", agent });
   }
 
   addEdgeOut(edge: NetworkEdge): void {
-    this.#edgesOutSubject.next([...this.#edgesOutSubject.getValue(), edge]);
+    this.#edgesOutSubject.next([...this.getEdgesOut(), edge]);
   }
 
   removeEdgeOut(edge: NetworkEdge): void{
-    this.#edgesOutSubject.next(this.#edgesOutSubject.getValue().filter((_edge) => _edge !== edge));
+    this.#edgesOutSubject.next(this.getEdgesOut().filter((_edge) => _edge !== edge));
   }
 
   getEdgesOut(): NetworkEdge[] {

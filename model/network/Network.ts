@@ -187,6 +187,7 @@ export class Network {
 
     this.nodesByName.set(name, node);
     this.#nodesSubject.next([...this.#nodesSubject.getValue(), node]);
+
     node.events$.subscribe((ev) => this.#emit(ev));  // forward all events up to the network
     this.#emit({ type: "addnode", node });
 
@@ -270,6 +271,25 @@ export class Network {
     return this.#agentsSubject.getValue();
   }
 
+  getAgentController(agent: Agent): NetworkAgentController {
+    const agentController = this.#agentControllers.get(agent);
+    if (agentController == null) {
+      throw new AgentNotFoundError(agent);
+    }
+
+    return agentController;
+  }
+
+  getAgentEvents(agent: Agent): Observable<events.NetworkAgentEvent> {
+    const agentEvents$ = this.getAgentController(agent).networkAgentEvents$;
+
+    return agentEvents$;
+  }
+
+  getAgentNode(agent: Agent): NetworkNode | undefined {
+    return this.getAgentController(agent).occupiedNode;
+  }
+
   /** Join an agent to the network on the given node */
   joinAgent(agent: Agent, node: NetworkNode): void {
     if (this.#agentControllers.get(agent) != null) {
@@ -301,19 +321,6 @@ export class Network {
     this.#agentsSubject.next([...this.getAgents(), agent]);
   }
 
-  getAgentEvents(agent: Agent): Observable<events.NetworkAgentEvent> {
-    const agentEvents$ = this.#agentControllers.get(agent)?.networkAgentEvents$;
-    if (agentEvents$ == null) {
-      throw new AgentNotFoundError(agent);
-    }
-
-    return agentEvents$;
-  }
-
-  getAgentNode(agent: Agent): NetworkNode | undefined {
-    return this.#agentControllers.get(agent)?.occupiedNode;
-  }
-
   /** throws if move is invalid. */
   #validateMoveAgent(agentController: NetworkAgentController, edge: NetworkEdge) {
     const agentPosition = agentController.occupiedNode;
@@ -331,10 +338,7 @@ export class Network {
   }
 
   removeAgent(agent: Agent) {
-    const agentController = this.#agentControllers.get(agent);
-    if (agentController == null) {
-      throw new AgentNotFoundError(agent);
-    }
+    const agentController = this.getAgentController(agent);
 
     agentController.emit({ type: "removeagent" });
 
@@ -350,10 +354,7 @@ export class Network {
       throw new NotImplementedError("not ready for clients that aren't agents");
     }
 
-    const agentController = this.#agentControllers.get(client);
-    if (agentController == null) {
-      throw new AgentNotFoundError(client);
-    }
+    const agentController = this.getAgentController(client);
 
     const request = (req: NetworkRequest) => this.#handleAgentRequest(agentController, req);
 

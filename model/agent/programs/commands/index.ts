@@ -181,7 +181,7 @@ export function resultFromError(error: unknown): ErrorResult {
   const status = "fu";
 
   if (error instanceof Error) {
-    return { status, errorName: error.name, errorMessage: error.message };
+    return { status, errorName: error.name, errorMessage: error.description };
   }
 
   console.warn("Creating ErrorResult from non-Error object", error);

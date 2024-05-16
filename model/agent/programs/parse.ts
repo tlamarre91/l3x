@@ -1,5 +1,32 @@
+import { L3xError } from "@/model/errors";
 import { Comparison, Instruction, Instructions, isComparison } from "./commands";
 import { NamedRegister, NamedRegisters, isNamedRegister } from "./DataDeque";
+
+export class ParseError extends L3xError {
+  name = "ParseError";
+
+  constructor(
+    public description: string,
+    public location: LineAndColumn
+  ) {
+    const { line, column } = location;
+    super(`Parse error at line ${line + 1}, column ${column + 1}: ${description}`);
+  }
+
+  withContext(code: string): string {
+    // TODO: !! not good. should probably pass code context when error is thrown
+    const codeLines = code.split("\n");
+    const { line, column } = this.location;
+    const codeLine = codeLines[line];
+    const pointer = " ".repeat(column) + "^";
+    const out = [
+      codeLine,
+      pointer,
+      this.message
+    ].join("\n");
+    return out;
+  }
+}
 
 export const Keywords = {
   def: "def",
@@ -73,9 +100,7 @@ export function isTestStatement(statement: Statement): statement is TestStatemen
 
 export function validateTestStatement(statement: Statement): statement is TestStatement {
   if (statement.tokens[0].symbol !== "test") {
-    throw new Error(
-      `Expected instruction "test" at column ${statement.tokens[0].start.column}, got ${statement.tokens[0].symbol}`
-    );
+    throw new ParseError(`Expected "test", got ${statement.tokens[0].symbol}`, statement.tokens[0].start);
   }
 
   if (statement.tokens.length === 2) {
@@ -87,7 +112,7 @@ export function validateTestStatement(statement: Statement): statement is TestSt
 
     const valid = isNamedRegister(outputToken.symbol); // TODO: ??? is this enough
     if (!valid) {
-      throw new Error(`Expected named register at column ${outputToken.start.column}, got ${outputToken.symbol}`);
+      throw new ParseError(`Expected named register, got ${outputToken.symbol}`, outputToken.start);
     }
 
     return true;
@@ -98,22 +123,21 @@ export function validateTestStatement(statement: Statement): statement is TestSt
 
     const comparisonValid = isComparisonToken(comparisonToken);
     if (!comparisonValid) {
-      throw new Error(`Expected comparison at column ${comparisonToken.start.column}, got ${comparisonToken.symbol}`);
+      throw new ParseError(`Expected comparison, got ${comparisonToken.symbol}`, comparisonToken.start);
     }
 
     const outputValid = statement.tokens.length === 4 || isRefToken(statement.tokens[4]);
     if (!outputValid) {
-      throw new Error(
-        `Expected named register or nothing at column ${
-          statement.tokens[5].start.column }, got ${
-          statement.tokens[5].symbol }`
+      throw new ParseError(
+        `Expected named register or nothing, got ${statement.tokens[4].symbol}`,
+        statement.tokens[4].start
       );
     }
 
     return true;
   }
 
-  throw new Error(`Expected 1, 2, 3, or 4 arguments, got ${statement.tokens.length - 1}`);
+  throw new ParseError(`Expected 1, 2, 3, or 4 arguments, got ${statement.tokens.length - 1}`, statement.start);
 }
 
 /**
@@ -129,14 +153,15 @@ export function validateWriteStatement(statement: Statement): statement is Write
   }
 
   if (statement.tokens.length !== 3) {
-    throw new Error(`Expected 1 or 2 arguments, got ${statement.tokens.length - 1}`);
+    throw new ParseError(`Expected 1 or 2 arguments, got ${statement.tokens.length - 1}`, statement.start);
   }
 
   const outputToken = statement.tokens[2];
   if (!isRefToken(outputToken)) {
-    throw new Error(`Expected named register or nothing at column ${
-      outputToken.start.column}, got ${
-      outputToken.symbol}`);
+    throw new ParseError(
+      `Expected named register or nothing, got ${outputToken.symbol}`,
+      outputToken.start
+    );
   }
 
   return true;
@@ -145,6 +170,13 @@ export function validateWriteStatement(statement: Statement): statement is Write
 export interface Program {
   statements: Statement[];
   codeLines: string[];
+}
+
+/** basically just throw if `symbol` starts with "$" but isn't a named register */
+export function validateSymbol(symbol: string, start: LineAndColumn): void {
+  if (symbol.startsWith("$") && !(isNamedRegister(symbol))) {
+    throw new ParseError(`Expected named register, got ${symbol}`, start);
+  }
 }
 
 export function parseStatement(line: string, lineNumber: number): Statement | undefined {
@@ -156,27 +188,34 @@ export function parseStatement(line: string, lineNumber: number): Statement | un
   }
 
   let currentColumn = 0;
-  let startColumn = 0;
+  let lineStartColumn = 0;
 
   const tokens = new Array<Token>();
   for (const symbol of splitOnSpace) {
-    const column = currentColumn;
+
+    const tokenColumn = currentColumn;
     currentColumn += symbol.length + 1; // add 1 because we split on " "
 
+
     if (symbol.length === 0) {
-      startColumn = currentColumn;
+      // handle consecutive whitespace
+      lineStartColumn = currentColumn;
       continue;
     }
 
+    const tokenStart: LineAndColumn = {
+      line: lineNumber,
+      column: tokenColumn
+    }
+
+    validateSymbol(symbol, tokenStart);
+
     if (tokens.length === 0 && !isKeyword(symbol)) {
-      throw new Error(`first token must be keyword; got ${symbol}`);
+      throw new ParseError(`First token must be keyword; got ${symbol}`, tokenStart);
     }
 
     const token: Token = {
-      start: {
-        line: lineNumber,
-        column
-      },
+      start: tokenStart,
       symbol
     };
 
@@ -190,7 +229,7 @@ export function parseStatement(line: string, lineNumber: number): Statement | un
   const statement = {
     start: {
       line: lineNumber,
-      column: startColumn
+      column: lineStartColumn
     },
     tokens
   } as Statement;

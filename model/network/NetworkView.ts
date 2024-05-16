@@ -1,40 +1,38 @@
 import { BehaviorSubject, Observable, Subscription } from "rxjs";
 
-import { Network, NetworkNode } from "./Network";
-import { Agent } from "../agent";
+import { Network } from "./Network";
+import { NetworkNode } from "./NetworkNode";
+import { Agent } from "@/model/agent";
 import * as events from "./events";
 import { Color } from "three";
+import { NetworkEdge } from "./NetworkEdge";
 
 type ArrayVector3 = readonly [number, number, number];
 // TODO: probably need one of these for Color too; i think spring expects strings
 
-// TODO: can i constrain T to be something springable?
-interface Animation<T> {
-  target: T;
-  start: number;
-  duration: number;
-}
-
 // TODO: extract to module
-export function initializeAnimation<T>(value: T, time: number = 0) {
-  return {
-    target: value,
-    start: time,
-    duration: 0,
-  };
+// TODO: can i constrain T to be something springable?
+export class Animation<T> {
+  constructor(
+    public target: T,
+    public duration: number = 0,
+    public start: number = 0,
+  ) {
+  }
 }
 
 export class NetworkObjectView {
-  // TODO: better naming
   #positionAnimationSubject: BehaviorSubject<Animation<ArrayVector3>>;
-  positionAnimation$: Observable<Animation<ArrayVector3>>;
   #colorAnimationSubject: BehaviorSubject<Animation<Color>>;
+
+  positionAnimation$: Observable<Animation<ArrayVector3>>;
   colorAnimation$: Observable<Animation<Color>>;
 
   constructor(position: ArrayVector3, color: Color, public eventSubscriptions: Subscription[] = []) {
-    this.#positionAnimationSubject = new BehaviorSubject(initializeAnimation(position));
+    this.#positionAnimationSubject = new BehaviorSubject(new Animation(position));
+    this.#colorAnimationSubject = new BehaviorSubject(new Animation(color));
+
     this.positionAnimation$ = this.#positionAnimationSubject.asObservable();
-    this.#colorAnimationSubject = new BehaviorSubject(initializeAnimation(color));
     this.colorAnimation$ = this.#colorAnimationSubject.asObservable();
   }
 
@@ -79,14 +77,28 @@ export class NetworkNodeView extends NetworkObjectView {
   }
 }
 
+export class NetworkEdgeView extends NetworkObjectView {
+  constructor(
+    public edge: NetworkEdge,
+    position: ArrayVector3,
+    color: Color,
+    eventSubscriptions: Subscription[] = []
+  ) {
+    super(position, color, eventSubscriptions);
+  }
+}
+
 export class NetworkView {
   #agentViewsSubject = new BehaviorSubject(new Array<AgentView>());
   #nodeViewsSubject = new BehaviorSubject(new Array<NetworkNodeView>());
+  #edgeViewsSubject = new BehaviorSubject(new Array<NetworkEdgeView>());
   #agentViewMap = new Map<Agent, AgentView>();
   #nodeViewMap = new Map<NetworkNode, NetworkNodeView>();
+  #edgeViewMap = new Map<NetworkEdge, NetworkEdgeView>();
 
   agentViews$ = this.#agentViewsSubject.asObservable();
   nodeViews$ = this.#nodeViewsSubject.asObservable();
+  edgeViews$ = this.#edgeViewsSubject.asObservable();
 
   constructor(
     public readonly network: Network,
@@ -101,21 +113,7 @@ export class NetworkView {
     this.network.agentEvents$.subscribe((ev) => {
       // TODO: extract to handleAddAgent
       if (events.isAddAgent(ev)) {
-        const { agent, node } = ev;
-        if (node == null) {
-          throw new Error(`addagent event for ${agent.name} has no node??`);
-        }
-
-        const nodeView = this.#nodeViewMap.get(node);
-        if (nodeView == null) {
-          throw new Error(`view not found for node ${node.name}`);
-        }
-
-        const nodePosition = nodeView.getPositionAnimation().target;
-
-        const agentView = new AgentView(agent, nodePosition, new Color(Color.NAMES.green));
-        this.addAgentView(agent, agentView);
-        return;
+        this.handleAddAgent(ev);
       }
 
       // TODO: extract to handleAddAgent
@@ -125,10 +123,41 @@ export class NetworkView {
         return;
       }
     });
+
+    // TODO:
+    // this.network.edgeEvents$.subscribe((ev) => {
+    //   if (events.isAddEdge(ev)) {
+    //     this.handleAddEdge(ev);
+    //   }
+    //
+    //   if (events.isRemoveEdge(ev)) {
+    //     this.handleRemoveEdge(ev);
+    //   }
+    // });
   }
 
   getAgentViews() {
     return this.#agentViewsSubject.getValue();
+  }
+
+  handleAddAgent(ev: events.NetworkAgentEvent): void {
+    const { agent, node } = ev;
+    if (node == null) {
+      throw new Error(`addagent event for ${agent.name} has no node??`);
+    }
+
+    const nodeView = this.#nodeViewMap.get(node);
+    if (nodeView == null) {
+      throw new Error(`view not found for node ${node.name}`);
+    }
+
+    const nodePosition = nodeView.getPositionAnimation().target;
+
+    const agentView = new AgentView(agent, nodePosition, new Color(Color.NAMES.green));
+    this.addAgentView(agentView);
+  }
+
+  handleRemoveAgent(ev: events.NetworkAgentEvent) {
   }
 
   getNodeViews() {
@@ -139,15 +168,16 @@ export class NetworkView {
     return this.#agentViewMap.get(agent);
   }
 
-  setAgentView(agent: Agent, agentView: AgentView) {
+  #setAgentView(agent: Agent, agentView: AgentView) {
     this.#agentViewMap.set(agent, agentView);
     // TODO: think about how this works with large numbers of agents...
     this.#agentViewsSubject.next([...this.#agentViewMap.values()]);
   }
 
-  addAgentView(agent: Agent, agentView: AgentView) {
+  addAgentView(agentView: AgentView): AgentView {
     // TODO: add pre-check for existence
-    this.setAgentView(agent, agentView);
+    const agent = agentView.agent;
+    this.#setAgentView(agent, agentView);
 
     // TODO: pass in some event handlers for the agent view instead of hardcoding
     const agentEvents$ = this.network.getAgentEvents(agent);
@@ -166,6 +196,8 @@ export class NetworkView {
     );
 
     agentView.eventSubscriptions.push(subscription, otherSubscription);
+
+    return agentView;
   }
 
   removeAgentView(agent: Agent) {

@@ -1,18 +1,18 @@
-import React, { useCallback, useContext, useRef, useState }  from "react";
+import React, { useCallback, useContext, useMemo, useRef, useState }  from "react";
 
 import { ThreeEvent } from "@react-three/fiber";
 import { useSubscription } from "@/hooks";
 import { GameContext } from "../game/GameContext";
-import { NetworkNodeView } from "@/model/network/NetworkView";
+import { NetworkEdgeView } from "@/model/network/NetworkView";
 import { Mesh } from "three";
 
-type NodeMeshProps = {
+type EdgeMeshProps = {
   position: readonly [number, number, number]; // TODO: ArrayVector3
   highlighted: boolean;
   onClick: (event: ThreeEvent<MouseEvent>) => void;
 }
 
-function NodeMesh({ position, highlighted, onClick }: NodeMeshProps) {
+function EdgeMesh({ position, highlighted, onClick }: EdgeMeshProps) {
   const meshRef = useRef<Mesh>(null!);
 
   return (
@@ -28,35 +28,26 @@ function NodeMesh({ position, highlighted, onClick }: NodeMeshProps) {
   );
 }
 
-export type DfNetworkNodeProps = {
-  nodeView: NetworkNodeView;
+export type DfNetworkEdgeProps = {
+  edgeView: NetworkEdgeView;
 }
 
-export default function DfNetworkNode({ nodeView }: DfNetworkNodeProps) {
+export default function DfNetworkEdge({ edgeView }: DfNetworkEdgeProps) {
   const gameContext = useContext(GameContext);
-  const node = nodeView.node;
+
+  const edgePosition = edgeView.getPositionAnimation();
 
   // TODO: handle changes in the view model
   const [highlighted, setHighlighted] = useState(false);
-  useSubscription(node.agents$, (agents) => {
-    if (agents.length !== 0) {
-      setHighlighted(true);
-      return;
-    }
-
-    setHighlighted(false);
-  });
 
   const onClick = useCallback((ev: ThreeEvent<MouseEvent>) => {
-    gameContext.selectObject(node);
+    gameContext.selectObject(edgeView.edge);
     ev.stopPropagation();
   }, []);
 
-  const nodePosition = nodeView.getPositionAnimation();
-
   return (
-    <NodeMesh
-      position={nodePosition.target}
+    <EdgeMesh
+      position={edgePosition.target}
       highlighted={highlighted}
       onClick={onClick}
     />
