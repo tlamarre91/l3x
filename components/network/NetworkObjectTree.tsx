@@ -3,10 +3,10 @@ import React, { useContext } from "react";
 import { Box, Flex } from "@radix-ui/themes";
 
 import { useStateSubscription } from "@/hooks";
-import { NetworkNode } from "@/model/network";
 import NetworkObjectLink from "./NetworkObjectLink";
 import { ArrowRightIcon, ChevronDownIcon } from "@radix-ui/react-icons";
 import { GameContext } from "../game/GameContext";
+import { NetworkNode } from "@/model/network/NetworkNode";
 
 export type NetworkNodeTreeProps = {
   node: NetworkNode
@@ -14,7 +14,7 @@ export type NetworkNodeTreeProps = {
 
 export function NetworkNodeTree({ node }: NetworkNodeTreeProps) {
   const agents = useStateSubscription(node.agents$, []);
-  const edges = useStateSubscription(node.edges$, []);
+  const edges = useStateSubscription(node.edgesOut$, []);
 
   // TODO: this layout ain't good
   return (

@@ -1,9 +1,10 @@
 import { Network, NetworkConfig } from "./Network";
-import { NetworkNodeView, NetworkView } from "./NetworkView";
+import { NetworkView } from "./NetworkView";
 import { Color } from "three";
 import { BufferStore } from "../data/BufferStore";
 import { AgentFactory } from "../agent/AgentFactory";
 import { NetworkNode } from "./NetworkNode";
+import { NetworkNodeView } from "./NetworkObjectView";
 
 export class NetworkFactory {
   static demo() {

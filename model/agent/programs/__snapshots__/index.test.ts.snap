@@ -59,6 +59,7 @@ exports[`parse+compile with test command 1`] = `
             "symbol": "start",
           },
         ],
+        "type": "def",
       },
       {
         "start": {
@@ -271,6 +272,7 @@ exports[`parse+compile works with a bunch of extra spaces 1`] = `
             "symbol": "start",
           },
         ],
+        "type": "def",
       },
       {
         "start": {
@@ -300,6 +302,7 @@ exports[`parse+compile works with a bunch of extra spaces 1`] = `
             "symbol": "dudes",
           },
         ],
+        "type": "echo",
       },
       {
         "start": {
@@ -350,6 +353,7 @@ exports[`parse+compile works with a bunch of extra spaces 1`] = `
             "symbol": "huh?",
           },
         ],
+        "type": "echo",
       },
       {
         "start": {
@@ -372,6 +376,7 @@ exports[`parse+compile works with a bunch of extra spaces 1`] = `
             "symbol": "end",
           },
         ],
+        "type": "def",
       },
       {
         "start": {
@@ -401,6 +406,7 @@ exports[`parse+compile works with a bunch of extra spaces 1`] = `
             "symbol": "dudes",
           },
         ],
+        "type": "echo",
       },
     ],
   },
@@ -698,6 +704,7 @@ exports[`sandbox 1`] = `
             "symbol": "start",
           },
         ],
+        "type": "def",
       },
       {
         "start": {
@@ -720,6 +727,7 @@ exports[`sandbox 1`] = `
             "symbol": "hey1",
           },
         ],
+        "type": "echo",
       },
       {
         "start": {
@@ -742,6 +750,7 @@ exports[`sandbox 1`] = `
             "symbol": "hey2",
           },
         ],
+        "type": "echo",
       },
       {
         "start": {
@@ -764,6 +773,7 @@ exports[`sandbox 1`] = `
             "symbol": "loop",
           },
         ],
+        "type": "go",
       },
       {
         "start": {
@@ -786,6 +796,7 @@ exports[`sandbox 1`] = `
             "symbol": "loop",
           },
         ],
+        "type": "def",
       },
       {
         "start": {
@@ -808,6 +819,7 @@ exports[`sandbox 1`] = `
             "symbol": "woo1",
           },
         ],
+        "type": "echo",
       },
       {
         "start": {
@@ -830,6 +842,7 @@ exports[`sandbox 1`] = `
             "symbol": "woo2",
           },
         ],
+        "type": "echo",
       },
       {
         "start": {
@@ -852,6 +865,7 @@ exports[`sandbox 1`] = `
             "symbol": "start",
           },
         ],
+        "type": "go",
       },
     ],
   },

@@ -4,8 +4,8 @@ import { config, useSpring, animated } from "@react-spring/three";
 import { Sphere, Wireframe } from "@react-three/drei";
 
 import { GameContext } from "@/components/game/GameContext";
-import { AgentView } from "@/model/network/NetworkView";
 import { useSubscription } from "@/hooks";
+import { AgentView } from "@/model/network/NetworkObjectView";
 
 export interface DfAgentProps {
   agentView: AgentView;

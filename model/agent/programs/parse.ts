@@ -1,5 +1,5 @@
 import { L3xError } from "@/model/errors";
-import { Comparison, Instruction, Instructions, isComparison } from "./commands";
+import { Comparison, Instruction, Instructions, isComparison, isInstruction } from "./commands";
 import { NamedRegister, NamedRegisters, isNamedRegister } from "./DataDeque";
 
 export class ParseError extends L3xError {
@@ -67,10 +67,14 @@ export function isComparisonToken(token: Token | undefined): token is Comparison
   return isComparison(token?.symbol);
 }
 
-export type StatementType = "test" | "write";
+export type StatementType = Instruction | "def";
+
+export function isStatementType(symbol: string): symbol is StatementType {
+  return isInstruction(symbol) || symbol === "def";
+}
 
 export interface Statement {
-  type?: StatementType | undefined; // TODO: more types
+  type: StatementType;
   start: LineAndColumn;
   tokens: Token[];
 }
@@ -84,16 +88,7 @@ export interface TestStatement extends Statement {
     | [InstructionToken, Token, ComparisonToken, Token, RefToken];
 }
 
-export interface WriteStatement extends Statement {
-  type: "write";
-  tokens:
-    | [InstructionToken, Token]
-    | [InstructionToken, Token, RefToken];
-}
-
-/**
- * Don't use this if you haven't already parsed the statement; it doesn't validate
- */
+/** Don't use this if you haven't already parsed the statement; it doesn't validate */
 export function isTestStatement(statement: Statement): statement is TestStatement {
   return statement.type === "test";
 }
@@ -140,9 +135,46 @@ export function validateTestStatement(statement: Statement): statement is TestSt
   throw new ParseError(`Expected 1, 2, 3, or 4 arguments, got ${statement.tokens.length - 1}`, statement.start);
 }
 
-/**
- * Don't use this if you haven't already parsed the statement; it doesn't validate
- */
+export interface EchoStatement extends Statement {
+  type: "echo";
+}
+
+export function isEchoStatement(statement: Statement): statement is EchoStatement {
+  return statement.type === "echo";
+}
+
+export interface GoStatement extends Statement {
+  type: "go";
+}
+
+export function isGoStatement(statement: Statement): statement is GoStatement {
+  return statement.type === "go";
+}
+
+export interface MoveStatement extends Statement {
+  type: "move";
+}
+
+export function isMoveStatement(statement: Statement): statement is MoveStatement {
+  return statement.type === "move";
+}
+
+export interface SetCursorStatement extends Statement {
+  type: "curs";
+}
+
+export function isSetCursorStatement(statement: Statement): statement is SetCursorStatement {
+  return statement.type === "curs";
+}
+
+export interface WriteStatement extends Statement {
+  type: "write";
+  tokens:
+    | [InstructionToken, Token]
+    | [InstructionToken, Token, RefToken];
+}
+
+/** Don't use this if you haven't already parsed the statement; it doesn't validate */
 export function isWriteStatement(statement: Statement): statement is WriteStatement {
   return statement.type === "write";
 }
@@ -191,11 +223,10 @@ export function parseStatement(line: string, lineNumber: number): Statement | un
   let lineStartColumn = 0;
 
   const tokens = new Array<Token>();
-  for (const symbol of splitOnSpace) {
 
+  for (const symbol of splitOnSpace) {
     const tokenColumn = currentColumn;
     currentColumn += symbol.length + 1; // add 1 because we split on " "
-
 
     if (symbol.length === 0) {
       // handle consecutive whitespace
@@ -210,8 +241,8 @@ export function parseStatement(line: string, lineNumber: number): Statement | un
 
     validateSymbol(symbol, tokenStart);
 
-    if (tokens.length === 0 && !isKeyword(symbol)) {
-      throw new ParseError(`First token must be keyword; got ${symbol}`, tokenStart);
+    if (tokens.length === 0 && !isStatementType(symbol)) {
+      throw new ParseError(`First token must be a statement type; got ${symbol}`, tokenStart);
     }
 
     const token: Token = {
@@ -227,12 +258,14 @@ export function parseStatement(line: string, lineNumber: number): Statement | un
   }
 
   const statement = {
+    // TODO: for first token, don't append to tokens so we don't store the instruction twice
+    type: tokens[0].symbol as StatementType,
+    tokens,
     start: {
       line: lineNumber,
       column: lineStartColumn
     },
-    tokens
-  } as Statement;
+  } satisfies Statement;
 
   if (statement.tokens[0].symbol === "test") {
     validateTestStatement(statement);

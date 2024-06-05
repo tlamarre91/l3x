@@ -1,92 +1,14 @@
-import { BehaviorSubject, Observable, Subscription } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 
+import type { ArrayVector3 } from "@/model/types";
 import { Network } from "./Network";
 import { NetworkNode } from "./NetworkNode";
 import { Agent } from "@/model/agent";
 import * as events from "./events";
 import { Color } from "three";
 import { NetworkEdge } from "./NetworkEdge";
-
-type ArrayVector3 = readonly [number, number, number];
-// TODO: probably need one of these for Color too; i think spring expects strings
-
-// TODO: extract to module
-// TODO: can i constrain T to be something springable?
-export class Animation<T> {
-  constructor(
-    public target: T,
-    public duration: number = 0,
-    public start: number = 0,
-  ) {
-  }
-}
-
-export class NetworkObjectView {
-  #positionAnimationSubject: BehaviorSubject<Animation<ArrayVector3>>;
-  #colorAnimationSubject: BehaviorSubject<Animation<Color>>;
-
-  positionAnimation$: Observable<Animation<ArrayVector3>>;
-  colorAnimation$: Observable<Animation<Color>>;
-
-  constructor(position: ArrayVector3, color: Color, public eventSubscriptions: Subscription[] = []) {
-    this.#positionAnimationSubject = new BehaviorSubject(new Animation(position));
-    this.#colorAnimationSubject = new BehaviorSubject(new Animation(color));
-
-    this.positionAnimation$ = this.#positionAnimationSubject.asObservable();
-    this.colorAnimation$ = this.#colorAnimationSubject.asObservable();
-  }
-
-  getPositionAnimation() {
-    return this.#positionAnimationSubject.getValue();
-  }
-
-  getColorAnimation() {
-    return this.#colorAnimationSubject.getValue();
-  }
-
-  animatePositionTo(position: ArrayVector3, duration: number) {
-    const start = 0; // TODO: is `start` even necessary?
-    this.#positionAnimationSubject.next({ target: position, start, duration });
-  }
-
-  animateColorTo(color: Color, duration: number) {
-    const start = 0; // TODO;
-    this.#colorAnimationSubject.next({ target: color, start, duration });
-  }
-}
-
-export class AgentView extends NetworkObjectView {
-  constructor(
-    public agent: Agent,
-    position: ArrayVector3,
-    color: Color,
-    eventSubscriptions: Subscription[] = []
-  ) {
-    super(position, color, eventSubscriptions);
-  }
-}
-
-export class NetworkNodeView extends NetworkObjectView {
-  constructor(
-    public node: NetworkNode,
-    position: ArrayVector3,
-    color: Color,
-    eventSubscriptions: Subscription[] = []
-  ) {
-    super(position, color, eventSubscriptions);
-  }
-}
-
-export class NetworkEdgeView extends NetworkObjectView {
-  constructor(
-    public edge: NetworkEdge,
-    position: ArrayVector3,
-    color: Color,
-    eventSubscriptions: Subscription[] = []
-  ) {
-    super(position, color, eventSubscriptions);
-  }
-}
+import { AgentView, NetworkEdgeView, NetworkNodeView, NetworkNodeViewNotFoundError } from "./NetworkObjectView";
+import { EdgeGroupIndex } from "./EdgeGroupIndex";
 
 export class NetworkView {
   #agentViewsSubject = new BehaviorSubject(new Array<AgentView>());
@@ -95,6 +17,7 @@ export class NetworkView {
   #agentViewMap = new Map<Agent, AgentView>();
   #nodeViewMap = new Map<NetworkNode, NetworkNodeView>();
   #edgeViewMap = new Map<NetworkEdge, NetworkEdgeView>();
+  #edgeGroupIndex = new EdgeGroupIndex();
 
   agentViews$ = this.#agentViewsSubject.asObservable();
   nodeViews$ = this.#nodeViewsSubject.asObservable();
@@ -124,16 +47,15 @@ export class NetworkView {
       }
     });
 
-    // TODO:
-    // this.network.edgeEvents$.subscribe((ev) => {
-    //   if (events.isAddEdge(ev)) {
-    //     this.handleAddEdge(ev);
-    //   }
-    //
-    //   if (events.isRemoveEdge(ev)) {
-    //     this.handleRemoveEdge(ev);
-    //   }
-    // });
+    this.network.edgeEvents$.subscribe((ev) => {
+      if (events.isAddEdge(ev)) {
+        this.handleAddEdge(ev);
+      }
+
+      if (events.isRemoveEdge(ev)) {
+        this.handleRemoveEdge(ev);
+      }
+    });
   }
 
   getAgentViews() {
@@ -158,6 +80,39 @@ export class NetworkView {
   }
 
   handleRemoveAgent(ev: events.NetworkAgentEvent) {
+  }
+
+  handleAddEdge(ev: events.NetworkEdgeEvent) {
+    function midpoint(p1: ArrayVector3, p2: ArrayVector3): ArrayVector3 {
+      const [x1, y1, z1] = p1;
+      const [x2, y2, z2] = p2;
+
+      return [
+        (x1 + x2) / 2,
+        (y1 + y2) / 2,
+        (z1 + z2) / 2,
+      ];
+    }
+
+    const { edge: { from, to } } = ev;
+    const fromView = this.getNodeView(from);
+    const fromPosition = fromView.getPositionAnimation().target;
+    const toView = this.getNodeView(to);
+    const toPosition = toView.getPositionAnimation().target;
+
+    const edgeView = new NetworkEdgeView(
+      ev.edge,
+      fromView,
+      toView,
+      new Color(Color.NAMES.gold)
+    );
+
+    this.#edgeGroupIndex.add(from, to, edgeView);
+    // TODO
+  }
+
+  handleRemoveEdge(ev: events.NetworkEdgeEvent) {
+
   }
 
   getNodeViews() {
@@ -212,8 +167,13 @@ export class NetworkView {
     agentView.eventSubscriptions.forEach(sub => sub.unsubscribe());
   }
 
-  getNetworkNodeView(node: NetworkNode) {
-    return this.#nodeViewMap.get(node);
+  getNodeView(node: NetworkNode): NetworkNodeView {
+    const view = this.#nodeViewMap.get(node);
+    if (view == null) {
+      throw new NetworkNodeViewNotFoundError(node);
+    }
+
+    return view;
   }
 
   setNetworKNodeView(node: NetworkNode, nodeView: NetworkNodeView) {

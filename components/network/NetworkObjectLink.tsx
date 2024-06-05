@@ -1,8 +1,9 @@
 import React, { useMemo } from "react";
 import { Badge } from "@radix-ui/themes";
-import { NetworkEdge, NetworkNode } from "@/model/network";
 import { Agent } from "@/model/agent";
 import { makeFragmentId } from "@/model/network/queryObjects";
+import { NetworkEdge } from "@/model/network/NetworkEdge";
+import { NetworkNode } from "@/model/network/NetworkNode";
 
 export const DefaultBadgeColors = {
   node: "purple",

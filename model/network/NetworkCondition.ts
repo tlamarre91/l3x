@@ -1,4 +1,4 @@
-import { NetworkNode } from ".";
+import { NetworkNode } from "./NetworkNode";
 
 export const NetworkConditionTypes = {
   playerHasAgentInNode: "playerHasAgentInNode",

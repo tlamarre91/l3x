@@ -1,5 +1,7 @@
 import { Agent } from "../agent";
-import { Network, NetworkEdge, NetworkNode } from "./Network";
+import { Network } from "./Network";
+import { NetworkEdge } from "./NetworkEdge";
+import { NetworkNode } from "./NetworkNode";
 
 export const FRAGMENT_ID_PREFIX_SEP = ":";
 
@@ -23,9 +25,12 @@ export function queryObjects(
     case FragmentIdPrefixes.node:
       return network.nodesByName.get(key);
 
+    case FragmentIdPrefixes.edge:
+      return network.edgesByName.get(key);
+
     case FragmentIdPrefixes.agent:
       console.warn("TODO: make querying for agents not slow?");
-      return network.agents.find((agent) => agent.name === key);
+      return network.getAgents().find((agent) => agent.name === key);
 
     default:
       throw new Error(`TODO: query stuff besides nodes: ${prefix}, ${key}`);

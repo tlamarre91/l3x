@@ -1,8 +1,8 @@
 import { Box, Card, Flex, Heading } from "@radix-ui/themes";
 import React from "react";
-import { NetworkNode } from "@/model/network";
 import { useStateSubscription } from "@/hooks";
 import { DiscIcon } from "@radix-ui/react-icons";
+import { NetworkNode } from "@/model/network/NetworkNode";
 
 export type NetworkNodeDetailsProps = {
   node: NetworkNode;

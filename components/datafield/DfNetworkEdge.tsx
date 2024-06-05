@@ -1,9 +1,8 @@
-import React, { useCallback, useContext, useMemo, useRef, useState }  from "react";
+import React, { useCallback, useContext, useRef, useState }  from "react";
 
 import { ThreeEvent } from "@react-three/fiber";
-import { useSubscription } from "@/hooks";
 import { GameContext } from "../game/GameContext";
-import { NetworkEdgeView } from "@/model/network/NetworkView";
+import { NetworkEdgeView } from "@/model/network/NetworkObjectView";
 import { Mesh } from "three";
 
 type EdgeMeshProps = {

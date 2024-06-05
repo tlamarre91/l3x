@@ -20,7 +20,7 @@ export function makeGameContextData(): GameContextValue {
   const game = new Game(network, networkView);
   const selectedObject$ = new BehaviorSubject<SelectableObject | null>(null);
 
-  const value = {
+  const contextValue = {
     game,
     selectedObject$: selectedObject$.asObservable(),
     selectObject(obj: SelectableObject | null) {
@@ -31,7 +31,7 @@ export function makeGameContextData(): GameContextValue {
     }
   } satisfies GameContextValue;
 
-  return value;
+  return contextValue;
 }
 
 export const GameContext = createContext<GameContextValue>(makeGameContextData());

@@ -9,3 +9,5 @@ export interface Positioned {
 }
 
 export type ObservableAndGetter<T> = readonly [Observable<T>, () => T];
+
+export type ArrayVector3 = readonly [number, number, number];

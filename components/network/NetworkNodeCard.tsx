@@ -4,10 +4,10 @@ import { Box, Card, Flex, Heading } from "@radix-ui/themes";
 
 import { useStateSubscription } from "@/hooks";
 import Button from "@/components/ui/Button";
-import { NetworkNode } from "@/model/network";
 import { Agent } from "@/model/agent";
 import { DiscIcon } from "@radix-ui/react-icons";
 import { GameContext } from "../game/GameContext";
+import { NetworkNode } from "@/model/network/NetworkNode";
 
 export type NetworkNodeCardProps = {
   node: NetworkNode;
@@ -17,7 +17,7 @@ export type NetworkNodeCardProps = {
 export default function NetworkNodeCard({ node }: NetworkNodeCardProps) {
   const network = useContext(GameContext).game.network!; // TODO: remove non null assert
   const agents = useStateSubscription(node.agents$, []);
-  const edges = useStateSubscription(node.edges$, []);
+  const edges = useStateSubscription(node.edgesOut$, []);
 
   const handleClickRemove = () => {
     network.removeNode(node);

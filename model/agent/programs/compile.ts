@@ -4,23 +4,26 @@ import { AgentStateMachine } from "./AgentStateMachine";
 import { SourceMap } from ".";
 import { NamedRegisters } from "./DataDeque";
 
-export function compileRefTerm(token: parse.RefToken, sourceMap: SourceMap | null): commands.RefTerm {
+export function compileRefTerm(token: parse.RefToken, sourceMap: SourceMap): commands.RefTerm {
   const term = { type: "ref", register: token.symbol } as const;
-  sourceMap?.set(term, token.start);
+  sourceMap.set(term, token.start);
   return term;
 }
 
 export function compileComparisonTerm(
   token: parse.ComparisonToken,
-  sourceMap: SourceMap | null
+  sourceMap: SourceMap,
 ): commands.ComparisonTerm {
   const term = { type: "comparison", comparison: token.symbol } as const;
-  sourceMap?.set(term, token.start);
+  sourceMap.set(term, token.start);
   return term;
 }
 
-// TODO: clean up
-export function compileOperand(token: parse.Token, sourceMap: SourceMap | null): commands.Term {
+export function compileOperands(tokens: parse.Token[], sourceMap: SourceMap): commands.Term[] {
+  return tokens.map((token) => compileOperand(token, sourceMap));
+}
+
+export function compileOperand(token: parse.Token, sourceMap: SourceMap): commands.Term {
   if (parse.isRefToken(token)) {
     return compileRefTerm(token, sourceMap);
   }
@@ -30,11 +33,11 @@ export function compileOperand(token: parse.Token, sourceMap: SourceMap | null):
   }
 
   const term = { type: "literal", value: token.symbol } as const;
-  sourceMap?.set(term, token.start);
+  sourceMap.set(term, token.start);
   return term;
 }
 
-export function compileStatement(statement: parse.Statement, sourceMap: SourceMap | null): commands.Command {
+export function compileStatement(statement: parse.Statement, sourceMap: SourceMap): commands.Command {
   const instructionToken = statement.tokens[0];
   if (!commands.isInstruction(instructionToken.symbol)) {
     throw new Error(`unrecognized instruction: ${instructionToken.symbol}`);
@@ -43,53 +46,77 @@ export function compileStatement(statement: parse.Statement, sourceMap: SourceMa
   // Handle special statements
   if (parse.isTestStatement(statement)) {
     const command = compileTest(statement, sourceMap);
-    sourceMap?.set(command, statement.start);
+    sourceMap.set(command, statement.start);
     return command;
   }
 
   if (parse.isWriteStatement(statement)) {
     const command = compileWrite(statement, sourceMap);
-    sourceMap?.set(command, statement.start);
+    sourceMap.set(command, statement.start);
     return command;
   }
 
-  const command = compileOtherStatement(statement, sourceMap);
-  sourceMap?.set(command, statement.start);
-  return command;
+  if (parse.isEchoStatement(statement)) {
+    const command = compileEcho(statement, sourceMap);
+    sourceMap.set(command, statement.start);
+    return command;
+  }
+
+  if (parse.isGoStatement(statement)) {
+    const command = compileGo(statement, sourceMap);
+    sourceMap.set(command, statement.start);
+    return command;
+  }
+
+  if (parse.isMoveStatement(statement)) {
+    const command = compileMove(statement, sourceMap);
+    sourceMap.set(command, statement.start);
+    return command;
+  }
+
+  if (parse.isSetCursorStatement(statement)) {
+    const command = compileSetCursor(statement, sourceMap);
+    sourceMap.set(command, statement.start);
+    return command;
+  }
+
+  throw new Error(`i'm dumb and can't compile a ${instructionToken.symbol}`);
 }
 
 // TODO: ew lol
-function compileOtherStatement(statement: parse.Statement, sourceMap: SourceMap | null): commands.Command {
-  const [instructionToken, ...operandTokens] = statement.tokens;
+// function compileOtherStatement(statement: parse.Statement, sourceMap: SourceMap): commands.Command {
+//   const [instructionToken, ...operandTokens] = statement.tokens;
+//
+//   const operands = operandTokens.map((token) => compileOperand(token, sourceMap));
+//
+//   switch (instructionToken.symbol) {
+//     case commands.Instructions.echo:
+//       return compileEcho(operands);
+//
+//     case commands.Instructions.go:
+//       return compileGo(operands);
+//
+//     case commands.Instructions.move:
+//       return compileMove(operands);
+//
+//     case commands.Instructions.setCursor:
+//       return compileCursor(operands);
+//
+//     default:
+//       throw new Error(`i'm dumb and can't compile a ${instructionToken.symbol}`);
+//   }
+// }
 
-  const operands = operandTokens.map((token) => compileOperand(token, sourceMap));
-
-  switch (instructionToken.symbol) {
-    case commands.Instructions.echo:
-      return compileEcho(operands);
-
-    case commands.Instructions.go:
-      return compileGo(operands);
-
-    case commands.Instructions.move:
-      return compileMove(operands);
-
-    case commands.Instructions.setCursor:
-      return compileCursor(operands);
-
-    default:
-      throw new Error(`i'm dumb and can't compile a ${instructionToken.symbol}`);
-  }
-}
-
-export function compileEcho(operands: commands.Term[]): commands.EchoCommand {
+export function compileEcho(statement: parse.Statement, sourceMap: SourceMap): commands.EchoCommand {
+  const operands = compileOperands(statement.tokens.slice(1), sourceMap);
   return {
     instruction: commands.Instructions.echo,
     operands
   };
 }
 
-export function compileGo(operands: commands.Term[]): commands.GoCommand {
+export function compileGo(statement: parse.Statement, sourceMap: SourceMap): commands.GoCommand {
+  const operands = compileOperands(statement.tokens.slice(1), sourceMap);
   if (operands.length !== 1) {
     throw new Error(`${commands.Instructions.go} takes 1 operand`);
   }
@@ -100,7 +127,8 @@ export function compileGo(operands: commands.Term[]): commands.GoCommand {
   };
 }
 
-export function compileMove(operands: commands.Term[]): commands.MoveCommand {
+export function compileMove(statement: parse.Statement, sourceMap: SourceMap): commands.MoveCommand {
+  const operands = compileOperands(statement.tokens.slice(1), sourceMap);
   if (operands.length !== 1) {
     throw new Error(`${commands.Instructions.move} takes 1 operand`);
   }
@@ -113,7 +141,7 @@ export function compileMove(operands: commands.Term[]): commands.MoveCommand {
 
 const DEFAULT_OUTPUT = { type: "ref", register: NamedRegisters.cursor } as const;
 
-export function compileTest(statement: parse.TestStatement, sourceMap: SourceMap | null): commands.TestCommand {
+export function compileTest(statement: parse.TestStatement, sourceMap: SourceMap): commands.TestCommand {
   const [_instruction, op1, op2, op3, op4] = statement.tokens;
 
   if (parse.isComparisonToken(op2)) {
@@ -144,10 +172,10 @@ export function compileTest(statement: parse.TestStatement, sourceMap: SourceMap
   };
 }
 
-
 // TODO: bad. don't use before rewriting.
 // do validation in parse, like with parse.TestStatement and parse.WriteStatement
-export function compileCursor(operands: commands.Term[]): commands.SetCursorCommand {
+export function compileSetCursor(statement: parse.Statement, sourceMap: SourceMap): commands.SetCursorCommand {
+  const operands = compileOperands(statement.tokens.slice(1), sourceMap);
   if (operands.length !== 1) {
     throw new Error(`SetCursorCommand takes 1 argument, got ${operands.length}`);
   }
@@ -164,7 +192,7 @@ export function compileCursor(operands: commands.Term[]): commands.SetCursorComm
   };
 }
 
-export function compileWrite(statement: parse.WriteStatement, sourceMap: SourceMap | null): commands.WriteCommand {
+export function compileWrite(statement: parse.WriteStatement, sourceMap: SourceMap): commands.WriteCommand {
   const [_instruction, dataToken, outputToken] = statement.tokens;
 
   const data = compileOperand(dataToken, sourceMap);

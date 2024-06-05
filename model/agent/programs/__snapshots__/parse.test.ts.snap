@@ -12,7 +12,7 @@ exports[`parse error can be printed with context 1`] = `
 Parse error at line 2, column 6: Expected named register, got $peek"
 `;
 
-exports[`parse throws on bad syntax 1`] = `[ParseError: Parse error at line 3, column 1: First token must be keyword; got scan]`;
+exports[`parse throws on bad syntax 1`] = `[ParseError: Parse error at line 3, column 1: First token must be a statement type; got scan]`;
 
 exports[`parse works 1`] = `
 {
@@ -53,6 +53,7 @@ exports[`parse works 1`] = `
           "symbol": "start",
         },
       ],
+      "type": "def",
     },
     {
       "start": {
@@ -82,6 +83,7 @@ exports[`parse works 1`] = `
           "symbol": "world",
         },
       ],
+      "type": "echo",
     },
     {
       "start": {
@@ -141,6 +143,7 @@ exports[`parse works 1`] = `
           "symbol": "loopdeloop",
         },
       ],
+      "type": "def",
     },
     {
       "start": {
@@ -170,6 +173,7 @@ exports[`parse works 1`] = `
           "symbol": "1",
         },
       ],
+      "type": "echo",
     },
     {
       "start": {
@@ -199,6 +203,7 @@ exports[`parse works 1`] = `
           "symbol": "2",
         },
       ],
+      "type": "echo",
     },
     {
       "start": {
@@ -221,6 +226,7 @@ exports[`parse works 1`] = `
           "symbol": "loopdeloop",
         },
       ],
+      "type": "go",
     },
     {
       "start": {
@@ -243,6 +249,7 @@ exports[`parse works 1`] = `
           "symbol": "moveover",
         },
       ],
+      "type": "def",
     },
     {
       "start": {
@@ -265,6 +272,7 @@ exports[`parse works 1`] = `
           "symbol": "f",
         },
       ],
+      "type": "go",
     },
     {
       "start": {
@@ -287,6 +295,7 @@ exports[`parse works 1`] = `
           "symbol": "start",
         },
       ],
+      "type": "go",
     },
   ],
 }
