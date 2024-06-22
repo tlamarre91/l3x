@@ -1,4 +1,4 @@
-import { Status } from "@/utils";
+import { Status, type StatusValue } from "@/utils";
 
 /**
  * Collection of methods a client can use to make requests to a Network
@@ -24,20 +24,20 @@ export function isMove(request: NetworkRequest): request is MoveRequest {
 }
 
 export interface NetworkResponse {
-  status: Status;
+  status: StatusValue;
   message?: string;
   errorName?: string;
   errorMessage?: string;
 }
 
 export interface ErrorResponse extends NetworkResponse {
-  status: "fu";
+  status: typeof Status.fu;
   errorName: string;
   errorMessage: string;
 }
 
 export function responseFromError(error: unknown): ErrorResponse {
-  const status = "fu";
+  const status = Status.fu;
 
   if (error instanceof Error) {
     return { status, errorName: error.name, errorMessage: error.message };

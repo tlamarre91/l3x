@@ -1,4 +1,4 @@
-import { Status } from "@/utils";
+import { Status, type StatusValue } from "@/utils";
 import { AgentEvent } from "../../events";
 import { NamedRegister } from "../../programs/DataDeque";
 
@@ -26,6 +26,25 @@ export function isInstruction(s: string | undefined): s is Instruction {
 
 export type TermType = "literal" | "ref" | "comparison";
 
+export type Comparison =
+  | "<"
+  | "<="
+  | "="
+  | ">"
+  | ">="
+  | "!=";
+
+export function isComparison(s: string | undefined): s is Comparison {
+  return [
+    "<",
+    "<=",
+    "=",
+    ">",
+    ">=",
+    "!=",
+  ].includes(s as Comparison);
+}
+
 export interface Term {
   readonly type: TermType;
   readonly value?: string;
@@ -46,25 +65,6 @@ export interface LiteralTerm extends Term {
 export interface RefTerm extends Term {
   readonly type: "ref";
   readonly register: NamedRegister;
-}
-
-export type Comparison =
-  | "<"
-  | "<="
-  | "="
-  | ">"
-  | ">="
-  | "!=";
-
-export function isComparison(s: string | undefined): s is Comparison {
-  return [
-    "<",
-    "<=",
-    "=",
-    ">",
-    ">=",
-    "!=",
-  ].includes(s as Comparison);
 }
 
 export interface Command {
@@ -100,6 +100,24 @@ export interface GoCommand extends Command {
 
 export function isGo(command: Command): command is GoCommand {
   return command.instruction === Instructions.go;
+}
+
+export interface GoIfTrueCommand extends Command {
+  instruction: typeof Instructions.goIfTrue;
+  state: Term;
+}
+
+export function isGoIfTrue(command: Command): command is GoIfTrueCommand {
+  return command.instruction === Instructions.go;
+}
+
+export interface GoIfFalseCommand extends Command {
+  instruction: typeof Instructions.goIfFalse;
+  state: Term;
+}
+
+export function isGoIfFalse(command: Command): command is GoCommand {
+  return command.instruction === Instructions.goIfFalse;
 }
 
 export interface MoveCommand extends Command {
@@ -153,32 +171,32 @@ export function isWrite(command: Command): command is WriteCommand {
 }
 
 export interface CommandResult {
-  status: Status;
+  status: StatusValue;
   eventsToEmit?: AgentEvent[];
   setCommandIndex?: number;
   incrementCommandIndex?: number;
 }
 
 export interface SuccessResult extends CommandResult {
-  status: "ok";
+  status: typeof Status.ok;
 }
 
 export function isSuccessResponse(result: CommandResult): result is SuccessResult {
-  return result.status === "ok";
+  return result.status === Status.ok;
 }
 
 export interface ErrorResult extends CommandResult {
-  status: "fu";
+  status: typeof Status.fu;
   errorName: string;
   errorMessage: string;
 }
 
 export function isErrorResult(result: CommandResult): result is ErrorResult {
-  return result.status === "fu";
+  return result.status === Status.fu;
 }
 
 export function resultFromError(error: unknown): ErrorResult {
-  const status = "fu";
+  const status = Status.fu;
 
   if (error instanceof Error) {
     return { status, errorName: error.name, errorMessage: error.message };
@@ -189,4 +207,4 @@ export function resultFromError(error: unknown): ErrorResult {
   return { status, errorName: "Unexpected error", errorMessage: String(error) };
 }
 
-export const OK_RESULT: CommandResult = { status: "ok" };
+export const OK_RESULT: CommandResult = { status: Status.ok };

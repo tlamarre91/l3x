@@ -1,3 +1,7 @@
+/**
+ * Parse l3x programs!
+ */
+
 import { L3xError } from "@/model/errors";
 import { Comparison, Instruction, Instructions, isComparison, isInstruction } from "./commands";
 import { NamedRegister, NamedRegisters, isNamedRegister } from "./DataDeque";
@@ -80,7 +84,7 @@ export interface Statement {
 }
 
 export interface TestStatement extends Statement {
-  type: "test";
+  type: typeof Instructions.test;
   tokens:
     | [InstructionToken, Token]
     | [InstructionToken, Token, RefToken]
@@ -93,17 +97,19 @@ export function isTestStatement(statement: Statement): statement is TestStatemen
   return statement.type === "test";
 }
 
+/** Return `true` if `statement` is a valid `TestStatement`, throw otherwise */
 export function validateTestStatement(statement: Statement): statement is TestStatement {
-  if (statement.tokens[0].symbol !== "test") {
-    throw new ParseError(`Expected "test", got ${statement.tokens[0].symbol}`, statement.tokens[0].start);
+  const { tokens, start } = statement;
+  if (tokens[0].symbol !== "test") {
+    throw new ParseError(`Expected "test", got ${tokens[0].symbol}`, tokens[0].start);
   }
 
-  if (statement.tokens.length === 2) {
+  if (tokens.length === 2) {
     return true; // TODO: ??? is this enough
   }
 
-  if (statement.tokens.length === 3) {
-    const outputToken = statement.tokens[2];
+  if (tokens.length === 3) {
+    const outputToken = tokens[2];
 
     const valid = isNamedRegister(outputToken.symbol); // TODO: ??? is this enough
     if (!valid) {
@@ -113,62 +119,78 @@ export function validateTestStatement(statement: Statement): statement is TestSt
     return true;
   }
 
-  if (statement.tokens.length === 4 || statement.tokens.length === 5) {
-    const comparisonToken = statement.tokens[2];
+  if (tokens.length === 4 || tokens.length === 5) {
+    const comparisonToken = tokens[2];
 
     const comparisonValid = isComparisonToken(comparisonToken);
     if (!comparisonValid) {
       throw new ParseError(`Expected comparison, got ${comparisonToken.symbol}`, comparisonToken.start);
     }
 
-    const outputValid = statement.tokens.length === 4 || isRefToken(statement.tokens[4]);
+    const outputValid = tokens.length === 4 || isRefToken(tokens[4]);
     if (!outputValid) {
       throw new ParseError(
-        `Expected named register or nothing, got ${statement.tokens[4].symbol}`,
-        statement.tokens[4].start
+        `Expected named register or nothing, got ${tokens[4].symbol}`,
+        tokens[4].start
       );
     }
 
     return true;
   }
 
-  throw new ParseError(`Expected 1, 2, 3, or 4 arguments, got ${statement.tokens.length - 1}`, statement.start);
+  throw new ParseError(`Expected 1, 2, 3, or 4 arguments, got ${tokens.length - 1}`, start);
 }
 
 export interface EchoStatement extends Statement {
-  type: "echo";
+  type: typeof Instructions.echo;
 }
 
 export function isEchoStatement(statement: Statement): statement is EchoStatement {
-  return statement.type === "echo";
+  return statement.type === Instructions.echo;
 }
 
 export interface GoStatement extends Statement {
-  type: "go";
+  type: typeof Instructions.go;
 }
 
 export function isGoStatement(statement: Statement): statement is GoStatement {
-  return statement.type === "go";
+  return statement.type === Instructions.go;
+}
+
+export interface GoIfTrueStatement extends Statement {
+  type: typeof Instructions.goIfTrue;
+}
+
+export function isGoIfTrueStatement(statement: Statement): statement is GoStatement {
+  return statement.type === Instructions.goIfTrue;
+}
+
+export interface GoIfFalseStatement extends Statement {
+  type: typeof Instructions.goIfFalse;
+}
+
+export function isGoIfFalseStatement(statement: Statement): statement is GoStatement {
+  return statement.type === Instructions.goIfFalse;
 }
 
 export interface MoveStatement extends Statement {
-  type: "move";
+  type: typeof Instructions.move;
 }
 
 export function isMoveStatement(statement: Statement): statement is MoveStatement {
-  return statement.type === "move";
+  return statement.type === Instructions.move;
 }
 
 export interface SetCursorStatement extends Statement {
-  type: "curs";
+  type: typeof Instructions.setCursor;
 }
 
 export function isSetCursorStatement(statement: Statement): statement is SetCursorStatement {
-  return statement.type === "curs";
+  return statement.type === Instructions.setCursor;
 }
 
 export interface WriteStatement extends Statement {
-  type: "write";
+  type: typeof Instructions.write;
   tokens:
     | [InstructionToken, Token]
     | [InstructionToken, Token, RefToken];
@@ -176,19 +198,27 @@ export interface WriteStatement extends Statement {
 
 /** Don't use this if you haven't already parsed the statement; it doesn't validate */
 export function isWriteStatement(statement: Statement): statement is WriteStatement {
-  return statement.type === "write";
+  return statement.type === Instructions.write;
 }
 
+/** Return `true` if `statement` is a valid `WriteStatement`, throw otherwise */
 export function validateWriteStatement(statement: Statement): statement is WriteStatement {
-  if (statement.tokens.length === 2) {
+  const { tokens, start } = statement;
+  const [instruction, ...operands] = tokens;
+
+  if (instruction.symbol !== Instructions.write) {
+    throw new ParseError(`Expected "write", got ${instruction.symbol}`, instruction.start);
+  }
+
+  if (operands.length === 1) {
     return true;
   }
 
-  if (statement.tokens.length !== 3) {
-    throw new ParseError(`Expected 1 or 2 arguments, got ${statement.tokens.length - 1}`, statement.start);
+  if (operands.length !== 2) {
+    throw new ParseError(`Expected 1 or 2 arguments, got ${tokens.length - 1}`, start);
   }
 
-  const outputToken = statement.tokens[2];
+  const outputToken = operands[1];
   if (!isRefToken(outputToken)) {
     throw new ParseError(
       `Expected named register or nothing, got ${outputToken.symbol}`,

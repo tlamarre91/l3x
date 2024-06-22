@@ -5,6 +5,7 @@ import * as programs from "./programs";
 import * as commands from "./programs/commands";
 import { Program } from "./programs/parse";
 import { DataDeque, DataDequeObservables } from "./programs/DataDeque";
+import { Status } from "@/utils";
 
 const newAgentId = (() => {
   let agentId = 0;
@@ -174,16 +175,14 @@ export class Agent {
   #executeEcho({ operands }: commands.EchoCommand): commands.CommandResult {
     const message = operands.map((op) => this.#evaluateTerm(op)).join(" ");
     const eventsToEmit = [{ type: "echo", message } as const];
-    return { status: "ok", eventsToEmit };
-    // console.log(`agent ${this.name}: ${operands.map((op) => this.#evaluateTerm(op)).join(" ")}`);
-    // return { status: "ok" };
+    return { status: Status.ok, eventsToEmit };
   }
 
   #executeGo({ state }: commands.GoCommand): commands.CommandResult {
     this.setState(state.value!);
 
     return {
-      status: "ok",
+      status: Status.ok,
       setCommandIndex: 0
     };
   }
@@ -200,7 +199,7 @@ export class Agent {
 
     const response = this.networkClient.request(req);
 
-    if (response.status !== "ok") {
+    if (response.status !== Status.ok) {
       throw new Error(`got a bad response from the network: ${response.errorMessage}`);
     }
 

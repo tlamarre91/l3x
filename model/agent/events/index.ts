@@ -1,5 +1,5 @@
+import type { StatusValue } from "@/utils";
 import { Command } from "@/model/agent/programs/commands";
-import { Status } from "@/utils";
 
 export type AgentEventType =
   | "error"
@@ -18,7 +18,7 @@ export interface AgentEvent {
   errorMessage?: string;
   message?: string;
   command?: Command;
-  status?: Status;
+  status?: StatusValue;
 }
 
 export interface SequentialAgentEvent extends AgentEvent {
@@ -43,5 +43,5 @@ export interface AgentEchoEvent extends AgentEvent {
 export interface AgentProcessEvent extends AgentEvent {
   type: "process";
   command: Command;
-  status: Status;
+  status: StatusValue;
 }

@@ -60,6 +60,7 @@ export class Network {
   readonly eventLog = new Array<events.SequentialNetworkEvent>();
   readonly nodesByName = new Map<string, NetworkNode>(); // TODO: make private
   readonly edgesByName = new Map<string, NetworkEdge>();
+  readonly agentsByName = new Map<string, Agent>();
 
   /**
    * `Subject` for all network events
@@ -293,7 +294,11 @@ export class Network {
   /** Join an agent to the network on the given node */
   joinAgent(agent: Agent, node: NetworkNode): void {
     if (this.#agentControllers.get(agent) != null) {
-      throw new NetworkError(`Agent ${agent.name} is already in the network`);
+      throw new InvalidOperationError(`Agent ${agent.name} is already in the network`);
+    }
+
+    if (this.agentsByName.get(agent.name) != null) {
+      throw new InvalidOperationError(`Agent with name ${agent.name} is already in the network`);
     }
 
     const networkAgentEventsSubject = new Subject<events.NetworkAgentEvent>();
@@ -313,6 +318,7 @@ export class Network {
     networkAgentEventsSubject.subscribe((ev) => this.#emit(ev));
 
     this.#agentControllers.set(agent, agentController);
+    this.agentsByName.set(agent.name, agent);
 
     agent.networkClient = this.#makeNetworkClient(agent);
 

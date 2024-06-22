@@ -3,21 +3,34 @@ import { BehaviorSubject, Observable } from "rxjs";
 import * as commands from "./commands";
 import * as parse from "./parse";
 import type { SourceMap } from ".";
+
+/**
+ * Represent the behaviors of an `Agent` as a state machine.
+ *
+ * Defines a list of states the `Agent` can be in, and for each state, defines
+ * a `Procedure` for the behavior in that state. Also, keep track of the original
+ * program written for the agent, and a `SourceMap` mapping each procedure,
+ * command and term to the location of its definition in the program.
+ */
 export interface AgentStateMachine {
+  procedures: Map<string, commands.Procedure>;
   program: parse.Program;
   sourceMap: SourceMap;
-  procedures: Map<string, commands.Procedure>;
 }
 
 export function emptyStateMachine() {
   const stateMachine = {
+    procedures: new Map(),
     program: { statements: [], codeLines: [] },
     sourceMap: new Map(),
-    procedures: new Map()
   } satisfies AgentStateMachine;
   return stateMachine;
 }
 
+/**
+ * Represent the execution state of an `Agent` running an `AgentStateMachine`
+ * and make parts of the state observable
+ */
 export class ExecutionState {
   readonly alive$: BehaviorSubject<boolean>;
   readonly stateName$: BehaviorSubject<string>;
@@ -35,6 +48,7 @@ export class ExecutionState {
 
   initialize() {
     this.stateName$.next("start");
+    // TODO: extract "start" to a constant
     this.commandIndex$.next(0);
     this.operandIndex$.next(0);
   }
