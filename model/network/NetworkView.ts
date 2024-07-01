@@ -5,7 +5,7 @@ import { Network } from "./Network";
 import { NetworkNode } from "./NetworkNode";
 import { Agent } from "@/model/agent";
 import * as events from "./events";
-import { Color } from "three";
+import { Color, Vector3 } from "three";
 import { NetworkEdge } from "./NetworkEdge";
 import { AgentView, NetworkEdgeView, NetworkNodeView, NetworkNodeViewNotFoundError } from "./NetworkObjectView";
 import { EdgeGroupIndex } from "./EdgeGroupIndex";
@@ -83,16 +83,6 @@ export class NetworkView {
   }
 
   handleAddEdge(ev: events.NetworkEdgeEvent) {
-    function midpoint(p1: ArrayVector3, p2: ArrayVector3): ArrayVector3 {
-      const [x1, y1, z1] = p1;
-      const [x2, y2, z2] = p2;
-
-      return [
-        (x1 + x2) / 2,
-        (y1 + y2) / 2,
-        (z1 + z2) / 2,
-      ];
-    }
 
     const { edge: { from, to } } = ev;
     const fromView = this.getNodeView(from);
@@ -117,6 +107,10 @@ export class NetworkView {
 
   getNodeViews() {
     return this.#nodeViewsSubject.getValue();
+  }
+
+  getEdgeViews() {
+    return this.#edgeViewsSubject.getValue();
   }
 
   getAgentView(agent: Agent) {

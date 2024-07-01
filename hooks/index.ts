@@ -1,6 +1,7 @@
 import { DependencyList, useCallback, useEffect, useState } from "react";
 import { Observable } from "rxjs";
 
+/** Set an event listener on the DOM */
 export function useEventListener<K extends keyof WindowEventMap>(
   type: K,
   listener: (this: Window, ev: WindowEventMap[K]) => void,
@@ -20,6 +21,7 @@ export function useEventListener<K extends keyof WindowEventMap>(
   }, [listener, ...dependencies]);
 }
 
+/** Set an event listener for changes to the fragment component of the URL */
 export function useFragmentId() {
   if (typeof window === "undefined") {
     return null;
@@ -38,6 +40,7 @@ export function useFragmentId() {
   return fragmentId;
 }
 
+/** Set a listener for changes to an RxJS observable */
 export function useSubscription<T>(
   observable$: Observable<T>,
   handler: (t: T) => void,
@@ -49,6 +52,7 @@ export function useSubscription<T>(
   }, [observable$, handler, ...dependencies]);
 }
 
+/** Wrap `React.useState` with a listener for changes to an RxJS observable */
 export function useStateSubscription<T>(
   observable$: Observable<T>,
   initialValue: T | (() => T),
@@ -60,3 +64,4 @@ export function useStateSubscription<T>(
 }
 
 // TODO: export function useReducerSubscription<T>
+// TODO: export function useBehaviorSubjectSubscription<T> that just wraps useStateSubscription

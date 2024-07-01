@@ -91,8 +91,8 @@ export class NetworkEdgeView extends NetworkObjectView {
   // TODO: simplify
   constructor(
     public edge: NetworkEdge,
-    public fromView: NetworkNodeView,
-    public toView: NetworkNodeView,
+    public fromNodeView: NetworkNodeView,
+    public toNodeView: NetworkNodeView,
     color: Color,
     eventSubscriptions: Subscription[] = []
   ) {
@@ -108,11 +108,11 @@ export class NetworkEdgeView extends NetworkObjectView {
     }
 
     const newSubscriptions = [
-      fromView.positionAnimation$.subscribe(
-        (fromPositionAnimation) => animatePosition(fromPositionAnimation, toView.getPositionAnimation())
+      fromNodeView.positionAnimation$.subscribe(
+        (fromPositionAnimation) => animatePosition(fromPositionAnimation, toNodeView.getPositionAnimation())
       ),
-      toView.positionAnimation$.subscribe(
-        (toPositionAnimation) => animatePosition(fromView.getPositionAnimation(), toPositionAnimation)
+      toNodeView.positionAnimation$.subscribe(
+        (toPositionAnimation) => animatePosition(fromNodeView.getPositionAnimation(), toPositionAnimation)
       ),
     ];
 

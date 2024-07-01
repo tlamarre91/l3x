@@ -29,6 +29,33 @@ export class NetworkFactory {
     return [network, networkView] as const;
   }
 
+  // TODO: rewrite when i've made views not suck
+  static line(
+    length: number,
+    config?: Partial<NetworkConfig>,
+  ): [Network, NetworkView] {
+    const network = new Network("linenet", config);
+    const networkView = new NetworkView(network);
+
+    let lastNode: NetworkNode | null = null;
+
+    for (let x = 0; x < length; x++) {
+      const position = [x * 3, 0, 0] as const;
+      const newNode = network.addNode();
+      const newNodeView = new NetworkNodeView(newNode, position, new Color(Color.NAMES.red));
+      console.log(`position of ${newNode.name}: ${position}`);
+      networkView.addNetworkNodeView(newNode, newNodeView);
+
+      if (lastNode !== null) {
+        network.addEdge({ from: lastNode, to: newNode, key: "forward" });
+        network.addEdge({ from: newNode, to: lastNode, key: "back" });
+      }
+    }
+
+    return [network, networkView];
+  }
+
+  // TODO: rewrite when i've made views not suck
   static grid(
     height: number,
     width: number,
@@ -60,7 +87,6 @@ export class NetworkFactory {
     function _addLeftEdge(index: number, data: BufferStore) { // TODO
       const edgeProps = {
         key: "left",
-        store: data
       };
       network.addEdge({ from: nodes[index], to: nodes[index - 1], ...edgeProps });
     }
