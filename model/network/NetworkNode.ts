@@ -2,10 +2,9 @@ import { BehaviorSubject, Observable, Subject } from "rxjs";
 import { Agent } from "@/model/agent";
 import { NetworkEvent, NetworkNodeEvent } from "./events";
 import { NetworkEdge } from "./NetworkEdge";
+import { L3xObject } from "../L3xObject";
 
-export class NetworkNode {
-  readonly type = "node";
-
+export class NetworkNode extends L3xObject {
   #eventSubject = new Subject<NetworkNodeEvent>();
   readonly events$ = this.#eventSubject.asObservable();
 
@@ -22,6 +21,7 @@ export class NetworkNode {
     agents: Agent[] = [],
     edgesOut: NetworkEdge[] = [],
   ) {
+    super("node", name);
     this.#agentsSubject = new BehaviorSubject(agents);
     this.#edgesOutSubject = new BehaviorSubject(edgesOut);
     this.agents$ = this.#agentsSubject.asObservable();

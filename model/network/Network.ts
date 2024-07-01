@@ -1,11 +1,12 @@
 import { BehaviorSubject, Observable, Subject, filter } from "rxjs";
 
+import { L3xObject } from "@/model/L3xObject";
+import { NotImplementedError } from "@/model/errors";
 import { Agent } from "@/model/agent";
 import { SequentialAgentEvent } from "@/model/agent/events";
 import * as events from "./events";
 import { NetworkClient, NetworkRequest, NetworkResponse, isMove as isMoveRequest, responseFromError } from "./NetworkClient";
-import { AgentNotFoundError, BadRequestError, InvalidOperationError, InvalidStateError, NetworkError, NodeNotFoundError, ReservedNameError } from "./errors";
-import { NotImplementedError } from "../errors";
+import { AgentNotFoundError, BadRequestError, InvalidOperationError, ReservedNameError } from "./errors";
 import { NetworkNode } from "./NetworkNode";
 import { NetworkEdge } from "./NetworkEdge";
 
@@ -55,7 +56,7 @@ const DEFAULT_NETWORK_CONFIG: NetworkConfig = {
   logEvents: false,
 };
 
-export class Network {
+export class Network extends L3xObject {
   readonly config: NetworkConfig;
   readonly eventLog = new Array<events.SequentialNetworkEvent>();
   readonly nodesByName = new Map<string, NetworkNode>(); // TODO: make private
@@ -102,6 +103,7 @@ export class Network {
   #pendingRequestCallbacks: (() => void)[] = [];
 
   constructor(public name: string, config: Partial<NetworkConfig> = {}) {
+    super("network", name);
     console.log(`creating network ${name}`);
     const fullConfig: NetworkConfig = { ...DEFAULT_NETWORK_CONFIG, ...config };
     this.config = fullConfig;

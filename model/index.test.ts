@@ -72,3 +72,7 @@ go start
   expect(events).toMatchSnapshot();
   expect(network.eventLog.map((ev) => eventSnapshot(ev))).toMatchSnapshot();
 });
+
+it("line network with objective trackers", () => {
+  const [network, _networkView] = NetworkFactory.line(8, { logEvents: true });
+});

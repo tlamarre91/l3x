@@ -6,6 +6,7 @@ import * as commands from "./programs/commands";
 import { Program } from "./programs/parse";
 import { DataDeque, DataDequeObservables } from "./programs/DataDeque";
 import { Status } from "@/utils";
+import { L3xObject } from "../L3xObject";
 
 const newAgentId = (() => {
   let agentId = 0;
@@ -18,10 +19,8 @@ const newAgentId = (() => {
 })();
 
 
-export class Agent {
-  type = "agent" as const;
+export class Agent extends L3xObject {
   id: number;
-  name: string;
   networkClient: NetworkClient<Agent> | null = null;
   readonly #eventSubject: Subject<events.SequentialAgentEvent>;
   readonly events$: Observable<events.SequentialAgentEvent>;
@@ -39,12 +38,12 @@ export class Agent {
     initialExecutionState?: programs.ExecutionState,
     initialBuffer?: DataDeque
   ) {
-    this.id = newAgentId();
-
     if (name == null) {
+      // TODO: better name generation; should have a way of generating explicitagentname-0, explicitagentname-1, -2, -3... 
       name = `agent-${Math.floor(Math.random() * 1000000)}`;
     }
-    this.name = name;
+    super("agent", name);
+    this.id = newAgentId();
 
     this.#eventSubject = new Subject();
     this.events$ = this.#eventSubject.asObservable();

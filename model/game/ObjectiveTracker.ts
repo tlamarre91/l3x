@@ -1,32 +1,14 @@
 import { BehaviorSubject, Observable } from "rxjs";
 import { Network } from "../network";
-import { ObservableAndGetter } from "../types";
-import { NotImplementedError } from "../errors";
+import { Objective, ObjectiveState } from "./Objective";
 
-export interface ObjectiveState {
-  value: boolean;
-  updatedAt: number;
-}
-
-type WatchableObject = Network;
-export type WatchableObjectWatcher = (object: WatchableObject) => ObservableAndGetter<ObjectiveState>;
-
-export interface Objective {
-  name: string;
-  description: string;
-  watchedObject: "network";
-  watch: WatchableObjectWatcher;
-  state$?: Observable<ObjectiveState>;
-  getState?(): ObjectiveState;
-}
-
-export interface TrackedObjective extends Objective {
-  state$: Observable<ObjectiveState>;
-  getState(): ObjectiveState;
-}
-
-export function isTrackedObjective(objective: Objective): objective is TrackedObjective {
-  return objective.state$ != null || objective.getState != null;
+export class TrackedObjective {
+  constructor(
+    public objective: Objective,
+    public state$: Observable<ObjectiveState>,
+    public getState: () => ObjectiveState,
+  ) {
+  }
 }
 
 export class ObjectiveTracker {
@@ -46,31 +28,18 @@ export class ObjectiveTracker {
     return this.#trackedObjectiveSubject.getValue();
   }
 
-  trackObjective(objective: Objective): TrackedObjective {
-    if (objective.watchedObject !== "network") {
-      throw new NotImplementedError("can only watch network for now");
-    }
+  trackObjective(objective: Objective): void {
+    const currentlyTrackedObjectives = this.getTrackedObjectives();
 
-    const currentlyTrackedObjectives = this.#trackedObjectiveSubject.getValue();
+    const alreadyTracked = currentlyTrackedObjectives.find((tracked) => tracked.objective === objective);
 
-    if (currentlyTrackedObjectives.includes(objective as TrackedObjective)) {
+    if (alreadyTracked != null) {
       throw new Error("objective is already being tracked");
     }
 
-    if (isTrackedObjective(objective)) {
-      throw new Error("objective is already being tracked somewhere else??");
-    }
-
     const [state$, getState] = objective.watch(this.watchedNetwork);
-
-    const trackedObjective = {
-      ...objective,
-      state$,
-      getState
-    };
+    const trackedObjective = new TrackedObjective(objective, state$, getState);
 
     this.#trackedObjectiveSubject.next([...currentlyTrackedObjectives, trackedObjective]);
-
-    return trackedObjective;
   }
 }
