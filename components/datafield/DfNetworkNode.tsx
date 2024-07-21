@@ -52,12 +52,13 @@ export default function DfNetworkNode({ nodeView }: DfNetworkNodeProps) {
     ev.stopPropagation();
   }, []);
 
-  const nodePosition = nodeView.getPositionAnimation();
+  const nodePosition = nodeView.getPositionAnimation().target;
+  const nodeColor = nodeView.getColorAnimation().target;
 
   return (
     <NodeMesh
-      position={nodePosition.target}
-      color={highlighted ? new Color(Color.NAMES.purple) : new Color(Color.NAMES.salmon)}
+      position={nodePosition}
+      color={highlighted ? new Color(Color.NAMES.purple) : nodeColor}
       onClick={onClick}
     />
   );

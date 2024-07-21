@@ -131,9 +131,8 @@ export class NetworkView {
     // TODO: pass in some event handlers for the agent view instead of hardcoding
     const agentEvents$ = this.network.getAgentEvents(agent);
     const subscription = agentEvents$.subscribe((ev) => {
-      // console.log({ ev });
-      if (ev.type === "agentmove") {
-        this.handleAgentMove(agent, ev.edge!.to);
+      if (events.isAgentMove(ev)) {
+        this.handleAgentMove(agent, ev.edge.to);
         return;
       }
     });
@@ -170,6 +169,21 @@ export class NetworkView {
     return view;
   }
 
+  #setEdgeView(edge: NetworkEdge, edgeView: NetworkEdgeView) {
+    this.#edgeViewMap.set(edge, edgeView);
+    // TODO: think about how this works with large numbers of edges...
+    this.#edgeViewsSubject.next([...this.#edgeViewMap.values()]);
+  }
+
+  addEdgeView(edgeView: NetworkEdgeView): NetworkEdgeView {
+    const edge = edgeView.edge;
+    this.#setEdgeView(edge, edgeView);
+
+    // TODO: more edge-view-adding stuff
+
+    return edgeView;
+  }
+
   setNetworKNodeView(node: NetworkNode, nodeView: NetworkNodeView) {
     this.#nodeViewMap.set(node, nodeView);
     // TODO: think about how this works with large numbers of nodes...
@@ -182,8 +196,9 @@ export class NetworkView {
     // TODO: pass in some event handlers for the node view
   }
 
+  // TODO: change to just take the agentmove event
   handleAgentMove(agent: Agent, toNode: NetworkNode) {
-    const DURATION = 1500; // TODO
+    const DURATION = 1500; // TODO: :)
     const agentView = this.#agentViewMap.get(agent);
     const nodeView = this.#nodeViewMap.get(toNode);
 

@@ -124,9 +124,24 @@ export interface AgentExitEvent extends NetworkAgentEvent {
   node: NetworkNode;
 }
 
-export interface AgentCrossEvent extends NetworkAgentEvent {
+/**
+ * Indicates agent has crossed an edge; emitted by the crossed edge
+ **/
+export interface AgentCrossEvent extends NetworkEdgeEvent {
   type: "agentcross";
+  agent: Agent;
+}
+
+/**
+ * Indicates agent has crossed an edge; emitted from the agent
+ **/
+export interface AgentMoveEvent extends NetworkAgentEvent {
+  type: "agentmove";
   edge: NetworkEdge;
+}
+
+export function isAgentMove(ev: NetworkEvent): ev is AgentMoveEvent {
+  return ev.type === "agentmove";
 }
 
 export interface AgentEmittedEvent extends NetworkAgentEvent {

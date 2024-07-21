@@ -97,28 +97,30 @@ export class NetworkEdgeView extends NetworkObjectView {
     eventSubscriptions: Subscription[] = []
   ) {
 
-    function animatePosition(
-      fromPositionAnimation: Animation<ArrayVector3>,
-      toPositionAnimation: Animation<ArrayVector3>,
-    ) {
-      console.log({
-        fromPositionAnimation,
-        toPositionAnimation
-      });
-    }
+    // function animatePosition(
+    //   fromPositionAnimation: Animation<ArrayVector3>,
+    //   toPositionAnimation: Animation<ArrayVector3>,
+    // ) {
+    //   console.log({
+    //     fromPositionAnimation,
+    //     toPositionAnimation
+    //   });
+    // }
+    //
+    // const newSubscriptions = [
+    //   fromNodeView.positionAnimation$.subscribe(
+    //     (fromPositionAnimation) => animatePosition(fromPositionAnimation, toNodeView.getPositionAnimation())
+    //   ),
+    //   toNodeView.positionAnimation$.subscribe(
+    //     (toPositionAnimation) => animatePosition(fromNodeView.getPositionAnimation(), toPositionAnimation)
+    //   ),
+    // ];
+    //
+    // eventSubscriptions = [...eventSubscriptions, ...newSubscriptions];
+    //
+    // const position = [0, 0, 0] as const; // TOOD! yes tood
 
-    const newSubscriptions = [
-      fromNodeView.positionAnimation$.subscribe(
-        (fromPositionAnimation) => animatePosition(fromPositionAnimation, toNodeView.getPositionAnimation())
-      ),
-      toNodeView.positionAnimation$.subscribe(
-        (toPositionAnimation) => animatePosition(fromNodeView.getPositionAnimation(), toPositionAnimation)
-      ),
-    ];
-
-    eventSubscriptions = [...eventSubscriptions, ...newSubscriptions];
-
-    const position = [0, 0, 0] as const; // TOOD! yes tood
+    const position = fromNodeView.getPositionAnimation().target;
     super(position, color, eventSubscriptions);
   }
 }
