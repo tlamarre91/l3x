@@ -12,8 +12,8 @@ export class TrackedObjective {
 }
 
 export class ObjectiveTracker {
-  #trackedObjectiveSubject = new BehaviorSubject<TrackedObjective[]>([]);
-  trackedObjectives$: Observable<TrackedObjective[]> = this.#trackedObjectiveSubject.asObservable();
+  readonly #trackedObjectiveSubject = new BehaviorSubject<TrackedObjective[]>([]);
+  readonly trackedObjectives$: Observable<TrackedObjective[]> = this.#trackedObjectiveSubject.asObservable();
 
   constructor(
     public watchedNetwork: Network,

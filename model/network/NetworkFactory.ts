@@ -50,6 +50,8 @@ export class NetworkFactory {
         network.addEdge({ from: lastNode, to: newNode, key: "forward" });
         network.addEdge({ from: newNode, to: lastNode, key: "back" });
       }
+
+      lastNode = newNode;
     }
 
     return [network, networkView];
