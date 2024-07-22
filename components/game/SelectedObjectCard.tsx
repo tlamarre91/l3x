@@ -19,6 +19,18 @@ export default function SelectedObjectCard() {
       return <AgentCard agent={selectedObject} />;
     }
 
+    if (selectedObject.type === "edge") {
+      return <Card>
+        <div>
+        {selectedObject.name}
+        </div>
+        <div>
+        {selectedObject.key}
+        </div>
+      </Card>
+    }
+
+    console.log(`selected ${selectedObject.name}`);
     return (
       <Card>
         {selectedObject.name}

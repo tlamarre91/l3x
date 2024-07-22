@@ -7,7 +7,7 @@ import { NetworkEdgeView, NetworkNodeView } from "./NetworkObjectView";
 
 export class NetworkFactory {
   static demo() {
-    const [network, networkView] = NetworkFactory.grid(4, 6);
+    const [network, networkView] = NetworkFactory.grid(20, 23);
 
     const nodes = [...network.getNodes()];
 
@@ -65,110 +65,119 @@ export class NetworkFactory {
     },
   ): [Network, NetworkView] {
     const separationScale = networkConfig?.separationScale ?? 6;
-    // TODO: why are non-square grids broken
-    function _addUpEdge(index: number) { // TODO
+    const nodeGrid = new Array<Array<NetworkNode>>();
+    const nodeViewGrid = new Array<Array<NetworkNodeView>>();
+
+    function _addUpEdge(columnIndex: number, rowIndex: number) { // TODO
       const edgeProps = {
         key: "up",
       };
-      const edge = network.addEdge({ from: nodes[index], to: nodes[index - width], ...edgeProps });
+      const edge = network.addEdge({ from: nodeGrid[columnIndex][rowIndex], to: nodeGrid[columnIndex][rowIndex - 1], ...edgeProps });
 
       const edgeView = new NetworkEdgeView(
         edge,
-        nodeViews[index],
-        nodeViews[index - width],
-        new Color(Color.NAMES.purple),
+        nodeViewGrid[columnIndex][rowIndex],
+        nodeViewGrid[columnIndex][rowIndex - 1],
+        new Color(Color.NAMES.aqua),
       );
       networkView.addEdgeView(edgeView);
     }
-    function _addRightEdge(index: number) { // TODO
+    function _addRightEdge(columnIndex: number, rowIndex: number) { // TODO
       const edgeProps = {
         key: "right",
       };
-      const edge = network.addEdge({ from: nodes[index], to: nodes[index + 1], ...edgeProps });
+      const edge = network.addEdge({ from: nodeGrid[columnIndex][rowIndex], to: nodeGrid[columnIndex + 1][rowIndex], ...edgeProps });
 
       const edgeView = new NetworkEdgeView(
         edge,
-        nodeViews[index],
-        nodeViews[index + 1],
+        nodeViewGrid[columnIndex][rowIndex],
+        nodeViewGrid[columnIndex + 1][rowIndex],
         new Color(Color.NAMES.purple),
       );
       networkView.addEdgeView(edgeView);
     }
-    function _addDownEdge(index: number) { // TODO
+    function _addDownEdge(columnIndex: number, rowIndex: number) { // TODO
       const edgeProps = {
         key: "down",
       };
-      const edge = network.addEdge({ from: nodes[index], to: nodes[index + width], ...edgeProps });
+      const edge = network.addEdge({ from: nodeGrid[columnIndex][rowIndex], to: nodeGrid[columnIndex][rowIndex + 1], ...edgeProps });
 
       const edgeView = new NetworkEdgeView(
         edge,
-        nodeViews[index],
-        nodeViews[index + width],
-        new Color(Color.NAMES.purple),
+        nodeViewGrid[columnIndex][rowIndex],
+        nodeViewGrid[columnIndex][rowIndex + 1],
+        new Color(Color.NAMES.orchid),
       );
       networkView.addEdgeView(edgeView);
     }
-    function _addLeftEdge(index: number) { // TODO
+    function _addLeftEdge(columnIndex: number, rowIndex: number) { // TODO
       const edgeProps = {
         key: "left",
       };
-      const edge = network.addEdge({ from: nodes[index], to: nodes[index - 1], ...edgeProps });
+      const edge = network.addEdge({ from: nodeGrid[columnIndex][rowIndex], to: nodeGrid[columnIndex - 1][rowIndex], ...edgeProps });
 
       const edgeView = new NetworkEdgeView(
         edge,
-        nodeViews[index],
-        nodeViews[index - 1],
-        new Color(Color.NAMES.purple),
+        nodeViewGrid[columnIndex][rowIndex],
+        nodeViewGrid[columnIndex - 1][rowIndex],
+        new Color(Color.NAMES.orange),
       );
       networkView.addEdgeView(edgeView);
     }
 
-    function computeNodePosition(x: number, y: number) {
-      const offset = -separationScale * height / 2;
+    function computeNodePosition(columnIndex: number, rowIndex: number) {
+      const xOffset = -width * separationScale / 2;
+      const yOffset = height * separationScale / 2;
       return [
-        x * separationScale + offset,
-        y * separationScale + offset,
-        0
+        (columnIndex * separationScale) + xOffset,
+        -(rowIndex * separationScale) + yOffset,
+        Math.sin(columnIndex) * 4 - 2
       ] as const;
     }
 
     const network = new Network("gridnet", networkConfig);
     const networkView = new NetworkView(network);
 
-    const nodes = new Array<NetworkNode>();
-    const nodeViews = new Array<NetworkNodeView>();
+    // const nodes = new Array<NetworkNode>();
+    // const nodeViews = new Array<NetworkNodeView>();
 
-    for (let x = 0; x < width; x++) {
-      for (let y = 0; y < height; y++) {
-        const position = computeNodePosition(x, y);
+    for (let columnIndex = 0; columnIndex < width; columnIndex++) {
+      const columnNodes = new Array<NetworkNode>;
+      const columnNodeViews = new Array<NetworkNodeView>;
+
+      for (let rowIndex = 0; rowIndex < height; rowIndex++) {
+        const position = computeNodePosition(columnIndex, rowIndex);
         const node = network.addNode();
         const view = new NetworkNodeView(node, position, new Color(Color.NAMES.salmon));
         console.log(`position of ${node.name}: ${position}`);
 
         networkView.addNetworkNodeView(node, view);
-        nodes.push(node);
-        nodeViews.push(view);
+        columnNodes.push(node);
+        columnNodeViews.push(view);
       }
+
+      nodeGrid.push(columnNodes);
+      nodeViewGrid.push(columnNodeViews);
     }
 
     for (let columnIndex = 0; columnIndex < width; columnIndex++) {
       for (let rowIndex = 0; rowIndex < height; rowIndex++) {
-        const index = (rowIndex * width) + columnIndex;
+        // const index = (rowIndex * width) + columnIndex;
 
         if (columnIndex > 0) {
-          _addLeftEdge(index);
+          _addLeftEdge(columnIndex, rowIndex);
         }
 
         if (columnIndex < width - 1) {
-          _addRightEdge(index);
+          _addRightEdge(columnIndex, rowIndex);
         }
 
         if (rowIndex > 0) {
-          _addUpEdge(index);
+          _addUpEdge(columnIndex, rowIndex);
         }
 
         if (rowIndex < height - 1) {
-          _addDownEdge(index);
+          _addDownEdge(columnIndex, rowIndex);
         }
       }
     }

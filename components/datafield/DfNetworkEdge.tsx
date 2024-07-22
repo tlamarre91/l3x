@@ -3,14 +3,14 @@ import React, { useCallback, useContext, useRef, useState }  from "react";
 import { ArrowHelperProps, ThreeEvent } from "@react-three/fiber";
 import { GameContext } from "../game/GameContext";
 import { NetworkEdgeView } from "@/model/network/NetworkObjectView";
-import { ArrowHelper, Mesh, Vector3 } from "three";
+import { ArrowHelper, Color, Mesh, Vector3 } from "three";
 import { ArrayVector3 } from "@/model/types";
 
 function direction(p1: ArrayVector3, p2: ArrayVector3): ArrayVector3 {
   const [x1, y1, z1] = p1;
   const [x2, y2, z2] = p2;
 
-  const [dx, dy, dz] = [x2 - x1 + Math.random(), y2 - y1 + Math.random(), z2 - z1 + Math.random()];
+  const [dx, dy, dz] = [x2 - x1, y2 - y1, z2 - z1];
   const d = new Vector3(dx, dy, dz).normalize();
 
   // console.log(`Direction from ${p1} to ${p2} is ${[d.x, d.y, d.z]}`);
@@ -21,6 +21,7 @@ function direction(p1: ArrayVector3, p2: ArrayVector3): ArrayVector3 {
 type EdgeMeshProps = {
   readonly origin: ArrayVector3;
   readonly direction: ArrayVector3;
+  readonly color: Color;
   readonly highlighted: boolean;
   readonly onClick: (event: ThreeEvent<MouseEvent>) => void;
   readonly length?: number;
@@ -31,6 +32,7 @@ function EdgeMesh(props: EdgeMeshProps) {
   const {
     origin,
     direction,
+    color,
     highlighted,
     onClick,
     length = 3
@@ -45,7 +47,7 @@ function EdgeMesh(props: EdgeMeshProps) {
         new Vector3(...direction),
         new Vector3(...originOffset),
         length,
-        0xff0000
+        color
       ]} />
   );
 
@@ -76,6 +78,8 @@ export default function DfNetworkEdge({ edgeView }: DfNetworkEdgeProps) {
     edgeView.toNodeView.getPositionAnimation().target,
   );
 
+  const color = edgeView.getColorAnimation().target;
+
   // TODO: handle changes in the view model
   const [highlighted, setHighlighted] = useState(false);
 
@@ -88,6 +92,7 @@ export default function DfNetworkEdge({ edgeView }: DfNetworkEdgeProps) {
     <EdgeMesh
       origin={edgePosition}
       direction={edgeDirection}
+      color={color}
       highlighted={highlighted}
       onClick={onClick}
     />
