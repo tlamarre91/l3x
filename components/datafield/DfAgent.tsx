@@ -1,11 +1,12 @@
 import React, { useContext, useRef }  from "react";
 import * as THREE from "three";
 import { config, useSpring, animated } from "@react-spring/three";
-import { Sphere, Wireframe } from "@react-three/drei";
+import { Wireframe } from "@react-three/drei";
 
 import { GameContext } from "@/components/game/GameContext";
 import { useSubscription } from "@/hooks";
 import { AgentView } from "@/model/network/NetworkObjectView";
+import { Color } from "three";
 
 export interface DfAgentProps {
   agentView: AgentView;
@@ -34,10 +35,12 @@ export default function DfAgent({ agentView }: DfAgentProps) {
     });
   }, [meshSpring, meshSpringApi]);
 
-  const AnimatedSphere = animated(Sphere);
+  // const AnimatedSphere = animated(Sphere);
+
+  const color = Color.NAMES.lime;
 
   const animatedSphere = (
-    <AnimatedSphere
+    <animated.mesh
       position={meshSpring.position}
       scale={meshSpring.scale}
       ref={meshRef}
@@ -46,9 +49,10 @@ export default function DfAgent({ agentView }: DfAgentProps) {
         ev.stopPropagation();
       }}
     >
-      <meshStandardMaterial opacity={1} color="white" />
+      <sphereGeometry args={[1, 8, 6]} />
+      <meshStandardMaterial wireframe wireframeLinewidth={5} color={color} />
       <Wireframe />
-    </AnimatedSphere>
+    </animated.mesh>
   );
 
   return animatedSphere;

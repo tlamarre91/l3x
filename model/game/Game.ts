@@ -37,11 +37,6 @@ export class Game {
       NetworkWatcherFactory.agentKnowsWordWatcher(agentName, magicWord)
     );
 
-    this.objectiveTracker.trackedObjectives$.subscribe((thing) => {
-      console.log("lookit the tracked objectives:");
-      console.log(thing);
-    });
-
     this.objectiveTracker.trackObjective(testObjective1);
     this.objectiveTracker.trackObjective(testObjective2);
 

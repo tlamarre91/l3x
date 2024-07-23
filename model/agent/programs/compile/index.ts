@@ -62,7 +62,6 @@ export function compile(program: parse.Program): AgentStateMachine {
   const procedures = new Map<string, commands.Procedure>();
   const sourceMap: SourceMap = new Map();
 
-  let currentStateName: string | undefined = undefined;
   let currentProcedure: commands.Procedure | undefined = undefined;
 
   for (const statement of program.statements) {
@@ -70,7 +69,7 @@ export function compile(program: parse.Program): AgentStateMachine {
 
       currentProcedure = compileDef(statement, sourceMap);
       if (procedures.has(currentProcedure.name)) {
-        throw new Error(`multiple definitions for state ${currentStateName}`);
+        throw new Error(`multiple definitions for state ${currentProcedure.name}`);
       }
 
       procedures.set(currentProcedure.name, currentProcedure);
@@ -84,6 +83,10 @@ export function compile(program: parse.Program): AgentStateMachine {
 
     const command = compileCommand(statement, sourceMap);
     currentProcedure.commands.push(command);
+  }
+
+  if (!procedures.has("start")) {
+    throw new Error("Program doesn't define a start procedure");
   }
 
   return {

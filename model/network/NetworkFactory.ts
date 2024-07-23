@@ -42,7 +42,6 @@ export class NetworkFactory {
       const position = [x * 3, 0, 0] as const;
       const newNode = network.addNode();
       const newNodeView = new NetworkNodeView(newNode, position, new Color(Color.NAMES.salmon));
-      console.log(`position of ${newNode.name}: ${position}`);
       networkView.addNetworkNodeView(newNode, newNodeView);
 
       if (lastNode !== null) {
@@ -128,18 +127,17 @@ export class NetworkFactory {
     function computeNodePosition(columnIndex: number, rowIndex: number) {
       const xOffset = -width * separationScale / 2;
       const yOffset = height * separationScale / 2;
+      let zOffset = 2;
+      zOffset += (Math.sin(columnIndex) + Math.sin(rowIndex)) * 2;
       return [
         (columnIndex * separationScale) + xOffset,
         -(rowIndex * separationScale) + yOffset,
-        Math.sin(columnIndex) * 4 - 2
+        zOffset
       ] as const;
     }
 
     const network = new Network("gridnet", networkConfig);
     const networkView = new NetworkView(network);
-
-    // const nodes = new Array<NetworkNode>();
-    // const nodeViews = new Array<NetworkNodeView>();
 
     for (let columnIndex = 0; columnIndex < width; columnIndex++) {
       const columnNodes = new Array<NetworkNode>;
@@ -149,7 +147,6 @@ export class NetworkFactory {
         const position = computeNodePosition(columnIndex, rowIndex);
         const node = network.addNode();
         const view = new NetworkNodeView(node, position, new Color(Color.NAMES.salmon));
-        console.log(`position of ${node.name}: ${position}`);
 
         networkView.addNetworkNodeView(node, view);
         columnNodes.push(node);
@@ -162,8 +159,6 @@ export class NetworkFactory {
 
     for (let columnIndex = 0; columnIndex < width; columnIndex++) {
       for (let rowIndex = 0; rowIndex < height; rowIndex++) {
-        // const index = (rowIndex * width) + columnIndex;
-
         if (columnIndex > 0) {
           _addLeftEdge(columnIndex, rowIndex);
         }

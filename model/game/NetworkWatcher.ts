@@ -17,14 +17,11 @@ export class NetworkWatcherFactory {
           lastChangedAt: network.clockCount
         };
       }
-      console.log(`gonna watch ${network.name}`);
 
       const nodeToWatch = network.nodesByName.get(nodeName);
       if (nodeToWatch == null) {
         throw new Error(`Couldn't find node ${nodeName} in network ${network.name}`);
       }
-
-      console.log(`gonna watch node ${nodeToWatch.name}`);
 
       let currentState = observeState(nodeToWatch.getAgents());
 
@@ -63,8 +60,6 @@ export class NetworkWatcherFactory {
       if (agent == null) {
         throw new Error(`Couldn't find node ${agentName} in network ${network.name}`);
       }
-
-      console.log(`gonna watch agent ${agent.name} to see if he learns "${magicWord}"`);
 
       let currentState = observeState(agent.bufferObservables.getData(), magicWord);
 

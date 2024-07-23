@@ -38,12 +38,13 @@ export class Agent extends L3xObject {
     initialExecutionState?: programs.ExecutionState,
     initialBuffer?: DataDeque
   ) {
+    const id = newAgentId();
     if (name == null) {
       // TODO: better name generation; should have a way of generating explicitagentname-0, explicitagentname-1, -2, -3... 
-      name = `agent-${Math.floor(Math.random() * 1000000)}`;
+      name = `agent-${id}`;
     }
     super("agent", name);
-    this.id = newAgentId();
+    this.id = id;
 
     this.#eventSubject = new Subject();
     this.events$ = this.#eventSubject.asObservable();
@@ -80,7 +81,7 @@ export class Agent extends L3xObject {
     const stateMachine = programs.compile(program);
     this.stateMachine = stateMachine;
     this.#executionState.initialize();
-    console.log("reprogrammed", this);
+    console.log("reprogrammed", this.name);
   }
 
   setState(state: string) {
