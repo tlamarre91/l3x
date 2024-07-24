@@ -57,7 +57,7 @@ export default function DfNetworkNode({ nodeView }: DfNetworkNodeProps) {
 
   return (
     <NodeMesh
-      position={nodePosition}
+      position={[nodePosition.x, nodePosition.y, nodePosition.z]}
       color={highlighted ? new Color(Color.NAMES.purple) : nodeColor}
       onClick={onClick}
     />

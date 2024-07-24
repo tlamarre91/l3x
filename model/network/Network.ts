@@ -1,4 +1,4 @@
-import { BehaviorSubject, Observable, Subject, filter } from "rxjs";
+import { BehaviorSubject, Observable, Subject, Subscription, filter } from "rxjs";
 
 import { L3xObject } from "@/model/L3xObject";
 import { NotImplementedError } from "@/model/errors";
@@ -33,6 +33,7 @@ export interface NetworkAgentController {
   occupiedNode: NetworkNode;
   networkAgentEvents$: Observable<events.NetworkAgentEvent>;
   emit: (event: events.NetworkEvent) => void;
+  agentEventSubscription?: Subscription;
 }
 
 /**
@@ -308,13 +309,14 @@ export class Network extends L3xObject {
       networkAgentEventsSubject.next({ type: "agentemit", agent, emitted: ev });
     }
 
-    agent.events$.subscribe(forwardAgentEvent);
+    const agentEventSubscription = agent.events$.subscribe(forwardAgentEvent);
 
     const agentController: NetworkAgentController = {
       agent,
       occupiedNode: node,
       networkAgentEvents$: networkAgentEventsSubject.asObservable(),
-      emit: (ev) => networkAgentEventsSubject.next({ ...ev, agent })
+      emit: (ev) => networkAgentEventsSubject.next({ ...ev, agent }),
+      agentEventSubscription
     };
 
     networkAgentEventsSubject.subscribe((ev) => this.#emit(ev));
@@ -347,9 +349,8 @@ export class Network extends L3xObject {
 
   removeAgent(agent: Agent) {
     const agentController = this.getAgentController(agent);
-
     agentController.emit({ type: "removeagent" });
-
+    agentController.agentEventSubscription?.unsubscribe(); // Stop forwarding events
     this.#agentControllers.delete(agent);
     this.#agentsSubject.next(this.getAgents().filter((agent_) => agent_ !== agent));
   }

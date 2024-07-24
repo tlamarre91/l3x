@@ -1,13 +1,14 @@
 import { Network, NetworkConfig } from "./Network";
 import { NetworkView } from "./NetworkView";
-import { Color } from "three";
+import { Color, Vector3 } from "three";
 import { AgentFactory } from "../agent/AgentFactory";
 import { NetworkNode } from "./NetworkNode";
 import { NetworkEdgeView, NetworkNodeView } from "./NetworkObjectView";
+import { Agent } from "../agent";
 
 export class NetworkFactory {
   static demo() {
-    const [network, networkView] = NetworkFactory.grid(20, 23);
+    const [network, networkView] = NetworkFactory.grid(7, 7);
 
     const nodes = [...network.getNodes()];
 
@@ -24,6 +25,13 @@ export class NetworkFactory {
         network.joinAgent(agent, node);
       }
     }
+
+    const TEST_CODE = `def start
+echo hey
+move left`;
+
+    const extraGuy = Agent.fromCode("extraguy", TEST_CODE);
+    network.joinAgent(extraGuy, nodes[0]);
 
     return [network, networkView] as const;
   }
@@ -127,7 +135,7 @@ export class NetworkFactory {
     function computeNodePosition(columnIndex: number, rowIndex: number) {
       const xOffset = -width * separationScale / 2;
       const yOffset = height * separationScale / 2;
-      let zOffset = 2;
+      let zOffset = -10;
       zOffset += (Math.sin(columnIndex) + Math.sin(rowIndex)) * 2;
       return [
         (columnIndex * separationScale) + xOffset,
@@ -146,7 +154,7 @@ export class NetworkFactory {
       for (let rowIndex = 0; rowIndex < height; rowIndex++) {
         const position = computeNodePosition(columnIndex, rowIndex);
         const node = network.addNode();
-        const view = new NetworkNodeView(node, position, new Color(Color.NAMES.salmon));
+        const view = new NetworkNodeView(node, new Vector3(...position), new Color(Color.NAMES.salmon));
 
         networkView.addNetworkNodeView(node, view);
         columnNodes.push(node);

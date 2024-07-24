@@ -1,11 +1,10 @@
 import { BehaviorSubject } from "rxjs";
 
-import type { ArrayVector3 } from "@/model/types";
 import { Network } from "./Network";
 import { NetworkNode } from "./NetworkNode";
 import { Agent } from "@/model/agent";
 import * as events from "./events";
-import { Color, Vector3 } from "three";
+import * as THREE from "three";
 import { NetworkEdge } from "./NetworkEdge";
 import { AgentView, NetworkEdgeView, NetworkNodeView, NetworkNodeViewNotFoundError } from "./NetworkObjectView";
 import { EdgeGroupIndex } from "./EdgeGroupIndex";
@@ -75,7 +74,7 @@ export class NetworkView {
 
     const nodePosition = nodeView.getPositionAnimation().target;
 
-    const agentView = new AgentView(agent, nodePosition, new Color(Color.NAMES.green));
+    const agentView = new AgentView(agent, nodePosition, new THREE.Color(THREE.Color.NAMES.green));
     this.addAgentView(agentView);
   }
 
@@ -94,7 +93,7 @@ export class NetworkView {
       ev.edge,
       fromView,
       toView,
-      new Color(Color.NAMES.gold)
+      new THREE.Color(THREE.Color.NAMES.gold)
     );
 
     this.#edgeGroupIndex.add(from, to, edgeView);
@@ -132,14 +131,19 @@ export class NetworkView {
     const agentEvents$ = this.network.getAgentEvents(agent);
     const subscription = agentEvents$.subscribe((ev) => {
       if (events.isAgentMove(ev)) {
-        this.handleAgentMove(agent, ev.edge.to);
+        this.handleAgentMove(ev);
+        return;
+      }
+
+      if (ev.type === "agentemit") { // TODO: add isAgentEmit
+        this.handleAgentEmittedEvent(ev as events.AgentEmittedEvent);
         return;
       }
     });
 
     const otherSubscription = agent.executionStateObservables.alive$.subscribe(
       (aliveness) => !aliveness
-        ? agentView.animatePositionTo([0, 0, -1000], 15000)
+        ? agentView.animatePositionTo(new THREE.Vector3(0, 0, -1000), 15000)
         : null
     );
 
@@ -196,9 +200,16 @@ export class NetworkView {
     // TODO: pass in some event handlers for the node view
   }
 
-  // TODO: change to just take the agentmove event
-  handleAgentMove(agent: Agent, toNode: NetworkNode) {
-    const DURATION = 1500; // TODO: :)
+  handleAgentMove(ev: events.AgentMoveEvent) {
+    const {
+      agent,
+      edge: {
+        to:
+        toNode,
+      }
+    } = ev;
+
+    const DURATION = 200; // TODO: :)
     const agentView = this.#agentViewMap.get(agent);
     const nodeView = this.#nodeViewMap.get(toNode);
 
@@ -213,5 +224,49 @@ export class NetworkView {
     const nodePosition = nodeView.getPositionAnimation().target;
 
     agentView.animatePositionTo(nodePosition, DURATION);
+  }
+
+  // TODO: refactor!!
+  handleAgentEmittedEvent(ev: events.AgentEmittedEvent) {
+    console.log("handling emitted", ev);
+    const {
+      agent,
+      emitted: {
+        id,
+        type,
+        message
+      }
+    } = ev;
+
+    const agentView = this.#agentViewMap.get(agent);
+
+    if (agentView == null) {
+      throw new Error("TODO: handle missing views gracefully");
+    }
+
+    function spinnySpin() {
+      // const newRotation = new THREE.Quaternion();
+      // newRotation.setFromEuler(new THREE.Euler(0, 1, 0));
+      // newRotation.multiply(agentView!.getRotationAnimation().target)
+      const r = Math.random() * 4;
+
+      if (r < 1) {
+        let newUpAxis = agentView!.getUpAxisAnimation().target;
+        newUpAxis = new THREE.Vector3(newUpAxis.y, newUpAxis.x, newUpAxis.z)
+        agentView!.animateUpAxisTo(newUpAxis, 500);
+      } else {
+        const newRotation = agentView!.getRotationAnimation().target + (Math.PI / 2);
+        agentView!.animateRotationTo(newRotation, 500)
+      }
+    }
+
+    switch (type) {
+      case "error":
+        spinnySpin();
+        break;
+
+      case "echo":
+        
+    }
   }
 }
