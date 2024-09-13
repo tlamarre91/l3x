@@ -6,7 +6,7 @@ import { NetworkEdgeView } from "@/model/network/NetworkObjectView";
 import { ArrowHelper, Color, Mesh, Vector3 } from "three";
 import { ArrayVector3 } from "@/model/types";
 
-function direction(p1: ArrayVector3, p2: ArrayVector3): ArrayVector3 {
+function direction(p1: Vector3, p2: Vector3): ArrayVector3 {
   const [x1, y1, z1] = p1;
   const [x2, y2, z2] = p2;
 
@@ -71,7 +71,8 @@ export type DfNetworkEdgeProps = {
 export default function DfNetworkEdge({ edgeView }: DfNetworkEdgeProps) {
   const gameContext = useContext(GameContext);
 
-  const edgePosition = edgeView.getPositionAnimation().target;
+  // TODO: 
+  const edgePosition: ArrayVector3 = [...edgeView.getPositionAnimation().target];
   // const edgePosition = [0, 0, 0] as const;
   const edgeDirection = direction(
     edgeView.fromNodeView.getPositionAnimation().target,

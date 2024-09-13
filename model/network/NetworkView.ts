@@ -252,11 +252,11 @@ export class NetworkView {
 
       if (r < 1) {
         let newUpAxis = agentView!.getUpAxisAnimation().target;
-        newUpAxis = new THREE.Vector3(newUpAxis.y, newUpAxis.x, newUpAxis.z)
+        newUpAxis = new THREE.Vector3(newUpAxis.y, newUpAxis.x, newUpAxis.z);
         agentView!.animateUpAxisTo(newUpAxis, 500);
       } else {
         const newRotation = agentView!.getRotationAnimation().target + (Math.PI / 2);
-        agentView!.animateRotationTo(newRotation, 500)
+        agentView!.animateRotationTo(newRotation, 500);
       }
     }
 

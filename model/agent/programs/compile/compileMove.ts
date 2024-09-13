@@ -15,5 +15,5 @@ export function compileMove(statement: parse.MoveStatement, sourceMap: SourceMap
     edgeKey: operands[0],
   };
   sourceMap.set(command, statement.start);
-  return command;;
+  return command;
 }

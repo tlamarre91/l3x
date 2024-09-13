@@ -7,21 +7,29 @@ import { NetworkWatcherFactory } from "./NetworkWatcher";
 
 
 export class Game {
-  #networkSubject = new BehaviorSubject<Network | null>(null);
-  network$ = this.#networkSubject.asObservable();
-  public objectiveTracker: ObjectiveTracker;
+  #networkViewSubject = new BehaviorSubject<NetworkView | null>(null);
+  networkView$ = this.#networkViewSubject.asObservable();
+  public objectiveTracker?: ObjectiveTracker;
 
   constructor(
-    public network?: Network,
-    public networkView?: NetworkView,
+    networkView?: NetworkView,
   ) {
-    if (network == null) {
-      throw new Error("TODO");
+    this.#networkViewSubject.next(networkView ?? null);
+    this.#networkViewSubject.subscribe((networkView) => {
+      if (networkView != null) {
+        this.objectiveTracker = new ObjectiveTracker(networkView.network);
+      }
+    });
+
+    if (networkView == null) {
+      return;
     }
 
-    this.objectiveTracker = new ObjectiveTracker(network);
+    this.tester(); // TODO: delete
+  }
 
-    this.tester();
+  setActiveNetwork(networkView: NetworkView) {
+    this.#networkViewSubject.next(networkView);
   }
 
   // TODO: extract useful stuff
@@ -29,7 +37,9 @@ export class Game {
     const nodeName = "@n15";
     const testObjective1 = new Objective(`Get to ${nodeName}`, `Get an agent into ${nodeName}`, NetworkWatcherFactory.agentInNodeWatcher(nodeName));
 
-    const agentName = this.network?.getAgents()[0].name!;
+    const network = this.getNetworkView()!.network;
+
+    const agentName = network.getAgents()[0].name!;
     const magicWord = "here";
     const testObjective2 = new Objective(
       `Teach ${agentName} to say ${magicWord}`,
@@ -48,7 +58,8 @@ export class Game {
     }
   }
 
-  getNetwork() {
-    return this.#networkSubject.getValue();
+  // TODO: finish switching to subscribable network
+  getNetworkView() {
+    return this.#networkViewSubject.getValue();
   }
 }

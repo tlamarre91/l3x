@@ -1,13 +1,15 @@
 import { DependencyList, useCallback, useEffect, useState } from "react";
 import { Observable } from "rxjs";
 
+export { useBoxProps } from "./props";
+
 /** Set an event listener on the DOM */
 export function useEventListener<K extends keyof WindowEventMap>(
   type: K,
   listener: (this: Window, ev: WindowEventMap[K]) => void,
   dependencies: DependencyList,
   options?: boolean | AddEventListenerOptions
-) {
+): void {
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
@@ -22,7 +24,7 @@ export function useEventListener<K extends keyof WindowEventMap>(
 }
 
 /** Set an event listener for changes to the fragment component of the URL */
-export function useFragmentId() {
+export function useFragmentId(): string | null {
   if (typeof window === "undefined") {
     return null;
   }
@@ -45,7 +47,7 @@ export function useSubscription<T>(
   observable$: Observable<T>,
   handler: (t: T) => void,
   dependencies: DependencyList = []
-) {
+): void {
   useEffect(() => {
     const subscription = observable$.subscribe(handler);
     return () => subscription.unsubscribe();
@@ -57,7 +59,7 @@ export function useStateSubscription<T>(
   observable$: Observable<T>,
   initialValue: T | (() => T),
   dependencies: DependencyList = []
-) {
+): T {
   const [state, setState] = useState<T>(initialValue);
   useSubscription(observable$, setState, dependencies);
   return state;

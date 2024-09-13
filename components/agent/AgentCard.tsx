@@ -1,18 +1,21 @@
 import React, { CSSProperties, useCallback, useMemo, useState } from "react";
 
-import { Card, Flex, Heading } from "@radix-ui/themes";
+// import { Card, Flex, Heading } from "@radix-ui/themes";
 import { Agent } from "@/model/agent";
 import { useStateSubscription } from "@/hooks";
 import CodeEditor from "./CodeEditor";
+import Flex from "../ui/Flex";
+import Panel from "../ui/Panel";
+import Heading from "../ui/Heading";
 
 export interface AgentCardProps {
   agent: Agent;
-  edit: boolean;
+  edit?: boolean;
 }
 
 export default function AgentCard({
   agent,
-  edit
+  edit = false
 }: AgentCardProps) {
   const [editingCode, setEditingCode] = useState(edit);
   const execState = agent.executionStateObservables;
@@ -22,8 +25,8 @@ export default function AgentCard({
   const stateName = useStateSubscription(execState.stateName$, () => execState.getStateName());
   const commandIndex = useStateSubscription(execState.commandIndex$, () => execState.getCommandIndex());
   const operandIndex = useStateSubscription(execState.operandIndex$, () => execState.getOperandIndex());
-  const bufferData = useStateSubscription(buffer.data$, buffer.getData);
-  const bufferCursor = useStateSubscription(buffer.cursorIndex$, buffer.getCursorIndex);
+  const bufferData = useStateSubscription(buffer.data$, () => buffer.getData());
+  const bufferCursor = useStateSubscription(buffer.cursorIndex$, () => buffer.getCursorIndex());
 
   const toggleEditingCode = () => setEditingCode((state) => !state);
 
@@ -77,9 +80,9 @@ export default function AgentCard({
   );
 
   return (
-    <Card>
-      <Flex direction="column" width="100%">
-        <Heading size="3">
+    <Panel>
+      <Flex flexDirection="column" width="100%">
+        <Heading>
           {agent.name}
         </Heading>
         <table>
@@ -100,7 +103,7 @@ export default function AgentCard({
         </table>
         { editingCode ? codeEditBox : codeViewBox}
       </Flex>
-    </Card>
+    </Panel>
   );
 }
 

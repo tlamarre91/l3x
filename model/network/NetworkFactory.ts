@@ -8,7 +8,8 @@ import { Agent } from "../agent";
 
 export class NetworkFactory {
   static demo() {
-    const [network, networkView] = NetworkFactory.grid(7, 7);
+    const networkView = NetworkFactory.grid(4, 4);
+    const network = networkView.network;
 
     const nodes = [...network.getNodes()];
 
@@ -33,7 +34,7 @@ move left`;
     const extraGuy = Agent.fromCode("extraguy", TEST_CODE);
     network.joinAgent(extraGuy, nodes[0]);
 
-    return [network, networkView] as const;
+    return networkView;
   }
 
   // TODO: rewrite when i've made views not suck
@@ -60,7 +61,7 @@ move left`;
       lastNode = newNode;
     }
 
-    return [network, networkView];
+    return networkView;
   }
 
   // TODO: rewrite when i've made views not suck
@@ -70,7 +71,7 @@ move left`;
     networkConfig?: Partial<NetworkConfig> & {
       separationScale?: number
     },
-  ): [Network, NetworkView] {
+  ): NetworkView {
     const separationScale = networkConfig?.separationScale ?? 6;
     const nodeGrid = new Array<Array<NetworkNode>>();
     const nodeViewGrid = new Array<Array<NetworkNodeView>>();
@@ -185,10 +186,14 @@ move left`;
       }
     }
 
-    return [network, networkView];
+    return networkView;
   }
 
-  static ring(_count: number): [Network, NetworkView] {
+  static binaryTree(_depth: number): NetworkView {
+    throw new Error("not implemented");
+  }
+
+  static ring(_count: number): NetworkView {
     throw new Error("not implemented");
   }
 }

@@ -1,17 +1,41 @@
-import React, { ReactNode } from "react";
-import { Button as RadixButton } from "@radix-ui/themes";
+import React, { CSSProperties, ReactNode } from "react";
+import { BoxProps, SizeValue } from "../types";
+import { useBoxProps } from "@/hooks";
 
-export type ButtonProps = {
-  children: ReactNode;
-  onClick?: () => void;
-  size?: "s" | "m" | "l";
+export interface ButtonProps extends BoxProps {
+  size?: SizeValue;
+}
+
+const softVariantStyle: CSSProperties = {
+
 };
 
-export default function Button({ children, onClick, size: _size = "m" }: ButtonProps) {
+export default function Button(props: ButtonProps & React.HTMLAttributes<HTMLButtonElement>) {
+  let [style, buttonProps] = useBoxProps(props);
+
+  const {
+    onClick,
+    children,
+    size,
+  } = buttonProps;
+
+  // TODO: fix this nonsense. i want that text centered!!!
+  style = {
+    ...style,
+    // display: "table-cell",
+  };
+
+  const divStyle: CSSProperties = {
+    verticalAlign: "middle",
+    display: "table-cell",
+  };
+
   return (
-    <RadixButton variant="soft" onClick={onClick}>
-      {children}
-    </RadixButton>
+    <button style={style} onClick={onClick}>
+      <div style={divStyle}>
+        {children}
+      </div>
+    </button>
   );
 }
 

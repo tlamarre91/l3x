@@ -11,5 +11,5 @@ export function compileEcho(statement: parse.EchoStatement, sourceMap: SourceMap
     operands
   };
   sourceMap.set(command, statement.start);
-  return command;;
+  return command;
 }

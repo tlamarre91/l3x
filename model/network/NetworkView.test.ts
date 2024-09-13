@@ -4,6 +4,6 @@ import { Network } from "./Network";
 
 // TODO: !!!
 it("should update as network changes", () => {
-    const network = new Network("gridnet");
-    const networkView = new NetworkView(network);
+  const network = new Network("gridnet");
+  const networkView = new NetworkView(network);
 });

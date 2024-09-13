@@ -1,16 +1,44 @@
-import React, { useContext }  from "react";
+import React, { useContext, useEffect, useState }  from "react";
 
 import { useStateSubscription } from "@/hooks";
 import DfNetworkNode from "./DfNetworkNode";
 import DfAgent from "./DfAgent";
 import { GameContext } from "../game/GameContext";
 import DfNetworkEdge from "./DfNetworkEdge";
+import { GameUiError } from "@/model/errors";
 
 export default function DfNetwork() {
-  const networkView = useContext(GameContext).game.networkView!; // TODO: remove non null assert
-  const agentViews = useStateSubscription(networkView.agentViews$, () => networkView.getAgentViews());
-  const nodeViews = useStateSubscription(networkView.nodeViews$, () => networkView.getNodeViews());
-  const edgeViews = useStateSubscription(networkView.edgeViews$, () => networkView.getEdgeViews());
+  // const networkView = useContext(GameContext).game.getNetworkView();
+  const game = useContext(GameContext).game;
+  const networkView = useStateSubscription(game.networkView$, game.getNetworkView());
+
+  // if (networkView == null) {
+  //   console.log("No network"); // TODO
+  //   return (
+  //     <></>
+  //   );
+  //   // throw new GameUiError("Network view not found");
+  // }
+
+  const [agentViews, setAgentViews] = useState(networkView?.getAgentViews() ?? []);
+  const [nodeViews, setNodeViews] = useState(networkView?.getNodeViews() ?? []);
+  const [edgeViews, setEdgeViews] = useState(networkView?.getEdgeViews() ?? []);
+
+  useEffect(() => {
+    if (networkView == null) {
+      return;
+    }
+
+    const agentSubscription = networkView.agentViews$.subscribe(setAgentViews);
+    const nodeSubscription = networkView.nodeViews$.subscribe(setNodeViews);
+    const edgeSubscription = networkView.edgeViews$.subscribe(setEdgeViews);
+
+    return () => {
+      agentSubscription.unsubscribe();
+      nodeSubscription.unsubscribe();
+      edgeSubscription.unsubscribe();
+    };
+  }, [networkView]);
 
   console.log(`rendering ${agentViews.length} agents`);
   console.log(`rendering ${nodeViews.length} nodes`);

@@ -2,10 +2,11 @@ import React, { useCallback, useMemo, useState }  from "react";
 
 import NextLink from "next/link";
 import { ClockIcon, CubeIcon, MagicWandIcon } from "@radix-ui/react-icons";
-import { Box, IconButton, Tooltip } from "@radix-ui/themes";
+import Box from "../ui/Box";
+import IconButton from "../ui/IconButton";
 
-import NavSidebar from "@/components/ui/NavSidebar";
 import NetworkObjectTree from "../network/NetworkObjectTree";
+import Flex from "../ui/Flex";
 
 export type SidebarName = "explore" | "test" | "help";
 
@@ -46,33 +47,27 @@ export default function GameSidebar() {
   return (
     <>
       {sidebarComponent}
-      <NavSidebar>
-        <Tooltip delayDuration={0} content="explore" side="right">
-          <IconButton variant="soft" onClick={() => setOrDeactivateSidebar("explore")}>
-            <CubeIcon />
+      <Flex flexDirection="column" gap="1">
+
+        <IconButton onClick={() => setOrDeactivateSidebar("explore")}>
+          <CubeIcon />
+        </IconButton>
+
+
+        <NextLink href="#events">
+          <IconButton variant="soft">
+            <ClockIcon />
           </IconButton>
-        </Tooltip>
-        <Tooltip
-          delayDuration={0}
-          content="event log"
-          side="right">
-          <NextLink href="#events">
-            <IconButton variant="soft">
-              <ClockIcon />
-            </IconButton>
-          </NextLink>
-        </Tooltip>
-        <Tooltip
-          delayDuration={0}
-          content="agent editor"
-          side="right">
-          <NextLink href="#yolo">
-            <IconButton variant="soft">
-              <MagicWandIcon />
-            </IconButton>
-          </NextLink>
-        </Tooltip>
-      </NavSidebar>
+        </NextLink>
+
+
+        <NextLink href="#yolo">
+          <IconButton variant="soft">
+            <MagicWandIcon />
+          </IconButton>
+        </NextLink>
+
+      </Flex>
     </>
   );
 }
