@@ -20,9 +20,6 @@ export default function DfAgent({ agentView }: DfAgentProps) {
     const startRotation = agentView.getRotationAnimation().target;
     const startUp = agentView.getUpAxisAnimation().target;
 
-    console.log("puttin", agentView.agent.name, "at", startPos);
-    console.log(startPos);
-
     return {
       scale: 1.2,
       position: [startPos.x, startPos.y, startPos.z] as const,
@@ -32,7 +29,7 @@ export default function DfAgent({ agentView }: DfAgentProps) {
       config: {
         easing: easings.easeInOutQuad
       },
-    }
+    };
   }, [agentView]);
 
   // TODO: can i extract binding a spring to a bunch of properties??
@@ -87,11 +84,10 @@ export default function DfAgent({ agentView }: DfAgentProps) {
   const quaternion = to(
     [meshSpring.rotation, meshSpring.upAxis] as const,
     (rotation, upAxis) => {
-      console.log("interpin", rotation, upAxis);
       const quaternion = new THREE.Quaternion();
       const upAxisVec = new THREE.Vector3(...upAxis).normalize();
       quaternion.setFromAxisAngle(upAxisVec, rotation);
-      return quaternion
+      return quaternion;
     }
   );
 

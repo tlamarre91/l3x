@@ -1,8 +1,8 @@
 import React from "react";
-import { Theme } from "@radix-ui/themes";
 
-import "./globals.css";
-import "@radix-ui/themes/styles.css";
+import "./globals.scss";
+// import "@radix-ui/themes/styles.css";
+import Theme from "@/components/ui/Theme";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -21,9 +21,9 @@ export default function RootLayout({
   }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      {/* suppress warning because radix theme appearance affects the <html> element */}
+      {/* suppress warning because theme alters the body element */}
       <body>
-        <Theme appearance="dark" accentColor="jade" radius="medium" >
+        <Theme appearance="nopref">
           {children}
         </Theme>
       </body>

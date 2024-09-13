@@ -21,9 +21,9 @@ export function compileTest(statement: parse.TestStatement, sourceMap: SourceMap
       comparison,
       rightOperand,
       output
-    }
+    };
     sourceMap.set(command, statement.start);
-    return command;;
+    return command;
   }
 
   const output = parse.isRefToken(op2)
@@ -36,6 +36,6 @@ export function compileTest(statement: parse.TestStatement, sourceMap: SourceMap
     output
   };
   sourceMap.set(command, statement.start);
-  return command;;
+  return command;
 }
 

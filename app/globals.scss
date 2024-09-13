@@ -1,0 +1,169 @@
+@use 'sass:color';
+
+@layer base {
+  :root {
+    --background-opacity: 0.4;
+
+    --foreground-light: rgb(60, 60, 115);
+    --text-light: rgb(77, 81, 86);
+    --background-light: rgb(200, 200, 255);
+    --panel-background-light: rgb(157, 157, 208, var(--background-opacity));
+    --panel-border-light: rgba(113, 113, 164, var(--background-opacity));
+    --btn-background-light: rgba(157, 157, 208, var(--background-opacity));
+    --btn-background-hover-light: rgba(200, 200, 255, var(--background-opacity));
+    --btn-border-light: rgba(113, 113, 164, var(--background-opacity));
+
+    --foreground-dark: rgb(140, 140, 195);
+    --text-dark: rgb(242, 246, 251);
+    --background-dark: rgb(10, 15, 11);
+    --panel-background-dark: rgba(36, 36, 87, var(--background-opacity));
+    --panel-border-dark: rgba(84, 80, 136, var(--background-opacity));
+    --panel-border-dark-focus: rgba(114, 110, 166, var(--background-opacity));
+    /* --panel-border-dark-focus: adjust-lightness(var(--panel-border-dark), -50%); */
+    --btn-background-dark: rgba(36, 36, 87, var(--background-opacity));
+    --btn-background-hover-dark: rgb(100, 100, 155);
+    --btn-border-light: rgba(113, 113, 164, var(--background-opacity));
+
+    --length-sm: 2px;
+    --length-md: 4px;
+    --length-lg: 8px;
+    --length-xl: 16px;
+
+    font-family: sans;
+    font-size: 12px;
+  }
+}
+
+.animate-in {
+  animation: animateIn 0.3s ease 0.15s both;
+}
+
+@keyframes animateIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+body {
+  margin: 0px;
+  background-color: var(--background-light);
+  color: var(--text-light);
+}
+
+body.dark-theme {
+  background-color: var(--background-dark);
+  color: var(--text-dark);
+}
+
+textarea {
+}
+
+textarea.dark-theme {
+}
+
+.panel, button {
+  border-radius: var(--length-md);
+}
+
+.panel {
+  display: flex;
+  padding: var(--length-md);
+  margin: var(--length-md);
+  background-color: var(--panel-background-light);
+  border: 1px;
+  border-style: solid;
+  border-color: var(--panel-border-light);
+}
+
+.dark-theme .panel {
+  background-color: var(--panel-background-dark);
+  border-color: var(--panel-border-dark);
+  color: var(--text-dark);
+}
+
+button {
+  font-family: inherit;
+  font-weight: normal;
+  height: fit-content;
+  width: max-content;
+  padding: var(--length-md);
+  text-wrap: nowrap;
+
+  background-color: var(--btn-background-light);
+  border-color: var(--btn-border-light);
+  color: var(--foreground-light);
+}
+
+button svg {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+
+button.icon {
+  padding: 0px;
+}
+
+.dark-theme button {
+  background-color: var(--btn-background-dark);
+  border-color: var(--btn-border-dark);
+  color: var(--foreground-dark);
+}
+
+@media (prefers-color-scheme: dark) {
+  /* TODO: use sass or whatever to avoid repeating dark theme properties */
+  body:not(.light-theme) {
+    background-color: var(--background-dark);
+    color: var(--text-dark);
+  }
+
+  textarea {
+    background-color: var(--panel-background-dark);
+    border-color: var(--panel-border-dark);
+    color: var(--text-dark);
+    outline: none;
+  }
+
+  textarea:focus {
+    border-color: var(--panel-border-dark-focus);
+  }
+
+  .panel {
+    background-color: var(--panel-background-dark);
+    border-color: var(--panel-border-dark);
+    color: var(--text-dark);
+  }
+
+  button {
+    background-color: var(--btn-background-dark);
+    color: var(--foreground-dark);
+  }
+}
+
+ul {
+  padding-left: 0px;
+  margin: 0px;
+  list-style-type: none;
+}
+
+a {
+  text-decoration: none;
+}
+
+.game-ui {
+  position: absolute;
+  pointer-events: none;
+  height: 100vh;
+  width: 100vw;
+  z-index: 1;
+}
+
+.game-ui button {
+  font-family: monospace;
+  /* line-height: 0.9lh; */
+  /* text-transform: lowercase; */
+}

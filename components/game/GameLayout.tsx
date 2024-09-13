@@ -1,14 +1,16 @@
 "use client";
+// TODO: rename -> GameWindow
 
-import React, { useContext } from "react";
-import { Box, Flex } from "@radix-ui/themes";
+import React, { useContext, useEffect } from "react";
+// import { Flex } from "@radix-ui/themes";
 
 import Header from "@/components/Header";
-import NetworkTestControls from "@/components/network/NetworkTestControls";
 import Datafield from "@/components/datafield/Datafield";
-import GameSidebar from "./GameSidebar";
-import { GameContext } from "./GameContext";
-import SelectedObjectCard from "./SelectedObjectCard";
+import { GameContext, GameContextValue } from "./GameContext";
+import GameUi from "./GameUi";
+import Flex from "../ui/Flex";
+import { NetworkFactory } from "@/model/network/NetworkFactory";
+import Box from "../ui/Box";
 
 
 const defaultUrl = process.env.VERCEL_URL
@@ -21,22 +23,30 @@ export const metadata = {
   description: "",
 };
 
+export function setupDemo(gameContextData: GameContextValue) {
+  const network = NetworkFactory.demo();
+  gameContextData.game.setActiveNetwork(network);
+  // const network = gameContextData.game.getNetworkView()?.network!;
+  // const agent = network.getAgents()[0];
+  // gameContextData.selectObject(agent);
+
+}
+
 export default function GameLayout() {
   const gameContextData = useContext(GameContext);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    setupDemo(gameContextData);
+  }, []);
+
   return (
     <GameContext.Provider value={gameContextData}>
-      <Flex p="2" gap="2">
-        <GameSidebar />
-        <Datafield />
-        <Flex direction="column" width="100%" gap="2">
-          <Header />
-          <NetworkTestControls />
-          <Box width="max-content">
-            <SelectedObjectCard />
-          </Box>
-        </Flex>
-      </Flex>
+      <Datafield/>
+      <GameUi/>
     </GameContext.Provider>
   );
 }

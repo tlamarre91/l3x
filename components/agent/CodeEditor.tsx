@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
+import TextArea from "../ui/TextArea";
 
-import { TextArea } from "@radix-ui/themes";
+// import { TextArea } from "@radix-ui/themes";
 
 export interface CodeEditorProps {
   onCommit: (code: string) => void;

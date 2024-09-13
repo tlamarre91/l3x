@@ -179,6 +179,7 @@ export class Agent extends L3xObject {
   }
 
   #executeGo({ state }: commands.GoCommand): commands.CommandResult {
+    // TODO: make this take 0 time? make fgo and tgo take 1 time?
     this.setState(state.value!);
 
     return {

@@ -23,7 +23,7 @@ export class EdgeGroupIndex {
   }
 
   delete(edgeView: NetworkEdgeView): boolean {
-    const { from, to } = edgeView.edge
+    const { from, to } = edgeView.edge;
 
     const [node1, node2] = this.#nodesSortedById(from, to);
 

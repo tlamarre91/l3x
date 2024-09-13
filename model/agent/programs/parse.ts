@@ -267,7 +267,7 @@ export function parseStatement(line: string, lineNumber: number): Statement | un
     const tokenStart: LineAndColumn = {
       line: lineNumber,
       column: tokenColumn
-    }
+    };
 
     validateSymbol(symbol, tokenStart);
 

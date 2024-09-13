@@ -10,14 +10,14 @@ export type SelectableObject = ReturnType<typeof queryObjects>; // TODO: better 
 
 export interface GameContextValue {
   game: Game;
-  selectedObject$: Observable<SelectableObject | null>;
+  selectedObject$: Observable<SelectableObject | null>; // TODO: make this an array
   selectObject: (obj: SelectableObject | null) => void;
   getSelectedObject: () => SelectableObject | null;
 }
 
-export function makeGameContextData(): GameContextValue {
-  const [network, networkView] = NetworkFactory.demo();
-  const game = new Game(network, networkView);
+export function makeGameContextValue(): GameContextValue {
+  // const [network, networkView] = NetworkFactory.demo();
+  const game = new Game();
   const selectedObject$ = new BehaviorSubject<SelectableObject | null>(null);
 
   const contextValue = {
@@ -34,4 +34,4 @@ export function makeGameContextData(): GameContextValue {
   return contextValue;
 }
 
-export const GameContext = createContext<GameContextValue>(makeGameContextData());
+export const GameContext = createContext<GameContextValue>(makeGameContextValue());

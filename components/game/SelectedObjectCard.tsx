@@ -1,9 +1,9 @@
 import React, { useContext, useMemo } from "react";
-import { Card } from "@radix-ui/themes";
 
 import { GameContext } from "./GameContext";
 import { useStateSubscription } from "@/hooks";
 import AgentCard from "../agent/AgentCard";
+import Panel from "../ui/Panel";
 
 export default function SelectedObjectCard() {
   const gameContext = useContext(GameContext);
@@ -15,26 +15,27 @@ export default function SelectedObjectCard() {
       return null;
     }
 
-    if (selectedObject.type === "agent") {
-      return <AgentCard agent={selectedObject} />;
+    if (selectedObject.isAgent()) {
+      // return <AgentCard agent={selectedObject} />;
+      return <Panel>TODO: handle selected agent</Panel>;
     }
 
     if (selectedObject.type === "edge") {
-      return <Card>
+      return <Panel>
         <div>
-        {selectedObject.name}
+          {selectedObject.name}
         </div>
         <div>
-        {selectedObject.key}
+          {selectedObject.key}
         </div>
-      </Card>
+      </Panel>;
     }
 
     console.log(`selected ${selectedObject.name}`);
     return (
-      <Card>
+      <Panel>
         {selectedObject.name}
-      </Card>
+      </Panel>
     );
   }, [selectedObject]);
 

@@ -110,7 +110,7 @@ go start
     NetworkWatcherFactory.agentKnowsWordWatcher(agentName, magicWord)
   );
 
-  const objectiveTracker = new ObjectiveTracker(network)
+  const objectiveTracker = new ObjectiveTracker(network);
 
   objectiveTracker.trackObjective(testObjective1);
   objectiveTracker.trackObjective(testObjective2);

@@ -34,13 +34,18 @@ export function DfEnvironment() {
   );
 }
 
-export default function Datafield() {
+export interface DatafieldProps {
+  zIndex?: number
+}
+
+export default function Datafield({ zIndex }: DatafieldProps) {
   const style = {
     position: "absolute",
     top: "0px",
     left: "0px",
     height: "100vh",
     width: "100vw",
+    zIndex
   } satisfies CSSProperties;
 
   return (

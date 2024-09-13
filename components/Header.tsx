@@ -1,9 +1,10 @@
 import React from "react";
-import { Flex, Heading } from "@radix-ui/themes";
+import Heading from "./ui/Heading";
+import Flex from "./ui/Flex";
 
 export default function Header() {
   return (
-    <Flex pb="1" justify="end">
+    <Flex justify="end">
       <Heading>L3xnm</Heading>
     </Flex>
   );

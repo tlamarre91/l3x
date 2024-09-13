@@ -1,11 +1,13 @@
 import React, { useCallback, useContext, useState } from "react";
 
-import { useStateSubscription } from "@/hooks";
+import { useSubscription, useStateSubscription } from "@/hooks";
 import { Agent } from "@/model/agent";
-import { Card, Flex, Heading } from "@radix-ui/themes";
+import Flex from "@/components/ui/Flex";
+import Heading from "@/components/ui/Heading";
 import Button from "@/components/ui/Button";
 import { GameContext } from "../game/GameContext";
 import { AgentFactory } from "@/model/agent/AgentFactory";
+import Panel from "../ui/Panel";
 
 const TEST_PROGRAM = `def start
 echo hey1
@@ -19,8 +21,17 @@ go start
 `;
 
 export default function NetworkTestControls() {
-  const network = useContext(GameContext).game.network!; // TODO: remove non null assert
-  const nodes = useStateSubscription(network.nodes$, []);
+  // const network = useContext(GameContext).game.network!; // TODO: remove non null assert
+  // const nodes = useStateSubscription(network.nodes$, []);
+  const game = useContext(GameContext).game;
+  const networkView = useStateSubscription(game.networkView$, game.getNetworkView());
+  const [network, setNetwork] = useState(game.getNetworkView()?.network);
+  const [nodes, setNodes] = useState(network?.getNodes() ?? []);
+
+  useSubscription(game.networkView$, (networkView) => {
+    setNetwork(networkView?.network);
+  });
+
   const [mostRecentAgent, setMostRecentAgent] = useState<Agent>();
 
   const testAddNode = useCallback(() => {
@@ -70,9 +81,15 @@ export default function NetworkTestControls() {
   );
 
   return (
-    <Card>
-      <Flex gap="2" align="center">
-        <Heading size="3">test controls</Heading>
+    <Panel className="customized-af">
+      <Flex
+        gap="2"
+        flexDirection="row"
+        align="center"
+        justify="center"
+        alignItems="center"
+      >
+        <Heading p="2">test controls</Heading>
         {addNodeControl}
         <Button onClick={testAddAgent}>
           add agent
@@ -87,6 +104,6 @@ export default function NetworkTestControls() {
           test go home
         </Button>
       </Flex>
-    </Card>
+    </Panel>
   );
 }

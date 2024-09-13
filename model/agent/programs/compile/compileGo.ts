@@ -15,5 +15,5 @@ export function compileGo(statement: parse.GoStatement, sourceMap: SourceMap): c
     state: operands[0]
   };
   sourceMap.set(command, statement.start);
-  return command;;
+  return command;
 }
